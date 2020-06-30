@@ -1,7 +1,3 @@
-//
-// Created by gabriel on 6/24/20.
-//
-
 #include "SplitMathModel.h"
 #include<set>
 

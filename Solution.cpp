@@ -96,13 +96,13 @@ Solution::Solution(const Instance &instance, const vector<unsigned int> &sequenc
 
     getDepositsVisits(x, y, 0, L, RD0);
 
-    cout << "PD: ";
-    for (auto v: depositVisits) {
-        cout << v << "  ";
-    }
-
-    cout << endl;
-    cout << "Result: " << (RD0 + x[0][L][RD0]) << endl;
+//    cout << "PD: ";
+//    for (auto v: depositVisits) {
+//        cout << v << "  ";
+//    }
+//
+//    cout << endl;
+//    cout << "Result: " << (RD0 + x[0][L][RD0]) << endl;
 }
 
 const vector<unsigned int> &Solution::getSequence() const {

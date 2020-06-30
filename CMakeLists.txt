@@ -12,6 +12,6 @@ link_directories("/opt/ibm/ILOG/CPLEX_Studio129/cplex/lib/x86-64_linux/static_pi
 
 add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h SplitMathModel.cpp SplitMathModel.h)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 target_link_libraries(TSPrd ilocplex concert cplex m pthread dl)
