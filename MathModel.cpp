@@ -6,13 +6,13 @@
 #include<set>
 
 MathModel::MathModel(const Instance &instance, vector<unsigned int> sequence) : instance(instance), model(env),
-                                                                                x(env, instance.nClients()),
-                                                                                y(env, instance.nClients()),
-                                                                                u(env, instance.nClients()),
-                                                                                Ts(env, instance.nClients(), 0, IloInfinity),
-                                                                                Te(env, instance.nClients(), 0, IloInfinity) {
+                                                                                x(env, instance.nVertex()),
+                                                                                y(env, instance.nVertex()),
+                                                                                u(env, instance.nVertex()),
+                                                                                Ts(env, instance.nVertex(), 0, IloInfinity),
+                                                                                Te(env, instance.nVertex(), 0, IloInfinity) {
 
-    unsigned int modV = instance.nClients(), modK = instance.nClients() - 1;
+    unsigned int modV = instance.nVertex(), modK = instance.nVertex() - 1;
     set<pair<unsigned int, unsigned int> > A;
     vector<int> before(modV, -1);
     vector<int> next(modV, -1);

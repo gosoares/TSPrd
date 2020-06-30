@@ -6,6 +6,7 @@
 #define TSPRD_SOLUTION_H
 
 #include <vector>
+#include <set>
 #include "Instance.h"
 
 using namespace std;
@@ -13,11 +14,12 @@ using namespace std;
 class Solution {
     const Instance& instance;
     vector<unsigned int> sequence;
-    vector<unsigned int> depositVisits;
+    set<unsigned int> depositVisits;
+    void getDepositsVisits(const vector<vector<vector<unsigned int> > > &x, const vector<vector<vector<int> > > &y, unsigned int i, unsigned int j, unsigned int t);
 public:
     Solution(const Instance& instance, const vector<unsigned int>& sequence);
     const vector<unsigned int>& getSequence() const;
-    const vector<unsigned int>& getDepositVisits() const;
+    const set<unsigned int>& getDepositVisits() const;
 };
 
 

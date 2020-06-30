@@ -9,7 +9,7 @@ void readUntil(ifstream& in, const string& s) {
     }
 }
 
-Instance::Instance(const string& instance): N(0), W(0), RD(0) {
+Instance::Instance(const string& instance): V(0), W(0), RD(0) {
 
     ifstream in(("../instances/" + instance).c_str(), ios::in);
     if(!in){
@@ -18,28 +18,34 @@ Instance::Instance(const string& instance): N(0), W(0), RD(0) {
     }
 
     readUntil(in, "DIMENSION:");
-    in >> N;
-    W.resize(N, vector<unsigned int>(N));
-    RD.resize(N);
+    in >> V;
+    W.resize(V, vector<unsigned int>(V));
+    RD.resize(V);
 
     readUntil(in, "EDGE_WEIGHT_SECTION");
-    for(int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
+    for(int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
             in >> W[i][j];
         }
     }
 
+    biggerRD = 0;
     readUntil(in, "RELEASE_DATES");
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < V; i++) {
         in >> RD[i];
+        if(RD[i] > biggerRD)
+            biggerRD = RD[i];
     }
 
     in.close();
+}
 
+unsigned int Instance::nVertex() const {
+    return V;
 }
 
 unsigned int Instance::nClients() const {
-    return N;
+    return V - 1;
 }
 
 unsigned int Instance::releaseTimeOf(unsigned int c) const {
@@ -48,4 +54,8 @@ unsigned int Instance::releaseTimeOf(unsigned int c) const {
 
 unsigned int Instance::time(unsigned int i, unsigned int j) const {
     return W[i][j];
+}
+
+unsigned int Instance::getBiggerRD() const {
+    return biggerRD;
 }

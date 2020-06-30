@@ -7,14 +7,17 @@
 using namespace std;
 
 class Instance {
-    unsigned int N;
+    unsigned int V;
     vector<vector<unsigned int> > W;
     vector<unsigned int> RD;
+    unsigned int biggerRD;
 public:
-    unsigned int nClients() const;
+    explicit Instance(const string& filename);
     unsigned int releaseTimeOf(unsigned int c) const;
     unsigned int time(unsigned int i, unsigned int j) const;
-    explicit Instance(const string& filename);
+    unsigned int nVertex() const;
+    unsigned int nClients() const;
+    unsigned int getBiggerRD() const;
 };
 
 
