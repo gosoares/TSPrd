@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Instance.h"
 #include "Solution.h"
-#include "MathModel.h"
+#include "SplitMathModel.h"
 #include <algorithm>
 #include <random>
 #include <chrono>
@@ -29,7 +29,7 @@ int main() {
     cout << endl << endl;
 
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    MathModel(instance, v);
+    SplitMathModel(instance, v);
     auto s = Solution(instance, v);
     chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     cout << "Time difference = " << (chrono::duration_cast<std::chrono::microseconds>(end - begin).count()) << "[µs]" << endl;

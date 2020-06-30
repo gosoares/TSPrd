@@ -2,15 +2,15 @@
 // Created by gabriel on 6/24/20.
 //
 
-#include "MathModel.h"
+#include "SplitMathModel.h"
 #include<set>
 
-MathModel::MathModel(const Instance &instance, vector<unsigned int> sequence) : instance(instance), model(env),
-                                                                                x(env, instance.nVertex()),
-                                                                                y(env, instance.nVertex()),
-                                                                                u(env, instance.nVertex()),
-                                                                                Ts(env, instance.nVertex(), 0, IloInfinity),
-                                                                                Te(env, instance.nVertex(), 0, IloInfinity) {
+SplitMathModel::SplitMathModel(const Instance &instance, vector<unsigned int> sequence) : instance(instance), model(env),
+                                                                                          x(env, instance.nVertex()),
+                                                                                          y(env, instance.nVertex()),
+                                                                                          u(env, instance.nVertex()),
+                                                                                          Ts(env, instance.nVertex(), 0, IloInfinity),
+                                                                                          Te(env, instance.nVertex(), 0, IloInfinity) {
 
     unsigned int modV = instance.nVertex(), modK = instance.nVertex() - 1;
     set<pair<unsigned int, unsigned int> > A;

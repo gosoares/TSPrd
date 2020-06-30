@@ -1,13 +1,13 @@
-#ifndef TSPRD_MATHMODEL_H
-#define TSPRD_MATHMODEL_H
+#ifndef TSPRD_SPLITMATHMODEL_H
+#define TSPRD_SPLITMATHMODEL_H
 
 #include <ilcplex/ilocplex.h>
 
 #include "Instance.h"
 
-class MathModel {
+class SplitMathModel {
 public:
-    MathModel(const Instance& instance, vector<unsigned int> sequence);
+    SplitMathModel(const Instance& instance, vector<unsigned int> sequence);
 private:
     const Instance& instance;
     IloEnv env;
@@ -20,4 +20,4 @@ private:
 };
 
 
-#endif //TSPRD_MATHMODEL_H
+#endif //TSPRD_SPLITMATHMODEL_H
