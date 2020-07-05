@@ -12,12 +12,17 @@ class Instance {
     vector<unsigned int> RD;
     unsigned int biggerRD;
 public:
-    explicit Instance(const string& filename);
+    explicit Instance(const string &filename);
+
     unsigned int releaseTimeOf(unsigned int c) const;
+
     unsigned int time(unsigned int i, unsigned int j) const;
+
     unsigned int nVertex() const;
-    unsigned int nClients() const;
-    unsigned int getBiggerRD() const;
+
+    const vector<vector<unsigned int> > &getW() const;
+
+    const vector<unsigned int> &getRD() const;
 };
 
 

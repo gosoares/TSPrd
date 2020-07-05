@@ -10,10 +10,10 @@ using namespace std;
 
 int main() {
 
-    string instanceFile = "instance.dat";
+    string instanceFile = "ftv33_1.dat";
     Instance instance = Instance(instanceFile);
 
-//    vector<unsigned int> v({1, 4, 3, 8, 5, 6, 7, 9, 2});
+//    vector<unsigned int> v({1, 6, 14, 13, 22, 16, 17, 27, 25, 33, 24, 4, 2, 32, 19, 3, 30, 8, 28, 10, 9, 11, 26, 12, 23, 31, 7, 18, 20, 29, 21, 5, 15});
 
     vector<unsigned int> v(instance.nVertex() - 1);
     for (int i = 0; i < v.size(); i++) {
@@ -24,7 +24,7 @@ int main() {
 
     cout << endl << "Sequencia: " << v[0];
     for (int i = 1; i < v.size(); i++) {
-        cout << " -> " << v[i];
+        cout << ", " << v[i];
     }
     cout << endl << endl;
 

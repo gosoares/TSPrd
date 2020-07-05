@@ -44,10 +44,6 @@ unsigned int Instance::nVertex() const {
     return V;
 }
 
-unsigned int Instance::nClients() const {
-    return V - 1;
-}
-
 unsigned int Instance::releaseTimeOf(unsigned int c) const {
     return RD[c];
 }
@@ -56,6 +52,11 @@ unsigned int Instance::time(unsigned int i, unsigned int j) const {
     return W[i][j];
 }
 
-unsigned int Instance::getBiggerRD() const {
-    return biggerRD;
+const vector<vector<unsigned int> > &Instance::getW() const {
+    return W;
 }
+
+const vector<unsigned int> &Instance::getRD() const {
+    return RD;
+}
+
