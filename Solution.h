@@ -16,7 +16,7 @@ class Solution {
     vector<unsigned int> sequence;
     vector<vector<unsigned int> > routes;
 public:
-    Solution(const Instance& instance, const vector<unsigned int>& sequence);
+    Solution(const Instance& instance, const vector<unsigned int>& sequence, bool reduce = false);
     const vector<unsigned int>& getSequence() const;
 };
 

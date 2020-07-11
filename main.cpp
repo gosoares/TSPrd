@@ -2,25 +2,55 @@
 #include "Instance.h"
 #include "Solution.h"
 #include "SplitMathModel.h"
+#include "NeighborSearch.h"
 #include <algorithm>
 #include <random>
 #include <chrono>
 
 using namespace std;
 
-int main() {
+void swapn(int n1, int n2) {
+    swap(n1, n2);
+    cout << n1 << "  " << n2 << endl;
+}
 
-    string instanceFile = "ftv33_1.dat";
+int routeTime(const Instance& instance, const vector<unsigned int>& r) {
+    cout << "Rota: " << r[0];
+    int time = 0;
+    for (int i = 1; i < r.size(); i++) {
+        cout << " -> " << r[i];
+        time += (int) instance.time(r[i-1], r[i]);
+    }
+    cout << endl << "Tempo: " << time << endl << endl;
+
+    return time;
+}
+
+int main() {
+    string instanceFile = "instance.dat";
     Instance instance = Instance(instanceFile);
 
-//    vector<unsigned int> v({1, 6, 14, 13, 22, 16, 17, 27, 25, 33, 24, 4, 2, 32, 19, 3, 30, 8, 28, 10, 9, 11, 26, 12, 23, 31, 7, 18, 20, 29, 21, 5, 15});
+    NeighborSearch ns(instance);
+    vector<unsigned int> route({0, 1, 2, 3, 4, 0});
+    routeTime(instance, route);
+    ns.twoOptSearch(route);
+    routeTime(instance, route);
 
-    vector<unsigned int> v(instance.nVertex() - 1);
-    for (int i = 0; i < v.size(); i++) {
-        v[i] = i + 1;
-    }
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(v.begin() + 1, v.end(), std::default_random_engine(seed));
+}
+
+int main2() {
+
+    string instanceFile = "instance.dat";
+    Instance instance = Instance(instanceFile);
+
+    vector<unsigned int> v({4, 1, 3, 2});
+
+//    vector<unsigned int> v(instance.nVertex() - 1);
+//    for (int i = 0; i < v.size(); i++) {
+//        v[i] = i + 1;
+//    }
+//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    shuffle(v.begin() + 1, v.end(), std::default_random_engine(seed));
 
     cout << endl << "Sequencia: " << v[0];
     for (int i = 1; i < v.size(); i++) {

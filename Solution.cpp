@@ -8,20 +8,36 @@ using namespace std;
 #pragma ide diagnostic ignored "modernize-pass-by-value"
 
 set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence);
+set<unsigned int> solutionFromSequenceReducing(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence);
 
-Solution::Solution(const Instance &instance, const vector<unsigned int> &sequence) : instance(instance),
+Solution::Solution(const Instance &instance, const vector<unsigned int> &sequence, bool reduce) : instance(instance),
                                                                                      sequence(sequence) {
-    set<unsigned int> depositVisits = solutionFromSequence(instance.getW(), instance.getRD(), sequence);
 
-    routes.emplace_back(0);
+    set<unsigned int> depositVisits;
+    if (reduce) {
+        depositVisits = solutionFromSequenceReducing(instance.getW(), instance.getRD(), sequence);
+    } else {
+        depositVisits = solutionFromSequence(instance.getW(), instance.getRD(), sequence);
+    }
 
+    routes.push_back(vector<unsigned int>({0}));
     for (unsigned int i : sequence) {
         routes.back().push_back(i);
 
         const bool is_in = depositVisits.find(i) != depositVisits.end();
         if(is_in) {
-            routes.emplace_back(0);
+            routes.back().push_back(0);
+            routes.push_back(vector<unsigned int>({0}));
         }
+    }
+    routes.back().push_back(0);
+
+    for (int i = 0; i < routes.size(); i++) {
+        cout << "Route " << i+1 << ": " << routes[i][0];
+        for (int j = 1; j < routes[i].size(); j++) {
+            cout << " -> " << routes[i][j];
+        }
+        cout << endl;
     }
 }
 
@@ -96,10 +112,9 @@ set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, c
     vector<vector<unsigned int> > maxT(N, vector<unsigned int>(N));
     for (int i = 0; i < N; i++) {
         unsigned int mint = 0;
-        unsigned int biggerRDbeforei = INF;
         if (i > 0) {
-            int ibiggerRDbeforei = iBiggerRD[0][i - 1];
-            biggerRDbeforei = biggerRD[0][i - 1];
+            //int ibiggerRDbeforei = iBiggerRD[0][i - 1];
+            unsigned int biggerRDbeforei = biggerRD[0][i - 1];
             mint = biggerRDbeforei; // + sumT[ibiggerRDbeforei][i-1];
         }
         mint = max(mint, RD[sequence[i]]);
@@ -107,7 +122,7 @@ set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, c
         for (int j = i; j < sequence.size(); j++) {
             minT[i][j] = mint;
 
-            unsigned int maxt = biggerRDbeforei + sumT[0][i-1];
+            //unsigned int maxt = biggerRDbeforei + sumT[0][i-1];
 //            maxT[i][j] = min(maxt, biggerRD[i][j]);
             maxT[i][j] = biggerRD[i][j];
         }
@@ -172,6 +187,77 @@ set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, c
     cout << "Result: " << (RD0 + x[0][L][RD0]) << endl;
 
     return visits;
+}
+
+set<unsigned int> solutionFromSequenceReducing(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence) {
+/*
+     * Dado uma sequência fixa, se um cliente tem um release date maior que o proximo
+     * cliente da sequencia, então os dois clientes serão atendidos na mesma rota.
+     *
+     * Com essa ideia podemos agrupa-los em apenas 1 vértice representando os clientes naquela sequencia.
+     *
+     * */
+    vector<vector<unsigned int> > mapping;
+    mapping.push_back({0});
+    mapping.push_back({sequence[0]});
+    unsigned int bigger = RD[sequence[0]];
+    vector<unsigned int> newReleaseTime({RD[0], RD[sequence[0]]});
+
+    for (int i = 1; i < sequence.size(); i++) {
+        unsigned int v = sequence[i];
+        unsigned int rdi = RD[v];
+
+        if (rdi > bigger) {
+            mapping.push_back({v});
+            bigger = rdi;
+            newReleaseTime.push_back(rdi);
+        } else {
+            mapping.back().push_back(v);
+        }
+    }
+    /*
+     * Calcula tempos entre os conjuntos de nós
+     * Peso de chegada: peso de chegada do primeiro nó da sequência
+     * Peso de saída: peso de saida do ultimo nó da sequencia, somado com os pesos da sequencia interna
+     *
+     * Vale notar: após visitar um cliente, só é possível voltar ao deposito ou ir ao proximo cliente da sequencia
+     */
+    vector<vector<unsigned int> > newGraph(mapping.size(), vector<unsigned int>(mapping.size(), UINT_MAX));
+
+    for (int i = 1; i < mapping.size(); i++) {
+
+        unsigned int inner = 0; // calcula tempo para percorrer os nós dessa sequencia
+        for (int j = 1; j < mapping[i].size(); j++) {
+            inner += W[mapping[i][j - 1]][mapping[i][j]];
+        }
+
+        newGraph[0][i] = W[0][mapping[i][0]];
+        newGraph[i][0] = inner + W[mapping[i].back()][0];
+
+        if (i + 1 < mapping.size()) {
+            newGraph[i][i + 1] = inner + W[mapping[i].back()][mapping[i + 1][0]];
+        }
+
+    }
+
+    vector<unsigned int> newSequence(newGraph.size()-1);
+    for (int i = 0; i < newSequence.size(); i++)
+        newSequence[i] = i+1;
+
+    set<unsigned int> visits(solutionFromSequence(newGraph, newReleaseTime, newSequence));
+
+    set<unsigned int> originalVisits;
+    for (unsigned int v: visits) {
+        originalVisits.insert(mapping[v].back());
+    }
+
+    cout << "PD2: ";
+    for (auto v: originalVisits) {
+        cout << v << "  ";
+    }
+    cout << endl;
+
+    return originalVisits;
 }
 
 const vector<unsigned int> &Solution::getSequence() const {
