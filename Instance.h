@@ -20,6 +20,8 @@ public:
 
     unsigned int nVertex() const;
 
+    unsigned int nClients() const;
+
     const vector<vector<unsigned int> > &getW() const;
 
     const vector<unsigned int> &getRD() const;

@@ -44,6 +44,10 @@ unsigned int Instance::nVertex() const {
     return V;
 }
 
+unsigned int Instance::nClients() const {
+    return V - 1;
+}
+
 unsigned int Instance::releaseTimeOf(unsigned int c) const {
     return RD[c];
 }

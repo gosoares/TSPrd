@@ -1,7 +1,3 @@
-//
-// Created by gabriel on 7/6/20.
-//
-
 #ifndef TSPRD_NEIGHBORSEARCH_H
 #define TSPRD_NEIGHBORSEARCH_H
 
