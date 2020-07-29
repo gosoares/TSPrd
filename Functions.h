@@ -8,12 +8,15 @@
 using namespace std;
 
 class Functions {
-
+    const Instance &instance;
 public:
-    static void orderCrossover(const vector<unsigned int> &parent1, const vector<unsigned int> &parent2, vector<unsigned int> &child);
-    static double solutionsDistance(const Solution &s1, const Solution &s2);
-    static void initializePopulation(const Instance &instance, vector<vector<Solution *> > &population, unsigned int N);
-    static void survivalSelection(vector<vector<Solution> > &population, int pop_size);
+    explicit Functions(const Instance &instance): instance(instance) {};
+
+    static Sequence *orderCrossover(const Sequence &parent1, const Sequence &parent2);
+    static double routesDistance(Solution *r1, Solution *r2);
+    vector<Sequence *> *initializePopulation(unsigned int min_pop_size, unsigned int max_pop_size);
+    static void getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close);
+    static void survivalSelection(vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close);
 };
 
 

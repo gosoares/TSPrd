@@ -1,9 +1,56 @@
 #include "NeighborSearch.h"
 #include <cassert>
+#include <exception>
+#include <chrono>
+#include <random>
+#include <algorithm>
+#include <iostream>
 
 #define L route.size() - 2 // indice do ultimo cliente em uma rota
 
 NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance) {}
+
+int NeighborSearch::callIntraSearch(vector<unsigned int> &route, int which) {
+    switch (which) {
+        case 1:
+            return swapSearch(route, 1, 1);
+        case 2:
+            return reinsertionSearch(route, 1);
+        case 3:
+            return twoOptSearch(route);
+        default:
+            throw invalid_argument("Invalid neighbor search id");
+    }
+}
+
+int NeighborSearch::intraSearch(Solution *solution) {
+    int N = 3; // number of intra searchs algorithms
+    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
+    vector<int> searchOrder(N);
+    iota(searchOrder.begin(), searchOrder.end(), 1);
+    shuffle(searchOrder.begin(), searchOrder.end(), re);
+
+    for(vector<unsigned int> &route: solution->routes) {
+        for (int i = 0; i < searchOrder.size(); i++) {
+            int gain = callIntraSearch(route, searchOrder[i]);
+            if(gain > 0) {
+                int lastMovement = searchOrder[i];
+                i = -1;
+                shuffle(searchOrder.begin(), searchOrder.end(), re);
+                if(searchOrder[0] == lastMovement) {
+                    swap(searchOrder[0], searchOrder[searchOrder.size()-1]);
+                }
+            }
+        }
+    }
+
+    int newTime = (int) Solution::getRoutesTime(instance, solution->routes);
+    if(newTime < solution->time) {
+        int gain = (int) solution->time - newTime;
+        solution->time = newTime;
+        return gain;
+    }
+}
 
 int NeighborSearch::swapSearch(vector<unsigned int> &route, int n1, int n2) {
     int gain = 0, x;
@@ -129,7 +176,7 @@ int NeighborSearch::verifySwap(vector<unsigned int> &route, int i1, int i2, int 
         minus += instance.time(route[i1 + n1 - 1], route[i1 + n1]); // depois do primeiro conjunto
 
         plus += instance.time(route[i2 - 1], route[i1])
-                + instance.time(route[i1 + n1 - 1], route[i2 + n2]);
+                + instance.time(route[i2 + n2 - 1], route[i1 + n1]);
     }
 
     return (int) minus - (int) plus;

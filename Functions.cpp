@@ -3,16 +3,14 @@
 #include <chrono>
 #include <random>
 #include <algorithm>
+#include <queue>
 
 #pragma ide diagnostic ignored "cert-msc50-cpp"
-void Functions::orderCrossover(const vector<unsigned int> &parent1, const vector<unsigned int> &parent2, vector<unsigned int> &child) {
+
+double nCloseMean(vector<vector<double> > &d, int n_close, int i);
+
+Sequence *Functions::orderCrossover(const vector<unsigned int> &parent1, const vector<unsigned int> &parent2) {
     int N = parent1.size();
-
-    random_device dev;
-    std::default_random_engine generator(dev());
-    std::uniform_int_distribution<int> distribution(1,6);
-    int dice_roll = distribution(generator);  // generates number in the range 1..6
-
 
     // escolhe aleatoriamente a subsequencia do primeiro pai que ira ao filho
     int a, b;
@@ -22,89 +20,179 @@ void Functions::orderCrossover(const vector<unsigned int> &parent1, const vector
         if (a > b) {
             swap(a, b);
         }
-    } while(a == 0 && b == N-1);
-
+    } while ((a == 0 && b == N - 1) || (b - a) <= 1);
 
     // copia a subsequencia do primeiro pai, ao filho
     vector<bool> has(N, false);
-    child.resize(N);
+    auto *child = new vector<unsigned int>(N);
     for (int i = a; i <= b; i++) {
-        child[i] = parent1[i];
-        has[child[i]] = true;
+        child->at(i) = parent1[i];
+        has[child->at(i)] = true;
     }
 
     // copia o restante dos elementos na ordem que esta no segundo pai
     int x = 0;
-    for (int i = b+1; i < N; i++) {
-        while(has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
+    for (int i = b + 1; i < N; i++) {
+        while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
             x++;
 
-        child[i] = parent2[x];
+        child->at(i) = parent2[x];
         x++;
     }
     for (int i = 0; i < a; i++) {
-        while(has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
+        while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
             x++;
 
-        child[i] = parent2[x];
+        child->at(i) = parent2[x];
         x++;
     }
+
+    return child;
 }
 
-double Functions::solutionsDistance(const Solution &s1, const Solution &s2) {
-    const unsigned int N = s1.getInstance().nVertex();
+double Functions::routesDistance(Solution *r1, Solution *r2) {
+    const unsigned int N = r1->V + 1;
     vector<unsigned int> s1Arcs(N), s2Arcs(N); // cada posicao do array representa quem vem depois dele na rota
     set<unsigned int> s1Deposits, s2Deposits; // x: (0, x) existe em rotas
 
-    for(const vector<unsigned int> &route: s1.getRoutes()) { // calcula os arcos em s1
+    for (const vector<unsigned int> &route: r1->routes) { // calcula os arcos em s1
         s1Deposits.insert(route[1]);
         for (int i = 2; i < route.size() - 1; i++) {
-            s1Arcs[route[i-1]] = route[i];
+            s1Arcs[route[i - 1]] = route[i];
         }
     }
-    for(const vector<unsigned int> &route: s2.getRoutes()) { // calcula os arcos em s2
+    for (const vector<unsigned int> &route: r2->routes) { // calcula os arcos em s2
         s2Deposits.insert(route[1]);
         for (int i = 2; i < route.size() - 1; i++) {
-            s2Arcs[route[i-1]] = route[i];
+            s2Arcs[route[i - 1]] = route[i];
         }
     }
 
     int I = 0;
-    for(unsigned int x: s1Deposits) { // compara arcos que saem do deposito
+    for (unsigned int x: s1Deposits) { // compara arcos que saem do deposito
         I += s2Deposits.erase(x);
     }
     int U = (int) (s1Deposits.size() + s2Deposits.size());
 
-    for(int i = 1; i < s1Arcs.size(); i++) { // comparam restante das arcos
+    for (int i = 1; i < s1Arcs.size(); i++) { // comparam restante das arcos
         int equal = s1Arcs[i] == s2Arcs[i];
         I += equal;
         U += 2 - equal;
     }
 
 
-    return 1 - ((double) I/U);
+    return 1 - ((double) I / U);
 }
 
-/*
- * population: vector que representa a populacao
- * M: numero de cromossomos na populacao inicial
- */
-void Functions::initializePopulation(const Instance &instance, vector<vector<Solution *>> &population, unsigned int M) {
+vector<Sequence *> *Functions::initializePopulation(unsigned int min_pop_size, unsigned int max_pop_size) {
     vector<unsigned int> clients(instance.nClients());
     for (int i = 0; i < clients.size(); i++) {
-        clients[i] = i+1;
+        clients[i] = i + 1;
     }
 
     auto rand = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-    population.resize(M);
-    for (int i = 0; i < M; i++) {
-        population[i] = clients;
-        shuffle(population[i].begin(), population[i].end(), rand);
+
+    auto population = new vector<Sequence *>(max_pop_size);
+    population->resize(
+            min_pop_size); // diminui o tamanho mas mantem o espaco alocado para a quantidade maxima da populacao, para evitar realocacao
+    for (int i = 0; i < min_pop_size; i++) {
+        auto sequence = new Sequence(clients);
+        shuffle(sequence->begin(), sequence->end(), rand);
+        population->at(i) = sequence;
+    }
+
+    return population;
+}
+
+void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close) {
+    int N = solutions->size();
+
+    vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
+    for(int i = 0; i < N; i++) {
+        for(int j = i+1; j < N; j++) {
+            d[i][j] = Functions::routesDistance(solutions->at(i), solutions->at(j));
+            d[j][i] = d[i][j];
+        }
+    }
+
+    vector<double> nMean(N);
+    for (int i = 0; i < N; i++) {
+        nMean[i] = nCloseMean(d, n_close, i);
+    }
+
+    vector<unsigned int> sortedIndex(N);
+    iota(sortedIndex.begin(), sortedIndex.end(), 0);
+    sort(sortedIndex.begin(), sortedIndex.end(), [&nMean](int i,int j){
+        return nMean[i] < nMean[j];
+    });
+
+    vector<unsigned int> rankDiversity(N); // rank em relacao a contribuicao pra diversidade.
+    // quanto maior o rank, maior a contribuicao para a diversidade da populacao
+    for (int i = 0; i < rankDiversity.size(); i++) {
+        rankDiversity[sortedIndex[i]] = i + 1;
+    }
+
+    // calcula o rank em relacao ao valor na funcao objetivo dessa solucao
+    // quanto menor o valor, melhor a solucao
+    sort(sortedIndex.begin(), sortedIndex.end(), [&solutions](int i, int j) {
+        return solutions->at(i)->time > solutions->at(i)->time;
+    });
+    vector<unsigned int> rankFitness(N);
+    for (int i = 0; i < rankFitness.size(); i++) {
+        rankFitness[sortedIndex[i]] = i + 1;
+    }
+
+    // com os ranks, eh calculado o biased fitness
+    biasedFitness.resize(solutions->size());
+    for (int i = 0; i < biasedFitness.size(); i++) {
+        biasedFitness[i] = rankFitness[i] + (1 - ((double) min_pop_size / max_pop_size)) * rankDiversity[i];
     }
 }
 
-void Functions::survivalSelection(vector<vector<Solution>> &population, int pop_size) {
+void Functions::survivalSelection(vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close) {
+    vector<double> biasedFitness(solutions->size());
+    getBiasedFitness(biasedFitness, solutions, min_pop_size, max_pop_size, n_close);
+    for(int i = 0; i < solutions->size(); i++) {
+        solutions->at(i)->id = i;
+    }
 
+    // ordenamos as solucoes pelo biased fitness e preservamos apenas as min_pop_size solucoes com melhores biased fitness
+    sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution* s1, Solution* s2) {
+        return biasedFitness[s1->id] > biasedFitness[s2->id];
+    });
+    solutions->resize(min_pop_size);
 }
 
+double nCloseMean(vector<vector<double> > &d, int n_close, int i) {
+    vector<double> &di = d[i];
+    // criamos uma fila de prioridade para armazenar as n_close menores distancias
+    priority_queue<double> pq;
+    // insere as distancias dos primeiros n_close clientes
+    int j;
+    for (j = 0; pq.size() < n_close; j++) {
+        if(i == j)
+            continue;
+        pq.push(di[j]);
+    }
 
+    // para cada distancia restante verifica se eh menor que alguma anterior
+    for(; j < d.size(); j++) {
+        if (i == j)
+            continue;
+
+        unsigned int dij = di[j];
+        if(dij < pq.top()) {
+            pq.pop();
+            pq.push(dij);
+        }
+    }
+
+    // calcula a media das menores distancias;
+    double sum = 0;
+    for (j = 0; j < n_close; j++) {
+        sum += pq.top();
+        pq.pop();
+    }
+
+    return sum / n_close;
+}

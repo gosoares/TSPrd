@@ -7,43 +7,122 @@ using namespace std;
 
 #pragma ide diagnostic ignored "modernize-pass-by-value"
 
-set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence);
-set<unsigned int> solutionFromSequenceReducing(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence);
+unsigned int routesFromSequence(const Instance &instance, const vector<unsigned int> &sequence,
+                                vector<vector<unsigned int> > &routes, bool reduce = false);
 
-Solution::Solution(const Instance &instance, const vector<unsigned int> &sequence, bool reduce) : instance(instance),
-                                                                                     sequence(sequence) {
+unsigned int
+visitsFromSequence(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
+                   const vector<unsigned int> &sequence);
 
-    set<unsigned int> depositVisits;
-    if (reduce) {
-        depositVisits = solutionFromSequenceReducing(instance.getW(), instance.getRD(), sequence);
-    } else {
-        depositVisits = solutionFromSequence(instance.getW(), instance.getRD(), sequence);
+unsigned int visitsFromSequenceReducing(set<unsigned int> &visits, const vector<vector<unsigned int> > &W,
+                                        const vector<unsigned int> &RD, const vector<unsigned int> &sequence);
+
+Solution::Solution(vector<vector<unsigned int> > routes, unsigned int time, int N): routes(std::move(routes)), time(time), V(N) {
+    if(N == -1) {
+        this->V = 0;
+        for (auto &r: routes) {
+            this->V += r.size() - 2;
+        }
     }
+};
+
+Solution::Solution(const Instance &instance, Sequence &sequence, bool reduce): V(sequence.size()) {
+    time = routesFromSequence(instance, sequence, routes, reduce);
+}
+
+vector<Solution *> *Solution::solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences, bool reduce) {
+    auto *solutions = new vector<Solution *>(sequences->size());
+    for (int i = 0; i < solutions->size(); i++ ){
+        solutions->at(i) = new Solution(instance, *(sequences->at(i)), reduce);
+    }
+    return solutions;
+}
+
+Solution *Solution::copy() const{
+    vector<vector<unsigned int> > r(this->routes);
+    return new Solution(r, this->time);
+}
+
+Sequence *Solution::getSequence() const {
+    auto *s = new Sequence(this->V);
+    int i = 0;
+    for(const vector<unsigned int> &route: routes) {
+        for(int j = 1; j < route.size() - 1; j++) {
+            s->at(i) = route[j];
+            i++;
+        }
+    }
+    return s;
+}
+
+unsigned int Solution::getRoutesTime(const Instance &instance, const vector<vector<unsigned int> >& routes) {
+    unsigned int time = 0;
+    for (const vector<unsigned int> &route : routes) {
+        // get max release date of elements in this route
+        unsigned int maxRD = 0;
+        for(int i = 1; i < route.size() - 1; i++) {
+            unsigned int rdi = instance.releaseTimeOf(route[i]);
+            if(rdi > maxRD) {
+                maxRD = rdi;
+            }
+        }
+
+        if (time < maxRD) {
+            time = maxRD; // time = horario de saida da rota
+        }
+
+        // acrescenta tempo de realizar a rota
+        for(int i = 1; i < route.size(); i++) {
+            time += instance.time(route[i-1], route[i]);
+        }
+    }
+}
+
+/*
+ * dada uma sequencia, calcula o melhor conjunto de rotas que visitem os clientes nessa sequencia
+ *
+ * retorna o tempo de realizar a rota, e altera o "routes" com a rota
+ */
+unsigned int routesFromSequence(const Instance &instance, const vector<unsigned int> &sequence,
+                                vector<vector<unsigned int> > &routes, bool reduce) {
+    set<unsigned int> depositVisits;
+    unsigned int time;
+    if (reduce) {
+        time = visitsFromSequenceReducing(depositVisits, instance.getW(), instance.getRD(), sequence);
+    } else {
+        time = visitsFromSequence(depositVisits, instance.getW(), instance.getRD(), sequence);
+    }
+
 
     routes.push_back(vector<unsigned int>({0}));
     for (unsigned int i : sequence) {
         routes.back().push_back(i);
 
         const bool is_in = depositVisits.find(i) != depositVisits.end();
-        if(is_in) {
+        if (is_in) {
             routes.back().push_back(0);
             routes.push_back(vector<unsigned int>({0}));
         }
     }
     routes.back().push_back(0);
 
-    for (int i = 0; i < routes.size(); i++) {
-        cout << "Route " << i+1 << ": " << routes[i][0];
-        for (int j = 1; j < routes[i].size(); j++) {
-            cout << " -> " << routes[i][j];
-        }
-        cout << endl;
-    }
+//    for (int i = 0; i < routes.size(); i++) {
+//        cout << "Route " << i + 1 << ": " << routes[i][0];
+//        for (int j = 1; j < routes[i].size(); j++) {
+//            cout << " -> " << routes[i][j];
+//        }
+//        cout << endl;
+//    }
+
+    return time;
 }
 
-void getDepositsVisits(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence, const vector<vector<vector<unsigned int> > > &x, const vector<vector<vector<int> > > &y,
-                                 unsigned int i,
-                                 unsigned int j, unsigned int t, unsigned int biggerRD) {
+
+void
+getDepositsVisits(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
+                  const vector<unsigned int> &sequence, const vector<vector<vector<unsigned int> > > &x,
+                  const vector<vector<vector<int> > > &y, unsigned int i, unsigned int j, unsigned int t,
+                  unsigned int biggerRD) {
     int deposit = y[i][j][t];
     if (deposit == -1 || i == j)
         return;
@@ -59,7 +138,9 @@ void getDepositsVisits(set<unsigned int> &visits, const vector<vector<unsigned i
 }
 
 // dada uma sequencia, calcula onde colocar os depositos para se obter o menor tempo total
-set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence) {
+unsigned int
+visitsFromSequence(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
+                   const vector<unsigned int> &sequence) {
     const unsigned int V = RD.size(), N = V - 1, L = N - 1;
     const unsigned int INF = UINT_MAX / (2 * V);
 
@@ -157,10 +238,10 @@ set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, c
                 for (int i = (int) f; i < biggerRDlf; i++) { // testa visitar o deposito depois do cliente i
                     int tFirst = x[f][i][t]; // tempo para realizar a primeira rota
 
-                    unsigned int wSecond = max(0, ((int) RD[sequence[i+1]]) - (t + tFirst));
+                    unsigned int wSecond = max(0, ((int) RD[sequence[i + 1]]) - (t + tFirst));
                     unsigned int startSecond = t + tFirst + wSecond;
                     unsigned int tSecond = x[i + 1][l][min(startSecond,
-                                                           maxT[i+1][l])]; // tempo para realizar a segunda rota
+                                                           maxT[i + 1][l])]; // tempo para realizar a segunda rota
 
                     unsigned int time = tFirst + wSecond + tSecond;
 
@@ -175,21 +256,21 @@ set<unsigned int> solutionFromSequence(const vector<vector<unsigned int> > &W, c
     } // terminado calculo de x e y
     const unsigned int RD0 = RD[sequence[0]];
 
-    set<unsigned int> visits;
     getDepositsVisits(visits, W, RD, sequence, x, y, 0, L, RD0, *max_element(RD.begin(), RD.end()));
 
-    cout << "PD: ";
-    for (auto v: visits) {
-        cout << v << "  ";
-    }
+//    cout << "PD: ";
+//    for (auto v: visits) {
+//        cout << v << "  ";
+//    }
+//
+//    cout << endl;
+//    cout << "Result: " << (RD0 + x[0][L][RD0]) << endl;
 
-    cout << endl;
-    cout << "Result: " << (RD0 + x[0][L][RD0]) << endl;
-
-    return visits;
+    return RD0 + x[0][L][RD0];
 }
 
-set<unsigned int> solutionFromSequenceReducing(const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD, const vector<unsigned int> &sequence) {
+unsigned int visitsFromSequenceReducing(set<unsigned int> &visits, const vector<vector<unsigned int> > &W,
+                                        const vector<unsigned int> &RD, const vector<unsigned int> &sequence) {
 /*
      * Dado uma sequência fixa, se um cliente tem um release date maior que o proximo
      * cliente da sequencia, então os dois clientes serão atendidos na mesma rota.
@@ -240,26 +321,22 @@ set<unsigned int> solutionFromSequenceReducing(const vector<vector<unsigned int>
 
     }
 
-    vector<unsigned int> newSequence(newGraph.size()-1);
+    vector<unsigned int> newSequence(newGraph.size() - 1);
     for (int i = 0; i < newSequence.size(); i++)
-        newSequence[i] = i+1;
+        newSequence[i] = i + 1;
 
-    set<unsigned int> visits(solutionFromSequence(newGraph, newReleaseTime, newSequence));
+    set<unsigned int> mappedVisits;
+    unsigned int time = visitsFromSequence(mappedVisits, newGraph, newReleaseTime, newSequence);
 
-    set<unsigned int> originalVisits;
-    for (unsigned int v: visits) {
-        originalVisits.insert(mapping[v].back());
+    for (unsigned int v: mappedVisits) {
+        visits.insert(mapping[v].back());
     }
 
-    cout << "PD2: ";
-    for (auto v: originalVisits) {
-        cout << v << "  ";
-    }
-    cout << endl;
+//    cout << "PD2: ";
+//    for (auto v: visits) {
+//        cout << v << "  ";
+//    }
+//    cout << endl;
 
-    return originalVisits;
-}
-
-const vector<unsigned int> &Solution::getSequence() const {
-    return sequence;
+    return time;
 }

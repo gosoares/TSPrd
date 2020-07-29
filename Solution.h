@@ -1,23 +1,29 @@
-//
-// Created by gabriel on 6/20/20.
-//
-
 #ifndef TSPRD_SOLUTION_H
 #define TSPRD_SOLUTION_H
 
 #include <vector>
 #include <set>
 #include "Instance.h"
+#include <memory>
 
 using namespace std;
+using Sequence = vector<unsigned int>;
 
 class Solution {
-    const Instance& instance;
-    vector<unsigned int> sequence;
-    vector<vector<unsigned int> > routes;
 public:
-    Solution(const Instance& instance, const vector<unsigned int>& sequence, bool reduce = false);
-    const vector<unsigned int>& getSequence() const;
+    Solution(vector<vector<unsigned int> > routes, unsigned int time, int N = -1);
+    Solution(const Instance &instance, Sequence &sequence, bool reduce = false);
+    vector<vector<unsigned int> > routes;
+    unsigned int id;
+    unsigned int time;
+    unsigned int V; // numero de clientes
+
+    Sequence *getSequence() const;
+
+    Solution *copy() const;
+
+    static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences, bool reduce = false);
+    static unsigned int getRoutesTime(const Instance &instance, const vector<vector<unsigned int> > &routes);
 };
 
 
