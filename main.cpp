@@ -82,14 +82,9 @@ void freePopulation(vector<Sequence *> *population) {
     population->clear();
 }
 
-int main() {
-    int min_population = 100;
-    int max_population = 200;
-    int n_close = 5;
-    int max_non_improved_iterations = 200;
+Solution *geneticAlgorithm(const string &instanceFile, int min_population, int max_population, int n_close, int max_non_improved_iterations) {
     srand(time(nullptr));
 
-    string instanceFile = "ftv70_1.5.dat";
     Instance instance = Instance(instanceFile);
 
     Functions f(instance);
@@ -134,7 +129,7 @@ int main() {
             if (solution->time < bestSolution->time) {
                 delete bestSolution;
                 bestSolution = solution->copy();
-                cout << "Best Solution Found: " << bestSolution->time << endl;
+                // cout << "Best Solution Found: " << bestSolution->time << endl;
 
                 iterations_not_improved = 0;
             } else {
@@ -151,6 +146,21 @@ int main() {
         }
     }
 
+    return bestSolution;
+}
+
+int main(int argc, char **argv) {
+    int min_population = 25;
+    int max_population = 125;
+    int n_close = 5;
+    int max_non_improved_iterations = 200;
+    string instanceFile = argv[1];
+
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    Solution *s = geneticAlgorithm(instanceFile, min_population, max_population, n_close, max_non_improved_iterations);
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    cout << "RESULT " << s->time << endl;
+    cout << "TIME " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << endl;
 
 
 //    vector<unsigned int> v({4, 1, 3, 2});

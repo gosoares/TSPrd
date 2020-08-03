@@ -11,7 +11,7 @@ void readUntil(ifstream& in, const string& s) {
 
 Instance::Instance(const string& instance): V(0), W(0), RD(0) {
 
-    ifstream in(("../instances/" + instance).c_str(), ios::in);
+    ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
     if(!in){
         std::cout << "Falha ao abrir o arquivo!" << endl;
         exit(1);
