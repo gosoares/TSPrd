@@ -300,3 +300,7 @@ int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
     return bestGain;
 }
 
+int NeighborSearch::educate(Solution *solution) {
+    return intraSearch(solution);
+}
+

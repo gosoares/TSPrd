@@ -14,9 +14,10 @@ public:
 
     static Sequence *orderCrossover(const Sequence &parent1, const Sequence &parent2);
     static double routesDistance(Solution *r1, Solution *r2);
-    vector<Sequence *> *initializePopulation(unsigned int min_pop_size, unsigned int max_pop_size);
-    static void getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close);
-    static void survivalSelection(vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close);
+    vector<Sequence *> *initializePopulation(unsigned int mi, unsigned int lambda = 0);
+    static void getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, double nbElite, int nClose);
+    static void survivalSelection(vector<Solution *> *solutions, int mi, double nbElite, int nClose);
+    void diversificate(vector<Solution *> *solutions, int mi, double nbElite, int nClose);
 };
 
 

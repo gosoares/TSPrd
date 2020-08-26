@@ -19,6 +19,7 @@ public:
     int swapSearch(vector<unsigned int> &route, int n1 = 1, int n2 = 1);
     int reinsertionSearch(vector<unsigned int> &route, int n = 1);
     int twoOptSearch(vector<unsigned int> &route);
+    int educate(Solution *solution);
 };
 
 

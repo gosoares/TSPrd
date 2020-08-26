@@ -82,7 +82,8 @@ void freePopulation(vector<Sequence *> *population) {
     population->clear();
 }
 
-Solution *geneticAlgorithm(const string &instanceFile, int min_population, int max_population, int n_close, int max_non_improved_iterations) {
+
+Solution *geneticAlgorithm(const string &instanceFile, int mi, int lambda, int nClose, double nbElite, int itNi, int itDiv) {
     srand(time(nullptr));
 
     Instance instance = Instance(instanceFile);
@@ -93,27 +94,28 @@ Solution *geneticAlgorithm(const string &instanceFile, int min_population, int m
     vector<unsigned int> r({0, 30, 16, 8, 0});
     ns.swapSearch(r, 1, 1);
 
-    vector<Sequence *> *population = f.initializePopulation(min_population, max_population);
-    vector<Solution *> *solutions = Solution::solutionsFromSequences(instance, population, min_population);
+    vector<Sequence *> *population = f.initializePopulation(mi, lambda);
+    vector<Solution *> *solutions = Solution::solutionsFromSequences(instance, population, mi);
     auto *bestSolution = new Solution(vector<vector<unsigned int> >(), 999999);
 
     int iterations_not_improved = 0;
 
-    while(iterations_not_improved < max_non_improved_iterations) {
+    while(iterations_not_improved < itNi) {
         vector<double> biasedFitness(solutions->size());
-        Functions::getBiasedFitness(biasedFitness, solutions, min_population, max_population, n_close);
+        Functions::getBiasedFitness(biasedFitness, solutions, nbElite, nClose);
 
-        for (int pop_size = min_population; pop_size < max_population; pop_size++) {
+        while(solutions->size() < mi + lambda) {
             // seleciona o primeiro pai
-            int p1a = rand() % min_population, p1b = rand() % min_population;
+            int p1a = rand() % mi, p1b = rand() % mi;
             int p1 = p1a;
             if (biasedFitness[p1b] > biasedFitness[p1a])
                 p1 = p1b;
 
+
             // seleciona segundo pai, diferente do primeiro
             int p2;
             do {
-                int p2a = rand() % min_population, p2b = rand() % min_population;
+                int p2a = rand() % mi, p2b = rand() % mi;
                 p2 = p2a;
                 if (biasedFitness[p2b] > biasedFitness[p2a])
                     p2 = p2b;
@@ -121,7 +123,7 @@ Solution *geneticAlgorithm(const string &instanceFile, int min_population, int m
 
             Sequence *child = Functions::orderCrossover(*population->at(p1), *population->at(p2));
             auto *solution = new Solution(instance, *child);
-            ns.intraSearch(solution);
+            ns.educate(solution);
 
             delete child;
             solutions->push_back(solution);
@@ -134,10 +136,13 @@ Solution *geneticAlgorithm(const string &instanceFile, int min_population, int m
                 iterations_not_improved = 0;
             } else {
                 iterations_not_improved++;
+                if(iterations_not_improved == itDiv) {
+                    f.diversificate(solutions, mi, nbElite, nClose);
+                }
             }
         }
 
-        Functions::survivalSelection(solutions, min_population, max_population, n_close);
+        Functions::survivalSelection(solutions, mi, nbElite, nClose);
 
         //recalculate population
         freePopulation(population);
@@ -150,14 +155,16 @@ Solution *geneticAlgorithm(const string &instanceFile, int min_population, int m
 }
 
 int main(int argc, char **argv) {
-    int min_population = 25;
-    int max_population = 125;
-    int n_close = 5;
-    int max_non_improved_iterations = 200;
+    int mi = 25;
+    int lambda = 100;
+    int nClose = 5;
+    double nbElite = 0.4;
+    int itNi = 200; // max iterations without improvement to stop the algorithm
+    int itDiv = 100; // iterations without improvement
     string instanceFile = argv[1];
 
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    Solution *s = geneticAlgorithm(instanceFile, min_population, max_population, n_close, max_non_improved_iterations);
+    Solution *s = geneticAlgorithm(instanceFile, mi, lambda, nClose, nbElite, itNi, itDiv);
     chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     cout << "RESULT " << s->time << endl;
     cout << "TIME " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << endl;

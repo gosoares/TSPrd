@@ -84,7 +84,7 @@ double Functions::routesDistance(Solution *r1, Solution *r2) {
     return 1 - ((double) I / U);
 }
 
-vector<Sequence *> *Functions::initializePopulation(unsigned int min_pop_size, unsigned int max_pop_size) {
+vector<Sequence *> *Functions::initializePopulation(unsigned int mi, unsigned int lambda) {
     vector<unsigned int> clients(instance.nClients());
     for (int i = 0; i < clients.size(); i++) {
         clients[i] = i + 1;
@@ -92,10 +92,9 @@ vector<Sequence *> *Functions::initializePopulation(unsigned int min_pop_size, u
 
     auto rand = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
 
-    auto population = new vector<Sequence *>(max_pop_size);
-    population->resize(
-            min_pop_size); // diminui o tamanho mas mantem o espaco alocado para a quantidade maxima da populacao, para evitar realocacao
-    for (int i = 0; i < min_pop_size; i++) {
+    auto population = new vector<Sequence *>(mi + lambda);
+    population->resize(2 * mi); // diminui o tamanho mas mantem o espaco alocado para a quantidade maxima da populacao, para evitar realocacao
+    for (int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
         shuffle(sequence->begin(), sequence->end(), rand);
         population->at(i) = sequence;
@@ -104,7 +103,7 @@ vector<Sequence *> *Functions::initializePopulation(unsigned int min_pop_size, u
     return population;
 }
 
-void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close) {
+void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, double nbElite, int nClose) {
     int N = solutions->size();
 
     vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
@@ -117,7 +116,7 @@ void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution 
 
     vector<double> nMean(N);
     for (int i = 0; i < N; i++) {
-        nMean[i] = nCloseMean(d, n_close, i);
+        nMean[i] = nCloseMean(d, nClose, i);
     }
 
     vector<unsigned int> sortedIndex(N);
@@ -145,22 +144,34 @@ void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution 
     // com os ranks, eh calculado o biased fitness
     biasedFitness.resize(solutions->size());
     for (int i = 0; i < biasedFitness.size(); i++) {
-        biasedFitness[i] = rankFitness[i] + (1 - ((double) min_pop_size / max_pop_size)) * rankDiversity[i];
+        biasedFitness[i] = rankFitness[i] + (1 - ((double) solutions->size() / nbElite)) * rankDiversity[i];
     }
 }
 
-void Functions::survivalSelection(vector<Solution *> *solutions, int min_pop_size, int max_pop_size, int n_close) {
+void Functions::survivalSelection(vector<Solution *> *solutions, int mi, double nbElite, int nClose) {
     vector<double> biasedFitness(solutions->size());
-    getBiasedFitness(biasedFitness, solutions, min_pop_size, max_pop_size, n_close);
+    getBiasedFitness(biasedFitness, solutions, nbElite, nClose);
     for(int i = 0; i < solutions->size(); i++) {
         solutions->at(i)->id = i;
     }
 
-    // ordenamos as solucoes pelo biased fitness e preservamos apenas as min_pop_size solucoes com melhores biased fitness
+    // ordenamos as solucoes pelo biased fitness e preservamos apenas as mi solucoes com melhores biased fitness
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution* s1, Solution* s2) {
         return biasedFitness[s1->id] > biasedFitness[s2->id];
     });
-    solutions->resize(min_pop_size);
+    solutions->resize(mi);
+}
+
+void Functions::diversificate(vector<Solution *> *solutions, int mi, double nbElite, int nClose) {
+    survivalSelection(solutions, mi/3, nbElite, nClose);
+
+    vector<Sequence *> *population = initializePopulation(mi);
+
+    for(auto *sequence: *population) {
+        solutions->push_back(new Solution(instance, *sequence));
+        delete sequence;
+    }
+    delete population;
 }
 
 double nCloseMean(vector<vector<double> > &d, int n_close, int i) {
