@@ -14,8 +14,9 @@ public:
     Solution(vector<vector<unsigned int> > routes, unsigned int time, int N = -1);
     Solution(const Instance &instance, Sequence &sequence, bool reduce = false);
     vector<vector<unsigned int> > routes;
-    unsigned int id;
     unsigned int time;
+
+    unsigned int id;
     unsigned int V; // numero de clientes
 
     Sequence *getSequence() const;

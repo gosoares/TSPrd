@@ -1,4 +1,4 @@
-#include <climits>
+#include <limits>
 #include <algorithm>
 #include "Solution.h"
 #include <iostream>
@@ -9,6 +9,9 @@ using namespace std;
 
 unsigned int routesFromSequence(const Instance &instance, const vector<unsigned int> &sequence,
                                 vector<vector<unsigned int> > &routes, bool reduce = false);
+
+unsigned int split(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
+                   const vector<unsigned int> &S);
 
 unsigned int
 visitsFromSequence(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
@@ -76,6 +79,8 @@ unsigned int Solution::getRoutesTime(const Instance &instance, const vector<vect
             time += instance.time(route[i-1], route[i]);
         }
     }
+
+    return time;
 }
 
 /*
@@ -83,6 +88,12 @@ unsigned int Solution::getRoutesTime(const Instance &instance, const vector<vect
  *
  * retorna o tempo de realizar a rota, e altera o "routes" com a rota
  */
+
+void printset(set<unsigned int> s) {
+    for (auto a: s) {
+        cout << a << " ";
+    }
+}
 unsigned int routesFromSequence(const Instance &instance, const vector<unsigned int> &sequence,
                                 vector<vector<unsigned int> > &routes, bool reduce) {
     set<unsigned int> depositVisits;
@@ -91,6 +102,14 @@ unsigned int routesFromSequence(const Instance &instance, const vector<unsigned 
         time = visitsFromSequenceReducing(depositVisits, instance.getW(), instance.getRD(), sequence);
     } else {
         time = visitsFromSequence(depositVisits, instance.getW(), instance.getRD(), sequence);
+//        set<unsigned int> dv2;
+//        unsigned int time2;
+//        time2 = split(dv2, instance.getW(), instance.getRD(), sequence);
+//        printset(depositVisits);
+//        cout << time << endl;
+//        printset(dv2);
+//        cout << time2 << endl;
+//        cout << (time == time2 ? "Igual" : "Diferente") << endl << endl << endl;
     }
 
 
@@ -135,6 +154,61 @@ getDepositsVisits(set<unsigned int> &visits, const vector<vector<unsigned int> >
 
     getDepositsVisits(visits, W, RD, sequence, x, y, i, deposit, t, biggerRD);
     getDepositsVisits(visits, W, RD, sequence, x, y, deposit + 1, j, startSecond, biggerRD);
+}
+
+unsigned int split(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
+                   const vector<unsigned int> &S) {
+    const unsigned int V = RD.size(), // numero total de vértices, incluindo o deposito
+    N = V - 1; // numero total de clientes
+
+    /*
+     * Calcula os maiores releases dates entre o i-esimo e o j-esimo cliente
+     *
+     * Tambem caculamos o tempo necessario para uma rota que sai do deposito
+     * visita do i-esimo ate o j-esimo cliente, e retorna ao deposito
+     */
+    vector<vector<unsigned int> > biggerRD(N, vector<unsigned int>(N));
+    vector<vector<unsigned int> > sumT(N, vector<unsigned int>(N));
+    for (int i = 0; i < N; i++) {
+        unsigned int bigger = RD[S[i]];
+        unsigned int sumTimes = W[0][S[i]];
+
+        biggerRD[i][i] = bigger;
+        sumT[i][i] = sumTimes + W[S[i]][0];
+
+        for (int j = i + 1; j < S.size(); j++) {
+            int rdj = (int) RD[S[j]];
+            if (rdj > bigger) {
+                bigger = rdj;
+            }
+            biggerRD[i][j] = bigger;
+
+            sumTimes += W[S[j - 1]][S[j]];
+            sumT[i][j] = sumTimes + W[S[j]][0];
+        }
+    }
+
+    vector<unsigned int> bestIn(N + 1); // armazena a origem do arco que leva ao menor tempo
+    vector<unsigned int> delta(N + 1, numeric_limits<unsigned int>::max()); // valor do arco (bestIn[i], i)
+    delta[0] = 0;
+
+    for(int i = 0; i < N; i++) {
+        for(int j = i + 1; j <= N; j++) {
+            unsigned int deltaJ = max(biggerRD[i][j-1], delta[i]) + sumT[i][j-1];
+            if(deltaJ < delta[j]) {
+                delta[j] = deltaJ;
+                bestIn[j] = i;
+            }
+        }
+    }
+
+    unsigned int x = bestIn[N];
+    while(x > 0) {
+        visits.insert(S[x-1]);
+        x = bestIn[x];
+    }
+
+    return delta.back();
 }
 
 // dada uma sequencia, calcula onde colocar os depositos para se obter o menor tempo total
@@ -234,8 +308,8 @@ visitsFromSequence(set<unsigned int> &visits, const vector<vector<unsigned int> 
                 x[f][l][t] = max(0, biggerT - t); // tempo de espera para iniciar rota com todos clientes
                 x[f][l][t] += allClients; // tempo realizar 1 rota visitando todos os clientes
 
-                unsigned int biggerRDlf = iBiggerRD[f][l]; // cliente que tem o maior release date da sequencia
-                for (int i = (int) f; i < biggerRDlf; i++) { // testa visitar o deposito depois do cliente i
+                unsigned int biggerRDfl = iBiggerRD[f][l]; // cliente que tem o maior release date da sequencia
+                for (int i = (int) f; i < biggerRDfl; i++) { // testa visitar o deposito depois do cliente i
                     int tFirst = x[f][i][t]; // tempo para realizar a primeira rota
 
                     unsigned int wSecond = max(0, ((int) RD[sequence[i + 1]]) - (t + tFirst));
