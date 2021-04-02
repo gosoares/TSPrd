@@ -17,7 +17,7 @@ public:
     vector<Sequence *> *initializePopulation(unsigned int mi, unsigned int lambda = 0);
     static void getBiasedFitness(vector<double> &biasedFitness, vector<Solution *> *solutions, double nbElite, int nClose);
     static void survivalSelection(vector<Solution *> *solutions, int mi, double nbElite, int nClose);
-    void diversificate(vector<Solution *> *solutions, int mi, double nbElite, int nClose);
+    void diversify(vector<Solution *> *solutions, int mi, double nbElite, int nClose);
 };
 
 

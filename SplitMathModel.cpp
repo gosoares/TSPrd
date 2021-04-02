@@ -1,7 +1,7 @@
 #include "SplitMathModel.h"
 #include<set>
 
-SplitMathModel::SplitMathModel(const Instance &instance, vector<unsigned int> sequence) : instance(instance), model(env),
+SplitMathModel::SplitMathModel(const Instance &instance, const vector<unsigned int> &sequence) : instance(instance), model(env),
                                                                                           x(env, instance.nVertex()),
                                                                                           y(env, instance.nVertex()),
                                                                                           u(env, instance.nVertex()),

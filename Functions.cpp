@@ -144,7 +144,7 @@ void Functions::getBiasedFitness(vector<double> &biasedFitness, vector<Solution 
     // com os ranks, eh calculado o biased fitness
     biasedFitness.resize(solutions->size());
     for (int i = 0; i < biasedFitness.size(); i++) {
-        biasedFitness[i] = rankFitness[i] + (1 - ((double) solutions->size() / nbElite)) * rankDiversity[i];
+        biasedFitness[i] = rankFitness[i] + (1 - ((double) nbElite / solutions->size())) * rankDiversity[i];
     }
 }
 
@@ -156,13 +156,13 @@ void Functions::survivalSelection(vector<Solution *> *solutions, int mi, double 
     }
 
     // ordenamos as solucoes pelo biased fitness e preservamos apenas as mi solucoes com melhores biased fitness
-    sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution* s1, Solution* s2) {
+    sort(solutions->begin(), solutions->end() , [&biasedFitness](Solution* s1, Solution* s2) {
         return biasedFitness[s1->id] > biasedFitness[s2->id];
     });
     solutions->resize(mi);
 }
 
-void Functions::diversificate(vector<Solution *> *solutions, int mi, double nbElite, int nClose) {
+void Functions::diversify(vector<Solution *> *solutions, int mi, double nbElite, int nClose) {
     survivalSelection(solutions, mi/3, nbElite, nClose);
 
     vector<Sequence *> *population = initializePopulation(mi);

@@ -68,11 +68,8 @@ Solution *geneticAlgorithm(const string &instanceFile, int mi, int lambda, int n
     Functions f(instance);
     NeighborSearch ns(instance);
 
-    vector<unsigned int> r({0, 30, 16, 8, 0});
-    ns.swapSearch(r, 1, 1);
-
     vector<Sequence *> *population = f.initializePopulation(mi, lambda);
-    vector<Solution *> *solutions = Solution::solutionsFromSequences(instance, population, mi);
+    vector<Solution *> *solutions = Solution::solutionsFromSequences(instance, population);
     auto *bestSolution = new Solution(vector<vector<unsigned int> >(), 999999);
 
     int iterations_not_improved = 0;
@@ -102,7 +99,7 @@ Solution *geneticAlgorithm(const string &instanceFile, int mi, int lambda, int n
             } else {
                 iterations_not_improved++;
                 if(iterations_not_improved == itDiv) { // DIVERSIFICACAO
-                    f.diversificate(solutions, mi, nbElite, nClose);
+                    f.diversify(solutions, mi, nbElite, nClose);
                 }
             }
         }
@@ -125,7 +122,7 @@ int main(int argc, char **argv) {
     int nClose = 5;
     double nbElite = 0.4;
     int itNi = 200; // max iterations without improvement to stop the algorithm
-    int itDiv = 100; // iterations without improvement to diversificate
+    int itDiv = 100; // iterations without improvement to diversify
     string instanceFile = argv[1];
 
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

@@ -7,7 +7,7 @@
 
 class SplitMathModel {
 public:
-    SplitMathModel(const Instance& instance, vector<unsigned int> sequence);
+    SplitMathModel(const Instance& instance, const vector<unsigned int>& sequence);
 private:
     const Instance& instance;
     IloEnv env;
