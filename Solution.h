@@ -11,19 +11,20 @@ using Sequence = vector<unsigned int>;
 
 class Solution {
 public:
-    Solution(vector<vector<unsigned int> > routes, unsigned int time, int N = -1);
-    Solution(const Instance &instance, Sequence &sequence, bool reduce = false);
+    Solution(const Instance &instance, Sequence &sequence); // create a solution given the sequence, by applying the split algorithm
+    Solution(vector<vector<unsigned int> > routes, unsigned int time, int N = -1); // create a solution given the routes
     vector<vector<unsigned int> > routes;
     unsigned int time;
 
-    unsigned int id;
-    unsigned int V; // numero de clientes
+    unsigned int id = 0; // aux field
+    unsigned int N; // number of clients
 
-    Sequence *getSequence() const;
+    Sequence *toSequence() const;
 
     Solution *copy() const;
 
-    static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences, bool reduce = false);
+    static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences);
+
     static unsigned int getRoutesTime(const Instance &instance, const vector<vector<unsigned int> > &routes);
 };
 
