@@ -11,9 +11,9 @@ void freePopulation(vector<Sequence *> *population) {
 }
 
 GeneticAlgorithm::GeneticAlgorithm(
-        const string &instanceFile, unsigned int mi, unsigned int lambda, unsigned int nClose, double nbElite,
+        const Instance& instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
         unsigned int itNi, unsigned int itDiv
-) : instance(instanceFile), mi(mi), lambda(lambda), nClose(nClose), nbElite(nbElite), itNi(itNi), itDiv(itDiv),
+) : instance(instance), mi(mi), lambda(lambda), nClose(nClose), nbElite(nbElite), itNi(itNi), itDiv(itDiv),
     ns(instance) {
     srand(time(nullptr));
 
@@ -26,6 +26,7 @@ GeneticAlgorithm::GeneticAlgorithm(
     // applying the split algorithm which find the optimal depot visits for each sequence;
     // and we transform the solutions in a population, removing the depot visits from the solutions
     // and constructing a vector with only the clients visit sequence
+
     auto *bestSolution = new Solution(vector<vector<unsigned int> >(), 999999);
 
     int iterations_not_improved = 0;
@@ -55,6 +56,8 @@ GeneticAlgorithm::GeneticAlgorithm(
                 iterations_not_improved++;
                 if (iterations_not_improved == this->itDiv) { // DIVERSIFICACAO
                     diversify(solutions);
+                } else if (iterations_not_improved == this->itNi) {
+                    break;
                 }
             }
         }
@@ -80,8 +83,9 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
     auto rand = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
 
     auto pop = new vector<Sequence *>(mi + lambda);
-    pop->resize(2 *
-                mi); // diminui o tamanho mas mantem o espaco alocado para a quantidade maxima da populacao, para evitar realocacao
+    pop->resize(2 *mi);
+    // reduces the size of the vector, but keeps enough space to store the max population without needing reallocation
+
     for (int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
         shuffle(sequence->begin(), sequence->end(), rand);
@@ -91,10 +95,21 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
     return pop;
 }
 
-double solutionsDistances(Solution *s1, Solution *s2) {
+/**
+ *
+ * @param s1 first solution to be compared
+ * @param s2 second solution to be compared
+ * @return distance between the solutions
+ *
+ * the distance is calculated based in how many arcs the routes from the solutions have in common
+ */
+double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2) {
     const unsigned int N = s1->N + 1;
-    vector<unsigned int> s1Arcs(N), s2Arcs(N); // cada posicao do array representa quem vem depois dele na rota
-    set<unsigned int> s1Depots, s2Depots; // x: (0, x) existe em rotas
+    // each position i of the vector represents the client that comes after the client i in the solution
+    // s1Arcs[i] = x -> (i, x) ∈ Arcs(s1)
+    vector<unsigned int> s1Arcs(N), s2Arcs(N);
+    // destination of arcs with the origin in the depot (first client of each route)
+    set<unsigned int> s1Depots, s2Depots; // x: (0, x) ∈ arcs
 
     for (const vector<unsigned int> &route: s1->routes) { // calcula os arcos em s1
         s1Depots.insert(route[1]);
@@ -109,15 +124,20 @@ double solutionsDistances(Solution *s1, Solution *s2) {
         }
     }
 
-    int I = 0;
+    unsigned int I = 0; // number of arcs that exists in both solutions
+    unsigned int U = 0; // number of arcs in Arcs(s1) U Arcs(s2)
     for (unsigned int x: s1Depots) { // compara arcos que saem do deposito
         I += s2Depots.erase(x);
     }
-    int U = (int) (s1Depots.size() + s2Depots.size());
+    U += s1Depots.size() + s2Depots.size();
+    // at that point we removed from s2 all the arcs in the intersection
 
     for (int i = 1; i < s1Arcs.size(); i++) { // comparam restante das arcos
         int equal = s1Arcs[i] == s2Arcs[i];
         I += equal;
+
+        // when the arcs are different, there are 2 more arcs in the union of arcs of the solutions
+        // but when they are equal, there are only 1 more arc
         U += 2 - equal;
     }
 
@@ -125,6 +145,13 @@ double solutionsDistances(Solution *s1, Solution *s2) {
     return 1 - ((double) I / U);
 }
 
+/**
+ *
+ * @param d matrix of the distances of the solutions
+ * @param n_close how many closest solutions should the algorithm consider to calculate the mean
+ * @param i which solution to calculate the mean
+ * @return the mean of the distances of the solution i to the 'nClose' closest solutions
+ */
 double nCloseMean(const vector<vector<double> > &d, unsigned int n_close, unsigned int i) {
     const vector<double> &di = d[i];
     // criamos uma fila de prioridade para armazenar as n_close menores distancias
