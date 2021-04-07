@@ -258,7 +258,8 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitne
 Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequence &parent2) {
     int N = parent1.size();
 
-    // escolhe aleatoriamente a subsequencia do primeiro pai que ira ao filho
+    // choose radomly a sub sequence of the first parent that goes to the offspring
+    // a and b represents the start and end index of the sequence, respectively
     int a, b;
     do {
         a = rand() % N;
@@ -268,32 +269,32 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
         }
     } while ((a == 0 && b == N - 1) || (b - a) <= 1);
 
-    // copia a subsequencia do primeiro pai, ao filho
+    // copy the chosen subsequence from the first parent to the offspring
     vector<bool> has(N, false);
-    auto *child = new vector<unsigned int>(N);
+    auto *offspring = new vector<unsigned int>(N);
     for (int i = a; i <= b; i++) {
-        child->at(i) = parent1[i];
-        has[child->at(i)] = true;
+        offspring->at(i) = parent1[i];
+        has[offspring->at(i)] = true;
     }
 
-    // copia o restante dos elementos na ordem que esta no segundo pai
+    // copy the remaining elements keeping the relative order that they appear in the second parent
     int x = 0;
-    for (int i = b + 1; i < N; i++) {
-        while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
-            x++;
-
-        child->at(i) = parent2[x];
-        x++;
-    }
     for (int i = 0; i < a; i++) {
         while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
             x++;
 
-        child->at(i) = parent2[x];
+        offspring->at(i) = parent2[x];
+        x++;
+    }
+    for (int i = b + 1; i < N; i++) {
+        while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
+            x++;
+
+        offspring->at(i) = parent2[x];
         x++;
     }
 
-    return child;
+    return offspring;
 }
 
 void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned int Mi) {
