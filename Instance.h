@@ -11,6 +11,11 @@ class Instance {
     vector<vector<unsigned int> > W;
     vector<unsigned int> RD;
     unsigned int biggerRD;
+
+    void readDistanceMatrixInstance(ifstream &in);
+
+    void readCoordinatesListInstance(ifstream &in);
+
 public:
     explicit Instance(const string &filename);
 

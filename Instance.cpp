@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 
+// read the stream until 's' appear
 void readUntil(ifstream& in, const string& s) {
     string x;
     while(x != s) {
@@ -9,14 +10,27 @@ void readUntil(ifstream& in, const string& s) {
     }
 }
 
-Instance::Instance(const string& instance): V(0), W(0), RD(0) {
+Instance::Instance(const string& instance): V(0), W(0), RD(0), biggerRD(0) {
 
     ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
     if(!in){
-        std::cout << "Falha ao abrir o arquivo!" << endl;
+        cout << "Falha ao abrir o arquivo!" << endl;
         exit(1);
     }
 
+    string instanceSet = instance.substr(0, instance.find('/'));
+    if(instanceSet == "aTSPLIB") {
+        readDistanceMatrixInstance(in);
+    } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon") {
+        readCoordinatesListInstance(in);
+    } else {
+        throw invalid_argument("unknown instance set");
+    }
+
+    in.close();
+}
+
+void Instance::readDistanceMatrixInstance(ifstream& in) {
     readUntil(in, "DIMENSION:");
     in >> V;
     W.resize(V, vector<unsigned int>(V));
@@ -36,8 +50,42 @@ Instance::Instance(const string& instance): V(0), W(0), RD(0) {
         if(RD[i] > biggerRD)
             biggerRD = RD[i];
     }
+}
 
-    in.close();
+void Instance::readCoordinatesListInstance(ifstream& in) {
+    readUntil(in, "<DIMENSION>");
+    in >> V;
+
+    W.resize(V, vector<unsigned int>(V));
+    RD.resize(V);
+
+    readUntil(in, "</VERTICES>");
+
+    vector<double> X(V);
+    vector<double> Y(V);
+    double aux;
+
+    biggerRD = 0;
+    for (unsigned int i = 0; i < V; i++) {
+        in >> X[i];
+        in >> Y[i];
+        in >> aux; in >> aux; in >> aux; in >> aux; // not important data
+        in >> RD[i];
+        if(RD[i] > biggerRD)
+            biggerRD = RD[i];
+    }
+
+    for (unsigned int i = 0; i < V; i++) {
+        for (unsigned j = i+1; j < V; j++) {
+            double a = X[i] - X[j];
+            double b = Y[i] - Y[j];
+
+            double distance = sqrt(a*a + b*b);
+
+            W[i][j] = floor(distance + 0.5);
+            W[j][i] = W[i][j];
+        }
+    }
 }
 
 unsigned int Instance::nVertex() const {
