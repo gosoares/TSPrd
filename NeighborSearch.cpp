@@ -24,9 +24,9 @@ int NeighborSearch::callIntraSearch(vector<unsigned int> &route, int which) {
 }
 
 int NeighborSearch::intraSearch(Solution *solution) {
-    int N = 3; // number of intra searchs algorithms
+    unsigned int N = 3; // number of intra searchs algorithms
     auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-    vector<int> searchOrder(N);
+    vector<unsigned int> searchOrder(N);
     iota(searchOrder.begin(), searchOrder.end(), 1);
     shuffle(searchOrder.begin(), searchOrder.end(), re);
 
@@ -45,11 +45,9 @@ int NeighborSearch::intraSearch(Solution *solution) {
     }
 
     int newTime = (int) Solution::getRoutesTime(instance, solution->routes);
-    if(newTime < solution->time) {
-        int gain = (int) solution->time - newTime;
-        solution->time = newTime;
-        return gain;
-    }
+    int gain = (int) solution->time - newTime;
+    solution->time = newTime;
+    return gain;
 }
 
 int NeighborSearch::swapSearch(vector<unsigned int> &route, int n1, int n2) {
