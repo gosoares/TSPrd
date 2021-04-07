@@ -169,7 +169,7 @@ double nCloseMean(const vector<vector<double> > &d, unsigned int n_close, unsign
         if (i == j)
             continue;
 
-        unsigned int dij = di[j];
+        double dij = di[j];
         if (dij < pq.top()) {
             pq.pop();
             pq.push(dij);
@@ -187,7 +187,7 @@ double nCloseMean(const vector<vector<double> > &d, unsigned int n_close, unsign
 }
 
 vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions) const {
-    int N = solutions->size();
+    int N = solutions->size(); // nbIndiv
     vector<double> biasedFitness(N);
 
     vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
@@ -206,29 +206,30 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
     vector<unsigned int> sortedIndex(N);
     iota(sortedIndex.begin(), sortedIndex.end(), 0);
     sort(sortedIndex.begin(), sortedIndex.end(), [&nMean](int i, int j) {
-        return nMean[i] < nMean[j];
+        return nMean[i] > nMean[j];
     });
 
-    vector<unsigned int> rankDiversity(N); // rank em relacao a contribuicao pra diversidade.
-    // quanto maior o rank, maior a contribuicao para a diversidade da populacao
+    vector<unsigned int> rankDiversity(N); // rank of the solution with respect to the diversity contribution
+    // best solutions (higher nMean distance) have the smaller ranks
     for (int i = 0; i < rankDiversity.size(); i++) {
         rankDiversity[sortedIndex[i]] = i + 1;
     }
 
-    // calcula o rank em relacao ao valor na funcao objetivo dessa solucao
-    // quanto menor o valor, melhor a solucao
+    // rank with respect to the time of the solution
+    // best solutions (smaller times) have the smaller ranks
     sort(sortedIndex.begin(), sortedIndex.end(), [&solutions](int i, int j) {
-        return solutions->at(i)->time > solutions->at(i)->time;
+        return solutions->at(i)->time < solutions->at(j)->time;
     });
     vector<unsigned int> rankFitness(N);
     for (int i = 0; i < rankFitness.size(); i++) {
         rankFitness[sortedIndex[i]] = i + 1;
     }
 
-    // com os ranks, eh calculado o biased fitness
+    // calculate the biased fitness with the equation 4 of the vidal article
+    // best solutions have smaller biased fitness
     biasedFitness.resize(solutions->size());
     for (int i = 0; i < biasedFitness.size(); i++) {
-        biasedFitness[i] = rankFitness[i] + (1 - ((double) nbElite / solutions->size())) * rankDiversity[i];
+        biasedFitness[i] = rankFitness[i] + (1 - ((double) nbElite / N)) * rankDiversity[i];
     }
 
     return biasedFitness;
@@ -239,7 +240,7 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitne
     vector<unsigned int> p(2);
     unsigned int p1a = rand() % mi, p1b = rand() % mi;
     p[0] = p1a;
-    if (biasedFitness[p1b] > biasedFitness[p1a])
+    if (biasedFitness[p1b] < biasedFitness[p1a])
         p[0] = p1b;
 
 
@@ -247,7 +248,7 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitne
     do {
         int p2a = rand() % mi, p2b = rand() % mi;
         p[1] = p2a;
-        if (biasedFitness[p2b] > biasedFitness[p2a])
+        if (biasedFitness[p2b] < biasedFitness[p2a])
             p[1] = p2b;
     } while (p[0] == p[1]);
 
@@ -303,7 +304,7 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
 
     // sort the solutions based on the biased fitness and keep only the best 'mi' solutions
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution *s1, Solution *s2) {
-        return biasedFitness[s1->id] > biasedFitness[s2->id];
+        return biasedFitness[s1->id] < biasedFitness[s2->id];
     });
     solutions->resize(Mi);
 }
