@@ -44,9 +44,9 @@ int NeighborSearch::intraSearch(Solution *solution) {
         }
     }
 
-    int newTime = (int) Solution::getRoutesTime(instance, solution->routes);
-    int gain = (int) solution->time - newTime;
-    solution->time = newTime;
+    int oldTime = (int) solution->time;
+    int newTime = (int) solution->update();
+    int gain = oldTime - newTime;
     return gain;
 }
 
