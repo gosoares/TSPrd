@@ -13,7 +13,7 @@ link_directories("${CPLEX_DIR}/cplex/lib/${CPLEX_ARCH}/static_pic" "${CPLEX_DIR}
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h SplitMathModel.cpp SplitMathModel.h NeighborSearch.cpp NeighborSearch.h GeneticAlgorithm.cpp GeneticAlgorithm.h)
+add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h MathModel.cpp MathModel.h NeighborSearch.cpp NeighborSearch.h GeneticAlgorithm.cpp GeneticAlgorithm.h)
 add_executable(Runner Runner.cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
