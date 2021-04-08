@@ -1,6 +1,7 @@
 #include "Instance.h"
 #include <fstream>
 #include <iostream>
+#include <cmath>
 
 // read the stream until 's' appear
 void readUntil(ifstream& in, const string& s) {

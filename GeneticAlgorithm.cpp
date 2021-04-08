@@ -1,7 +1,8 @@
 #include <chrono>
 #include <random>
-#include "GeneticAlgorithm.h"
 #include <queue>
+#include <algorithm>
+#include "GeneticAlgorithm.h"
 
 void freePopulation(vector<Sequence *> *population) {
     for (auto p: *population) {
