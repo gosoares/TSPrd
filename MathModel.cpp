@@ -2,9 +2,22 @@
 
 #pragma ide diagnostic ignored "EndlessLoop"
 
+unsigned int calcModK(const Instance &instance) {
+    double x = 0;
+    unsigned int biggerRD = 0;
+    for (int i = 1; i < instance.nVertex(); i++) {
+        x += instance.time(0, i) + instance.time(i, 0);
+        biggerRD = max(biggerRD, instance.releaseTimeOf(i));
+    }
+    x = (biggerRD * (instance.nClients() - 1)) / x;
+    unsigned int modK = 1 + (unsigned int) floor(x);
+    cout << "modK: " << modK << endl;
+    return modK;
+}
+
 MathModel::MathModel(
         const Instance &instance
-) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(instance.nVertex() - 1), model(env),
+) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(calcModK(instance)), model(env),
     x(env, instance.nVertex()), y(env, instance.nVertex()), u(env, instance.nVertex()),
     Ts(env, instance.nVertex(), 0, IloInfinity), Te(env, instance.nVertex(), 0, IloInfinity) {
     for (int i = 0; i < instance.nVertex(); i++) {
@@ -13,13 +26,14 @@ MathModel::MathModel(
             adjList[i].insert(j);
         }
     }
+
     addConstraints();
     execute();
 }
 
 MathModel::MathModel(
         const Instance &instance, const vector<unsigned int> &sequence
-) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(instance.nVertex() - 1), model(env), x(env, instance.nVertex()),
+) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(calcModK(instance)), model(env), x(env, instance.nVertex()),
     y(env, instance.nVertex()), u(env, instance.nVertex()), Ts(env, instance.nVertex(), 0, IloInfinity),
     Te(env, instance.nVertex(), 0, IloInfinity) {
     for (unsigned int i = 1; i < sequence.size(); i++) {
@@ -43,7 +57,7 @@ MathModel::MathModel(
 
 MathModel::MathModel(
         const Instance &instance, vector<set<unsigned int> > &adjList
-) : instance(instance), adjList(adjList), modV(instance.nVertex()), modK(instance.nVertex() - 1), model(env),
+) : instance(instance), adjList(adjList), modV(instance.nVertex()), modK(calcModK(instance)), model(env),
     x(env, instance.nVertex()), y(env, instance.nVertex()), u(env, instance.nVertex()),
     Ts(env, instance.nVertex(), 0, IloInfinity), Te(env, instance.nVertex(), 0, IloInfinity) {
     addConstraints();
