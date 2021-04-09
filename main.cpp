@@ -21,6 +21,8 @@ int main(int argc, char **argv) {
     auto ga = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv);
     Solution s = ga.getSolution();
     chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    s.validate();
     cout << "RESULT " << s.time << endl;
     cout << "TIME " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << endl;
 

@@ -28,7 +28,9 @@ public:
     // should be called if the routes change to update values of RD, Time and Start
     // returns the new completion time
     unsigned int update();
+    unsigned int updateStartingTimes();
 
+    void validate();
     void printRoutes();
 
     Sequence *toSequence() const;

@@ -9,8 +9,9 @@ using namespace std;
 unsigned int split(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
                    const vector<unsigned int> &S);
 
-Solution::Solution(vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance) : routes(std::move(routes)),
-                                                                                     time(time), instance(instance) {
+Solution::Solution(
+        vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance
+) : routes(std::move(routes)), time(time), instance(instance) {
     this->N = 0;
     for (auto &r: routes) {
         this->N += r.size() - 2; // excluding the depot at the start and end of the route
@@ -44,11 +45,11 @@ Solution::Solution(const Instance &instance, Sequence &sequence) : N(sequence.si
 unsigned int Solution::update() {
     routeRD.resize(routes.size());
     routeTime.resize(routes.size());
-    routeStart.resize(routes.size());
 
     for (int r = 0; r < routes.size(); r++) {
         auto &route = routes[r];
-        routeRD[r] = 0; routeTime[r] = 0; routeStart[r] = 0;
+        routeRD[r] = 0;
+        routeTime[r] = 0;
 
         for (int i = 1; i < route.size(); i++) {
             // calculate time to perform route
@@ -60,16 +61,24 @@ unsigned int Solution::update() {
                 routeRD[r] = rdi;
             }
         }
+    }
 
+    return updateStartingTimes();
+}
+
+// must be called when changes are made to the release date and times of the routes
+unsigned int Solution::updateStartingTimes() {
+    routeStart.resize(routes.size());
+
+    for (int r = 0; r < routes.size(); r++) {
         // calculate the starting time of route = max between release time and finishing time of the previous route
         // the first route always have the release time as starting time
         routeStart[r] = r == 0 ? routeRD[r] : max(routeRD[r], routeStart[r - 1] + routeTime[r - 1]); //
     }
-
     this->time = routeStart.back() + routeTime.back();
-
     return time;
 }
+
 
 // given a set of sequences, create a solution from each sequence
 vector<Solution *> *Solution::solutionsFromSequences(
@@ -104,13 +113,61 @@ Sequence *Solution::toSequence() const {
 }
 
 void Solution::printRoutes() {
-        for (int i = 0; i < routes.size(); i++) {
-            cout << "Route " << i + 1 << ": " << routes[i][0];
-            for (int j = 1; j < routes[i].size(); j++) {
-                cout << " -> " << routes[i][j];
-            }
-            cout << endl;
+    for (int i = 0; i < routes.size(); i++) {
+        cout << "Route " << i + 1 << ": " << routes[i][0];
+        for (int j = 1; j < routes[i].size(); j++) {
+            cout << " -> " << routes[i][j];
         }
+        cout << endl;
+    }
+}
+
+void Solution::validate() {
+    // check if all clients are visited once
+    vector<bool> visited(instance->nVertex(), false);
+    visited[0] = true;
+    for (auto &route: routes) {
+        for (unsigned int i = 1; i < route.size() - 1; i++) {
+            if (visited[route[i]])
+                throw logic_error("client " + to_string(i) + " visited more than once");
+            visited[route[i]] = true;
+        }
+    }
+
+    // check all routes release date
+    for (unsigned int r = 0; r < routes.size(); r++) {
+        unsigned int rd = 0;
+        for (unsigned int i = 1; i < routes[r].size(); i++) {
+            rd = max(rd, instance->releaseTimeOf(routes[r][i]));
+        }
+        if (routeRD[r] != rd) {
+            throw logic_error("route " + to_string(r) + " has incorrect release date");
+        }
+    }
+
+    // check all routes times
+    for (unsigned int r = 0; r < routes.size(); r++) {
+        unsigned int rtime = 0;
+        for (int i = 1; i < routes[r].size(); i++) {
+            rtime += instance->time(routes[r][i - 1], routes[r][i]);
+        }
+        if (routeTime[r] != rtime) {
+            throw logic_error("route " + to_string(r) + " has incorrect time");
+        }
+    }
+
+    // check all routes starting times
+    for (unsigned int r = 0; r < routes.size(); r++) {
+        unsigned int start = r == 0 ? routeRD[r] : max(routeRD[r], routeStart[r - 1] + routeTime[r - 1]);
+        if (routeStart[r] != start) {
+            throw logic_error("route " + to_string(r) + " has incorrect starting time");
+        }
+    }
+
+    // check completion time
+    if (time != routeStart.back() + routeTime.back()) {
+        throw logic_error("incorrect solution time");
+    }
 }
 
 unsigned int split(set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
