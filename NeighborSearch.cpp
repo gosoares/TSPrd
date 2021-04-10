@@ -313,6 +313,60 @@ unsigned int NeighborSearch::calculateEndingTime(
     return time;
 }
 
+// calculate the release date of the route 'r' in solution when removing 'vertex'
+unsigned int NeighborSearch::routeReleaseDateRemoving(
+        Solution *s, unsigned int r, unsigned int vertex
+) {
+    unsigned int rd = s->routeRD[r];
+    if (instance.releaseTimeOf(vertex) == rd) { // possibly removing the vertex with bigger RD in the route
+        rd = 0;
+        vector<unsigned int> &route = s->routes[r];
+        for (int j = F(route); j <= L(route); j++) {
+            if (route[j] == vertex) continue;
+            unsigned int rdj = instance.releaseTimeOf(route[j]);
+            if (rdj > rd)
+                rd = rdj;
+        }
+    }
+
+    return rd;
+}
+
+/*
+ * Calculate the ending time gain in the ending time of max(r1, r2)
+ * given that the (release time, route time) ou routes r1 and r1
+ * have changed to (r1RD, r1Time) and (r2RD, r2Time) respectively
+ *
+ * if the ending time is improved, change the given values in the solution,
+ * if not, keep the original values
+ */
+unsigned int NeighborSearch::verifySolutionChangingRoutes(
+        Solution *solution, unsigned int r1, unsigned int r2,
+        unsigned int r1RD, unsigned int r1Time, unsigned int r2RD, unsigned int r2Time
+) {
+    // calculate the ending time of the bigger route in (r1, r2)
+    unsigned int br = max(r1, r2);
+    unsigned int originalTime = solution->routeStart[br] + solution->routeTime[br];
+
+    // calculate the solution time, given the changes
+    swap(r1RD, solution->routeRD[r1]);
+    swap(r1Time, solution->routeTime[r1]);
+    swap(r2RD, solution->routeRD[r2]);
+    swap(r2Time, solution->routeTime[r2]);
+    unsigned int newTime = calculateEndingTime(solution, r1, r2);
+
+    if (newTime >= originalTime) { // if not improved, put the values back
+        swap(r1RD, solution->routeRD[r1]);
+        swap(r1Time, solution->routeTime[r1]);
+        swap(r2RD, solution->routeRD[r2]);
+        swap(r2Time, solution->routeTime[r2]);
+
+        return 0;
+    }
+
+    return originalTime - newTime;
+}
+
 unsigned int NeighborSearch::vertexRelocation(Solution *solution) {
     const unsigned int originalTime = solution->time;
     unsigned int gain;
@@ -323,6 +377,7 @@ unsigned int NeighborSearch::vertexRelocation(Solution *solution) {
                 // try to relocate a vertex from r2 to r1
                 gain += vertexRelocationIt(solution, r1, r2);
                 gain += vertexRelocationIt(solution, r2, r1);
+                gain += interSwapIt(solution, r1, r2);
             }
         }
     } while (gain > 0);
@@ -334,21 +389,11 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
     vector<unsigned int> &route2 = solution->routes[r2];
 
     // try to remove a vertex from r2 and put in r1
-    for (int i = 1; i < route2.size() - 1; i++) {
+    for (int i = F(route2); i <= L(route2); i++) {
         unsigned int vertex = route2[i];
 
-        // verify the new release date of route2 when removing 'vertex'
-        unsigned int r2RD = solution->routeRD[r2];
-        if (instance.releaseTimeOf(vertex) == r2RD) { // possibly removing the vertex with bigger RD in the route
-            r2RD = 0;
-            // look for the max release date of the route after removing 'vertex'
-            for (int j = 1; j < route2.size() - 1; j++) {
-                if (j == i) continue;
-                unsigned int rdj = instance.releaseTimeOf(route2[j]);
-                if (rdj > r2RD)
-                    r2RD = rdj;
-            }
-        }
+        // check the new release date of route2 when removing 'vertex'
+        unsigned int r2RD = routeReleaseDateRemoving(solution, r2, vertex);
 
         // calculate the new route time of route2 when removing vertex
         unsigned int r2Time = solution->routeTime[r2]
@@ -371,28 +416,56 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
             }
         }
 
-        // calculate the ending time of the bigger route in (r1, r2)
-        unsigned int br = max(r1, r2);
-        unsigned int originalTime = solution->routeStart[br] + solution->routeTime[br];
-
-        // calculate the solution time, given the changes
-        swap(r1RD, solution->routeRD[r1]);
-        swap(r1Time, solution->routeTime[r1]);
-        swap(r2RD, solution->routeRD[r2]);
-        swap(r2Time, solution->routeTime[r2]);
-        unsigned int newTime = calculateEndingTime(solution, r1, r2);
-
-        if (newTime < originalTime) { // perform the movement
+        unsigned int routeGain = verifySolutionChangingRoutes(solution, r1, r2, r1RD, r1Time, r2RD, r2Time);
+        if(routeGain > 0) { // perform the movement
             route2.erase(route2.begin() + i); // delete i-th element
             route1.insert(route1.begin() + bestJ + 1, vertex);
             solution->updateStartingTimes(min(r1, r2));
-            return originalTime - newTime; // gain
-        } else { // put original values back
-            swap(r1RD, solution->routeRD[r1]);
-            swap(r1Time, solution->routeTime[r1]);
-            swap(r2RD, solution->routeRD[r2]);
-            swap(r2Time, solution->routeTime[r2]);
+            return routeGain;
         }
+    }
+
+    return 0;
+}
+
+unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, unsigned int r2) {
+    vector<unsigned int> &route1 = solution->routes[r1];
+    vector<unsigned int> &route2 = solution->routes[r2];
+
+    // try to swap the i-th vertex from r1 with the j-th vertex from r2
+    for (int i = F(route1); i <= L(route1); i++) {
+        const unsigned int vertex1 = route1[i];
+
+        // check the new release date of route1 when removing 'vertex1'
+        const unsigned int preR1RD = routeReleaseDateRemoving(solution, r1, vertex1);
+
+        // time of the route without the arcs with vertex1
+        const unsigned int preR1Time = solution->routeTime[r1]
+                                       - instance.time(route1[i - 1], vertex1) - instance.time(vertex1, route1[i + 1]);
+
+
+        // check where to put vertex to have the smaller route time
+        for (unsigned int j = F(route2); j <= L(route2); j++) {
+            const unsigned int vertex2 = route2[j];
+            const unsigned int r1RD = max(instance.releaseTimeOf(vertex2), preR1RD);
+            const unsigned int r1Time = preR1Time
+                                        + instance.time(route1[i - 1], vertex2) + instance.time(vertex2, route1[i + 1]);
+
+            unsigned int r2RD = routeReleaseDateRemoving(solution, r2, vertex2); // removing vertex2
+            r2RD = max(r2RD, instance.releaseTimeOf(vertex1)); // inserting vertex1
+            const unsigned int r2Time = solution->routeTime[r2]
+                                        - instance.time(route2[j - 1], vertex2) - instance.time(vertex2, route2[j + 1])
+                                        + instance.time(route2[j - 1], vertex1) + instance.time(vertex1, route2[j + 1]);
+
+            const unsigned int routeGain = verifySolutionChangingRoutes(solution, r1, r2, r1RD, r1Time, r2RD, r2Time);
+            if(routeGain > 0) { // perform movement
+                swap(route1[i], route2[j]);
+                solution->updateStartingTimes(min(r1, r2));
+                return routeGain;
+            }
+
+        }
+
     }
 
     return 0;

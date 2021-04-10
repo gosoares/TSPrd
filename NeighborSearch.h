@@ -13,8 +13,16 @@ private:
     int swapSearchIt(vector<unsigned int> &route, int n1, int n2);
     int reinsertionSearchIt(vector<unsigned int> &route, int n);
     int twoOptSearchIt(vector<unsigned int> &route);
+
+    unsigned int calculateEndingTime(Solution *solution, unsigned int r1, unsigned int r2);
+    unsigned int routeReleaseDateRemoving(Solution *s, unsigned int r, unsigned int vertex);
+    unsigned int verifySolutionChangingRoutes(
+            Solution *solution, unsigned int r1, unsigned int r2,
+            unsigned int r1RD, unsigned int r1Time, unsigned int r2RD, unsigned int r2Time
+    );
     unsigned int vertexRelocation(Solution *solution);
     unsigned int vertexRelocationIt(Solution *solution, unsigned int r1, unsigned int r2);
+    unsigned int interSwapIt(Solution *solution, unsigned int r1, unsigned int r2);
 public:
     explicit NeighborSearch(const Instance& instance);
     int intraSearch(Solution *solution);
