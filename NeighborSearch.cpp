@@ -5,7 +5,8 @@
 #include <algorithm>
 #include <limits>
 
-#define L route.size() - 2 // indice do ultimo cliente em uma rota
+#define F(R) 1 // index of first client in a route
+#define L(R) R.size() - 2 // index of last client in a route
 
 NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance) {}
 
@@ -82,7 +83,7 @@ int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
      * route.size() - 2: indice do ultimo cliente visitado na rota
      *
      */
-    for (int i = 1; (i + n1 - 1) <= L; i++) {
+    for (int i = F(route); (i + n1 - 1) <= L(route); i++) {
         if (n1 != n2) // so verifica os conjuntos entre os clientes anteriores se os conjuntos tiver tamanhos distindos
             // para evitar que o mesmo conjunto seja verificado duas vezes
             for (int j = 1; (j + n2 - 1) < i; j++) {
@@ -93,7 +94,7 @@ int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
                     bestO = gain;
                 }
             }
-        for (int j = (i + n1 - 1) + 1; (j + n2 - 1) <= L; j++) {
+        for (int j = (i + n1 - 1) + 1; (j + n2 - 1) <= L(route); j++) {
             int gain = verifySwap(route, i, j, n1, n2);
             if (gain > bestO) {
                 bestI = i;
@@ -203,12 +204,12 @@ int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, int n) {
 
     int bestI, bestJ, bestGain = 0;
 
-    for (int i = 1; i + n - 1 <= L; i++) {
+    for (int i = 1; i + n - 1 <= L(route); i++) {
         unsigned int minusFixed = instance.time(route[i - 1], route[i])
                                   + instance.time(route[i + n - 1], route[i + n]);
         unsigned int plusFixed = instance.time(route[i - 1], route[i + n]);
 
-        for (int j = 0; j <= L; j++) {
+        for (int j = 0; j <= L(route); j++) {
             if (j >= i - 1 && j <= i + n - 1)
                 continue;
 
@@ -268,11 +269,11 @@ int NeighborSearch::twoOptSearch(vector<unsigned int> &route) {
 int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
     int bestI, bestJ, bestGain = 0;
 
-    for (int i = 1; i <= L - 1; i++) {
+    for (int i = 1; i <= L(route) - 1; i++) {
         int minus = (int) instance.time(route[i - 1], route[i])
                     + (int) instance.time(route[i], route[i + 1]);
         int plus = 0;
-        for (int j = i + 1; j <= L; j++) {
+        for (int j = i + 1; j <= L(route); j++) {
             minus += (int) instance.time(route[j], route[j + 1]);
             plus += (int) instance.time(route[j], route[j - 1]);
 
@@ -297,11 +298,17 @@ int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
     return bestGain;
 }
 
-unsigned int calculateTime(vector<unsigned int> &routeRD, vector<unsigned int> &routeTime) {
-    unsigned int time = 0;
-    for (int i = 0; i < routeRD.size(); i++) {
-        time = max(time, routeRD[i]); // tempo de inicio da rota
-        time += routeTime[i]; // tempo final da rota
+// calculate the new ending time of route max(r1, r2) given that r1 and r2 changed
+unsigned int NeighborSearch::calculateEndingTime(
+        Solution *solution, unsigned int r1, unsigned int r2
+) {
+    if (r1 > r2) swap(r1, r2);
+    // check ending time of route previous to r1
+    unsigned int time = r1 == 0 ? 0 : solution->routeStart[r1 - 1] + solution->routeTime[r1 - 1];
+
+    for (unsigned int i = r1; i <= r2; i++) {
+        time = max(time, solution->routeRD[i]); // route starting time
+        time += solution->routeTime[i]; // route ending time
     }
     return time;
 }
@@ -311,20 +318,20 @@ unsigned int NeighborSearch::vertexRelocation(Solution *solution) {
     unsigned int gain;
     do {
         gain = 0;
-        for (int i = 0; i < solution->routes.size(); i++) {
-            for (int j = i + 1; j < solution->routes.size(); j++) {
-                gain += vertexRelocationIt(solution, i, j);
-                gain += vertexRelocationIt(solution, j, i);
+        for (unsigned int r2 = solution->routes.size() - 1; r2 > 0; r2--) {
+            for (int r1 = (int) r2 - 1; r1 >= 0; r1--) {
+                // try to relocate a vertex from r2 to r1
+                gain += vertexRelocationIt(solution, r1, r2);
+                gain += vertexRelocationIt(solution, r2, r1);
             }
         }
-    } while(gain > 0);
+    } while (gain > 0);
     return originalTime - solution->time;
 }
 
 unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int r1, unsigned int r2) {
     vector<unsigned int> &route1 = solution->routes[r1];
     vector<unsigned int> &route2 = solution->routes[r2];
-    const unsigned int originalTime = solution->time;
 
     // try to remove a vertex from r2 and put in r1
     for (int i = 1; i < route2.size() - 1; i++) {
@@ -364,17 +371,21 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
             }
         }
 
+        // calculate the ending time of the bigger route in (r1, r2)
+        unsigned int br = max(r1, r2);
+        unsigned int originalTime = solution->routeStart[br] + solution->routeTime[br];
+
         // calculate the solution time, given the changes
         swap(r1RD, solution->routeRD[r1]);
         swap(r1Time, solution->routeTime[r1]);
         swap(r2RD, solution->routeRD[r2]);
         swap(r2Time, solution->routeTime[r2]);
-        unsigned int newTime = calculateTime(solution->routeRD, solution->routeTime);
+        unsigned int newTime = calculateEndingTime(solution, r1, r2);
 
         if (newTime < originalTime) { // perform the movement
             route2.erase(route2.begin() + i); // delete i-th element
             route1.insert(route1.begin() + bestJ + 1, vertex);
-            solution->updateStartingTimes();
+            solution->updateStartingTimes(min(r1, r2));
             return originalTime - newTime; // gain
         } else { // put original values back
             swap(r1RD, solution->routeRD[r1]);

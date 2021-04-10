@@ -28,7 +28,7 @@ public:
     // should be called if the routes change to update values of RD, Time and Start
     // returns the new completion time
     unsigned int update();
-    unsigned int updateStartingTimes();
+    unsigned int updateStartingTimes(unsigned int from = 0);
 
     void validate();
     void printRoutes();

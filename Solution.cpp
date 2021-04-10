@@ -67,10 +67,10 @@ unsigned int Solution::update() {
 }
 
 // must be called when changes are made to the release date and times of the routes
-unsigned int Solution::updateStartingTimes() {
+unsigned int Solution::updateStartingTimes(unsigned int from) {
     routeStart.resize(routes.size());
 
-    for (int r = 0; r < routes.size(); r++) {
+    for (unsigned int r = from; r < routes.size(); r++) {
         // calculate the starting time of route = max between release time and finishing time of the previous route
         // the first route always have the release time as starting time
         routeStart[r] = r == 0 ? routeRD[r] : max(routeRD[r], routeStart[r - 1] + routeTime[r - 1]); //
