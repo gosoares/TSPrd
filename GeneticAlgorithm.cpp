@@ -12,11 +12,14 @@ void freePopulation(vector<Sequence *> *population) {
 }
 
 GeneticAlgorithm::GeneticAlgorithm(
-        const Instance& instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
-        unsigned int itNi, unsigned int itDiv
+        const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
+        unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
 ) : instance(instance), mi(mi), lambda(lambda), nClose(nClose), nbElite(nbElite), itNi(itNi), itDiv(itDiv),
-    ns(instance) {
+    timeLimit(timeLimit), ns(instance) {
     srand(time(nullptr));
+
+    beginTime = steady_clock::now();
+    const steady_clock::time_point maxTime = beginTime + seconds(timeLimit);
 
     vector<Sequence *> *population = initializePopulation();
     // represents the population for the genetic algorithm
@@ -32,7 +35,7 @@ GeneticAlgorithm::GeneticAlgorithm(
 
     int iterations_not_improved = 0;
 
-    while (iterations_not_improved < this->itNi) {
+    while (iterations_not_improved < this->itNi && steady_clock::now() < maxTime) {
         vector<double> biasedFitness = getBiasedFitness(solutions);
 
         while (solutions->size() < mi + lambda) {
@@ -48,6 +51,7 @@ GeneticAlgorithm::GeneticAlgorithm(
             solutions->push_back(sol);
 
             if (sol->time < bestSolution->time) {
+                bestSolutionFoundTime = steady_clock::now();
                 delete bestSolution;
                 bestSolution = sol->copy();
                 // cout << "Best Solution Found: " << bestSolution->time << endl;
@@ -55,12 +59,13 @@ GeneticAlgorithm::GeneticAlgorithm(
                 iterations_not_improved = 0;
             } else {
                 iterations_not_improved++;
-                if (iterations_not_improved == this->itDiv) { // DIVERSIFICACAO
+                if (iterations_not_improved % this->itDiv == 0) {
                     diversify(solutions);
                 } else if (iterations_not_improved == this->itNi) {
                     break;
                 }
             }
+            if (steady_clock::now() > maxTime) break; // time limit
         }
 
         survivalSelection(solutions);
@@ -71,6 +76,8 @@ GeneticAlgorithm::GeneticAlgorithm(
             population->push_back(s->toSequence());
         }
     }
+
+    endTime = steady_clock::now();
 
     this->solution = bestSolution;
 }
@@ -84,7 +91,7 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
     auto rand = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
 
     auto pop = new vector<Sequence *>(mi + lambda);
-    pop->resize(2 *mi);
+    pop->resize(2 * mi);
     // reduces the size of the vector, but keeps enough space to store the max population without needing reallocation
 
     for (int i = 0; i < 2 * mi; i++) {

@@ -5,6 +5,8 @@
 #include "Instance.h"
 #include "NeighborSearch.h"
 
+using namespace chrono;
+
 class GeneticAlgorithm {
 private:
     const Instance &instance;
@@ -15,9 +17,14 @@ private:
     const unsigned int nClose; // number of closest solutions to consider when calculating the nCloseMean
     const unsigned int itNi; // max number of iterations without improvement to stop the algorithm
     const unsigned int itDiv; // max number of iterations without improvement to diversify the current population
+    const unsigned int timeLimit; // time limit of the execution of the algorithm in seconds
 
     NeighborSearch ns;
     Solution *solution;
+
+    steady_clock::time_point beginTime;
+    steady_clock::time_point endTime;
+    steady_clock::time_point bestSolutionFoundTime;
 
     vector<Sequence *> *initializePopulation();
     vector<double> getBiasedFitness(vector<Solution *> *solutions) const;
@@ -31,10 +38,17 @@ private:
     void diversify(vector<Solution *> *solutions);
 public:
     GeneticAlgorithm(const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose,
-                     unsigned int nbElite, unsigned int itNi, unsigned int itDiv);
+                     unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit);
     const Solution& getSolution() {
+        solution->validate();
         return *solution;
     };
+    unsigned int getExecutionTime() {
+        return duration_cast<milliseconds>(endTime - beginTime).count();
+    }
+    unsigned int getBestSolutionTime() {
+        return duration_cast<milliseconds>(bestSolutionFoundTime - beginTime).count();
+    }
 };
 
 
