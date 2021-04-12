@@ -4,23 +4,23 @@
 #include <cmath>
 
 // read the stream until 's' appear
-void readUntil(ifstream& in, const string& s) {
+void readUntil(ifstream &in, const string &s) {
     string x;
-    while(x != s) {
+    while (x != s) {
         in >> x;
     }
 }
 
-Instance::Instance(const string& instance): V(0), W(0), RD(0), biggerRD(0) {
+Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0) {
 
     ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
-    if(!in){
+    if (!in) {
         cout << "Falha ao abrir o arquivo!" << endl;
         exit(1);
     }
 
     string instanceSet = instance.substr(0, instance.find('/'));
-    if(instanceSet == "aTSPLIB") {
+    if (instanceSet == "aTSPLIB") {
         readDistanceMatrixInstance(in);
     } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon") {
         readCoordinatesListInstance(in);
@@ -31,14 +31,14 @@ Instance::Instance(const string& instance): V(0), W(0), RD(0), biggerRD(0) {
     in.close();
 }
 
-void Instance::readDistanceMatrixInstance(ifstream& in) {
+void Instance::readDistanceMatrixInstance(ifstream &in) {
     readUntil(in, "DIMENSION:");
     in >> V;
     W.resize(V, vector<unsigned int>(V));
     RD.resize(V);
 
     readUntil(in, "EDGE_WEIGHT_SECTION");
-    for(int i = 0; i < V; i++) {
+    for (int i = 0; i < V; i++) {
         for (int j = 0; j < V; j++) {
             in >> W[i][j];
         }
@@ -48,12 +48,12 @@ void Instance::readDistanceMatrixInstance(ifstream& in) {
     readUntil(in, "RELEASE_DATES");
     for (int i = 0; i < V; i++) {
         in >> RD[i];
-        if(RD[i] > biggerRD)
+        if (RD[i] > biggerRD)
             biggerRD = RD[i];
     }
 }
 
-void Instance::readCoordinatesListInstance(ifstream& in) {
+void Instance::readCoordinatesListInstance(ifstream &in) {
     readUntil(in, "<DIMENSION>");
     in >> V;
 
@@ -70,21 +70,36 @@ void Instance::readCoordinatesListInstance(ifstream& in) {
     for (unsigned int i = 0; i < V; i++) {
         in >> X[i];
         in >> Y[i];
-        in >> aux; in >> aux; in >> aux; in >> aux; // not important data
+        in >> aux;
+        in >> aux;
+        in >> aux;
+        in >> aux; // not important data
         in >> RD[i];
-        if(RD[i] > biggerRD)
+        if (RD[i] > biggerRD)
             biggerRD = RD[i];
     }
 
+
+    // calculate rounded euclidian distances between each pair of vertex
     for (unsigned int i = 0; i < V; i++) {
-        for (unsigned j = i+1; j < V; j++) {
+        W[i][i] = 0;
+        for (unsigned j = i + 1; j < V; j++) {
             double a = X[i] - X[j];
             double b = Y[i] - Y[j];
 
-            double distance = sqrt(a*a + b*b);
+            double distance = sqrt(a * a + b * b);
 
             W[i][j] = floor(distance + 0.5);
             W[j][i] = W[i][j];
+        }
+    }
+
+    // apply floyd marshall algorithm to ensure triangular inequality
+    for (unsigned int k = 0; k < V; k++) {
+        for (unsigned int i = 0; i < V; i++) {
+            for (unsigned int j = 0; j < V; j++) {
+                W[i][j] = min(W[i][j], W[i][k] + W[k][j]);
+            }
         }
     }
 }
