@@ -50,13 +50,15 @@ void runInstances(const vector<Instance> &instances, string executionId = "") {
     char buffer[512];
 
     sprintf(buffer, "output/log_%s.txt", executionId.c_str()); // output file
-    ofstream outf(buffer, ios::out);
+    ofstream fout(buffer, ios::out);
 
     cout << fixed;
     cout.precision(2);
 
     cout << "beta   Instance   TE(ms)  TI(ms)   Obj    opt   dev" << endl;
-    outf << "beta   Instance   TE(ms)  TI(ms)   Obj    opt   dev" << endl;
+    fout << "beta   Instance   TE(ms)  TI(ms)   Obj    opt   dev" << endl;
+
+    unsigned int better = 0, worse = 0, same = 0;
 
     for (auto &instance: instances) {
         sprintf(buffer, "./TSPrd %s", instance.file.c_str());
@@ -69,17 +71,23 @@ void runInstances(const vector<Instance> &instances, string executionId = "") {
         executionTime = readInt(stream, "EXEC_TIME");
         bestSolutionTime = readInt(stream, "SOL_TIME");
 
+        if (result < instance.optimal) better++;
+        else if (result > instance.optimal) worse++;
+        else same++;
+
         double deviation = (((double) result / instance.optimal) - 1) * 100;
 
         sprintf(buffer, "%3s  %10s  %6d  %6d  %5d  %5d  % 2.2f%%", instance.beta.c_str(), instance.name.c_str(),
                 executionTime, bestSolutionTime, result, instance.optimal, deviation);
 
         cout << buffer << endl;
-        outf << buffer << endl;
-        outf.flush();
+        fout << buffer << endl;
+        fout.flush();
     }
+    cout << "Better: " << better << "  |  Worse: " << worse << "  |  Same: " << same << endl;
+    fout << "Better: " << better << "  |  Worse: " << worse << "  |  Same: " << same << endl;
 
-    outf.close();
+    fout.close();
 }
 
 void runATSPLIBInstances() {
