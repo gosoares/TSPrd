@@ -1,25 +1,29 @@
 #include "MathModel.h"
+#include <limits>
 
 #pragma ide diagnostic ignored "EndlessLoop"
 
+static const int INF = numeric_limits<int>::max();
+
 unsigned int calcModK(const Instance &instance) {
-    double x = 0;
-    unsigned int biggerRD = 0;
-    for (int i = 1; i < instance.nVertex(); i++) {
-        x += instance.time(0, i) + instance.time(i, 0);
-        biggerRD = max(biggerRD, instance.releaseTimeOf(i));
-    }
-    x = (biggerRD * (instance.nClients() - 1)) / x;
-    unsigned int modK = 1 + (unsigned int) floor(x);
-    cout << "modK: " << modK << endl;
-    return modK;
+//    double x = 0;
+//    unsigned int biggerRD = 0;
+//    for (int i = 1; i < instance.nVertex(); i++) {
+//        x += instance.time(0, i) + instance.time(i, 0);
+//        biggerRD = max(biggerRD, instance.releaseTimeOf(i));
+//    }
+//    x = (biggerRD * (instance.nClients() - 1)) / x;
+//    unsigned int modK = 1 + (unsigned int) floor(x);
+//    cout << "modK: " << modK << endl;
+//    return modK;
+    return instance.nClients();
 }
 
 MathModel::MathModel(
         const Instance &instance
 ) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(calcModK(instance)), model(env),
     x(env, instance.nVertex()), y(env, instance.nVertex()), u(env, instance.nVertex()),
-    Ts(env, instance.nVertex(), 0, IloInfinity), Te(env, instance.nVertex(), 0, IloInfinity) {
+    Ts(env, instance.nVertex(), 0, INF), Te(env, instance.nVertex(), 0, INF) {
     for (int i = 0; i < instance.nVertex(); i++) {
         for (int j = 0; j < instance.nVertex(); j++) {
             if (i == j) continue;
@@ -34,8 +38,8 @@ MathModel::MathModel(
 MathModel::MathModel(
         const Instance &instance, const vector<unsigned int> &sequence
 ) : instance(instance), adjList(instance.nVertex()), modV(instance.nVertex()), modK(calcModK(instance)), model(env), x(env, instance.nVertex()),
-    y(env, instance.nVertex()), u(env, instance.nVertex()), Ts(env, instance.nVertex(), 0, IloInfinity),
-    Te(env, instance.nVertex(), 0, IloInfinity) {
+    y(env, instance.nVertex()), u(env, instance.nVertex()), Ts(env, instance.nVertex(), 0, INF),
+    Te(env, instance.nVertex(), 0, INF) {
     for (unsigned int i = 1; i < sequence.size(); i++) {
         adjList[0].insert(i);
         adjList[i].insert(0);
@@ -59,7 +63,7 @@ MathModel::MathModel(
         const Instance &instance, vector<set<unsigned int> > &adjList
 ) : instance(instance), adjList(adjList), modV(instance.nVertex()), modK(calcModK(instance)), model(env),
     x(env, instance.nVertex()), y(env, instance.nVertex()), u(env, instance.nVertex()),
-    Ts(env, instance.nVertex(), 0, IloInfinity), Te(env, instance.nVertex(), 0, IloInfinity) {
+    Ts(env, instance.nVertex(), 0, INF), Te(env, instance.nVertex(), 0, INF) {
     addConstraints();
     execute();
 }
@@ -105,7 +109,7 @@ void MathModel::addConstraints() {
     for (int i = 0; i < modV; i++) { // criando variaveis u
         u[i] = IloArray<IloIntVarArray>(env, modV);
         for (int j = 0; j < modV; j++) {
-            u[i][j] = IloIntVarArray(env, modK, 0, IloInfinity);
+            u[i][j] = IloIntVarArray(env, modK, 0, INF);
 
             if (adjList[i].find(j) != adjList[i].end()) { // se existir o arco
                 for (int k = 0; k < modK; k++) {
