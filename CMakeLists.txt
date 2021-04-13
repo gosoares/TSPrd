@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h MathModel.cpp MathModel.h NeighborSearch.cpp NeighborSearch.h GeneticAlgorithm.cpp GeneticAlgorithm.h)
 add_executable(Runner Runner.cpp)
+add_dependencies(Runner TSPrd)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
