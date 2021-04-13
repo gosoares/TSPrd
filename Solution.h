@@ -13,7 +13,7 @@ class Solution {
 private:
     const Instance *instance;
 public:
-    Solution(const Instance &instance, Sequence &sequence); // create a solution given the sequence, by applying the split algorithm
+    Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits = nullptr); // create a solution given the sequence, by applying the split algorithm
     Solution(vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance = nullptr); // create a solution given the routes
     vector<vector<unsigned int> > routes;
 
