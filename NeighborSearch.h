@@ -11,12 +11,17 @@ private:
     const vector<vector<unsigned int> > &W;
     const vector<unsigned int> &RD;
 
-    int callIntraSearch(vector<unsigned int> &route, int which);
-    int verifySwap(vector<unsigned int> &route, int i1, int i2, int n1, int n2);
-    int swapSearchIt(vector<unsigned int> &route, int n1, int n2);
-    int reinsertionSearchIt(vector<unsigned int> &route, int n);
-    int twoOptSearchIt(vector<unsigned int> &route);
+    unsigned int callIntraSearch(vector<unsigned int> &route, unsigned int which);
+    unsigned int swapSearch(vector<unsigned int> &route, unsigned int n1 = 1, unsigned int n2 = 1);
+    unsigned int swapSearchIt(vector<unsigned int> &route, unsigned int n1, unsigned int n2);
+    int verifySwap(vector<unsigned int> &route, unsigned int i1, unsigned int i2,
+                            unsigned int n1, unsigned int n2);
+    unsigned int reinsertionSearch(vector<unsigned int> &route, unsigned int n = 1);
+    unsigned int reinsertionSearchIt(vector<unsigned int> &route, unsigned int n);
+    unsigned int twoOptSearch(vector<unsigned int> &route);
+    unsigned int twoOptSearchIt(vector<unsigned int> &route);
 
+    unsigned int callInterSearch(Solution *solution, int which);
     static unsigned int calculateEndingTime(Solution *solution, unsigned int r1, unsigned int r2);
     unsigned int routeReleaseDateRemoving(Solution *s, unsigned int r, unsigned int vertex);
     static unsigned int verifySolutionChangingRoutes(
@@ -25,14 +30,13 @@ private:
     );
     unsigned int vertexRelocation(Solution *solution);
     unsigned int vertexRelocationIt(Solution *solution, unsigned int r1, unsigned int r2);
+    unsigned int interSwap(Solution *solution);
     unsigned int interSwapIt(Solution *solution, unsigned int r1, unsigned int r2);
 public:
     explicit NeighborSearch(const Instance& instance);
-    int intraSearch(Solution *solution);
-    int swapSearch(vector<unsigned int> &route, int n1 = 1, int n2 = 1);
-    int reinsertionSearch(vector<unsigned int> &route, int n = 1);
-    int twoOptSearch(vector<unsigned int> &route);
-    int educate(Solution *solution);
+    unsigned int intraSearch(Solution *solution);
+    unsigned int interSearch(Solution *solution);
+    unsigned int educate(Solution *solution);
 };
 
 

@@ -8,9 +8,38 @@
 #define F(R) 1 // index of first client in a route
 #define L(R) R.size() - 2 // index of last client in a route
 
-NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance), W(instance.getW()), RD(instance.getRD()) {}
+NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance), W(instance.getW()),
+                                                           RD(instance.getRD()) {}
 
-int NeighborSearch::callIntraSearch(vector<unsigned int> &route, int which) {
+unsigned int NeighborSearch::intraSearch(Solution *solution) {
+    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
+
+    unsigned int N = 3; // number of intra searchs algorithms
+    vector<unsigned int> searchOrder(N);
+    iota(searchOrder.begin(), searchOrder.end(), 1);
+    shuffle(searchOrder.begin(), searchOrder.end(), re);
+
+    for (vector<unsigned int> &route: solution->routes) {
+        for (unsigned int i = 0; i < searchOrder.size(); i++) {
+            unsigned int gain = callIntraSearch(route, searchOrder[i]);
+
+            if (gain > 0) {
+                unsigned int lastMovement = searchOrder[i];
+                i = -1;
+                shuffle(searchOrder.begin(), searchOrder.end(), re);
+                if (searchOrder[0] == lastMovement) {
+                    swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
+                }
+            }
+        }
+    }
+
+    unsigned int oldTime = solution->time;
+    unsigned int newTime = solution->update();
+    return oldTime - newTime;
+}
+
+unsigned int NeighborSearch::callIntraSearch(vector<unsigned int> &route, unsigned int which) {
     switch (which) {
         case 1:
             return swapSearch(route, 1, 1);
@@ -23,37 +52,8 @@ int NeighborSearch::callIntraSearch(vector<unsigned int> &route, int which) {
     }
 }
 
-int NeighborSearch::intraSearch(Solution *solution) {
-    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-    
-    unsigned int N = 3; // number of intra searchs algorithms
-    vector<unsigned int> searchOrder(N);
-    iota(searchOrder.begin(), searchOrder.end(), 1);
-    shuffle(searchOrder.begin(), searchOrder.end(), re);
-
-    for (vector<unsigned int> &route: solution->routes) {
-        for (int i = 0; i < searchOrder.size(); i++) {
-            int gain = callIntraSearch(route, searchOrder[i]);
-            
-            if (gain > 0) {
-                int lastMovement = searchOrder[i];
-                i = -1;
-                shuffle(searchOrder.begin(), searchOrder.end(), re);
-                if (searchOrder[0] == lastMovement) {
-                    swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
-                }
-            }
-        }
-    }
-
-    int oldTime = (int) solution->time;
-    int newTime = (int) solution->update();
-    int gain = oldTime - newTime;
-    return gain;
-}
-
-int NeighborSearch::swapSearch(vector<unsigned int> &route, int n1, int n2) {
-    int gain = 0, x;
+unsigned int NeighborSearch::swapSearch(vector<unsigned int> &route, unsigned int n1, unsigned int n2) {
+    unsigned int gain = 0, x;
 
     do {
         x = swapSearchIt(route, n1, n2);
@@ -64,9 +64,9 @@ int NeighborSearch::swapSearch(vector<unsigned int> &route, int n1, int n2) {
 }
 
 // realiza o swap entre dois conjuntos de vértices seguidos, de tamanhos n1 e n2
-int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
-    int bestI, bestJ; // armazena os indices que representa o melhor swap
-    int bestO = 0; // representa a melhora ao realizar o swap acima
+unsigned int NeighborSearch::swapSearchIt(vector<unsigned int> &route, unsigned int n1, unsigned int n2) {
+    unsigned int bestI, bestJ; // armazena os indices que representa o melhor swap
+    unsigned int bestO = 0; // representa a melhora ao realizar o swap acima
 
     /*
      * i: indice do primeiro elemento do primeiro conjunto
@@ -85,19 +85,19 @@ int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
      * route.size() - 2: indice do ultimo cliente visitado na rota
      *
      */
-    for (int i = F(route); (i + n1 - 1) <= L(route); i++) {
+    for (unsigned int i = F(route); (i + n1 - 1) <= L(route); i++) {
         if (n1 != n2) // so verifica os conjuntos entre os clientes anteriores se os conjuntos tiver tamanhos distindos
             // para evitar que o mesmo conjunto seja verificado duas vezes
-            for (int j = 1; (j + n2 - 1) < i; j++) {
-                int gain = verifySwap(route, j, i, n2, n1);
+            for (unsigned int j = 1; (j + n2 - 1) < i; j++) {
+                unsigned int gain = verifySwap(route, j, i, n2, n1);
                 if (gain > bestO) {
                     bestI = i;
                     bestJ = j;
                     bestO = gain;
                 }
             }
-        for (int j = (i + n1 - 1) + 1; (j + n2 - 1) <= L(route); j++) {
-            int gain = verifySwap(route, i, j, n1, n2);
+        for (unsigned int j = (i + n1 - 1) + 1; (j + n2 - 1) <= L(route); j++) {
+            unsigned int gain = verifySwap(route, i, j, n1, n2);
             if (gain > bestO) {
                 bestI = i;
                 bestJ = j;
@@ -112,28 +112,28 @@ int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
     }
 
     if (bestO > 0) { // se ha uma melhora possivel, realiza o swap
-        vector<int> a(route.begin() + bestI, route.begin() + bestI + n1); // primeiro conjunto
-        vector<int> b(route.begin() + bestJ, route.begin() + bestJ + n2); // segundo conjunto
-        int diff = n2 - n1;
+        vector<unsigned int> a(route.begin() + bestI, route.begin() + bestI + n1); // primeiro conjunto
+        vector<unsigned int> b(route.begin() + bestJ, route.begin() + bestJ + n2); // segundo conjunto
+        int diff = (int) n2 - (int) n1;
 
         // desloca os elementos que estão entre os conjuntos para suas posições finais
         if (diff < 0) {
-            for (int i = bestI + n1; i < bestJ; i++) {
+            for (unsigned int i = bestI + n1; i < bestJ; i++) {
                 route[i + diff] = route[i];
             }
         } else if (diff > 0) {
-            for (int i = bestJ - 1; i >= bestI + n1; i--) {
+            for (unsigned int i = bestJ - 1; i >= bestI + n1; i--) {
                 route[i + diff] = route[i];
             }
         }
 
         // copia o primeiro conjunto
-        for (int x = 0; x < a.size(); x++) {
+        for (unsigned int x = 0; x < a.size(); x++) {
             route[bestJ + diff + x] = a[x];
         }
 
         // copia o segundo conjunto
-        for (int x = 0; x < b.size(); x++) {
+        for (unsigned int x = 0; x < b.size(); x++) {
             route[bestI + x] = b[x];
         }
     }
@@ -154,7 +154,10 @@ int NeighborSearch::swapSearchIt(vector<unsigned int> &route, int n1, int n2) {
  * um retorno positivo representa uma diminuicao (melhora) no tempo de realizar a rota
  * enquando um negativo representa um aumento (piora)
  */
-int NeighborSearch::verifySwap(vector<unsigned int> &route, int i1, int i2, int n1, int n2) {
+int NeighborSearch::verifySwap(
+        vector<unsigned int> &route, unsigned int i1, unsigned int i2,
+        unsigned int n1, unsigned int n2
+) {
     assert(i1 + n1 - 1 < i2);
     assert(i2 + n2 - 1 <= route.size() - 2);
 
@@ -182,8 +185,8 @@ int NeighborSearch::verifySwap(vector<unsigned int> &route, int i1, int i2, int 
     return (int) minus - (int) plus;
 }
 
-int NeighborSearch::reinsertionSearch(vector<unsigned int> &route, int n) {
-    int gain = 0, x;
+unsigned int NeighborSearch::reinsertionSearch(vector<unsigned int> &route, unsigned int n) {
+    unsigned int gain = 0, x;
 
     do {
         x = reinsertionSearchIt(route, n);
@@ -202,7 +205,7 @@ int NeighborSearch::reinsertionSearch(vector<unsigned int> &route, int n) {
  *
  * j representa onde será feita a tentativa de reinsercao
  */
-int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, int n) {
+unsigned int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, unsigned int n) {
 
     int bestI, bestJ, bestGain = 0;
 
@@ -242,8 +245,8 @@ int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, int n) {
     return bestGain;
 }
 
-int NeighborSearch::twoOptSearch(vector<unsigned int> &route) {
-    int gain = 0, x;
+unsigned int NeighborSearch::twoOptSearch(vector<unsigned int> &route) {
+    unsigned int gain = 0, x;
 
     do {
         x = twoOptSearchIt(route);
@@ -256,20 +259,19 @@ int NeighborSearch::twoOptSearch(vector<unsigned int> &route) {
 /*
  * tenta inverter a ordem de uma subrota que comeca no i-esimo cliente e termina no j-esimo cliente
  */
-int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
-    int bestI, bestJ, bestGain = 0;
+unsigned int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
+    unsigned int bestI, bestJ, bestGain = 0;
 
     for (int i = 1; i <= L(route) - 1; i++) {
-        int minus = (int) W[route[i - 1]][route[i]]
-                    + (int) W[route[i]][route[i + 1]];
+        unsigned int minus = W[route[i - 1]][route[i]]
+                             + W[route[i]][route[i + 1]];
         int plus = 0;
         for (int j = i + 1; j <= L(route); j++) {
-            minus += (int) W[route[j]][route[j + 1]];
-            plus += (int) W[route[j]][route[j - 1]];
+            minus += W[route[j]][route[j + 1]];
+            plus += W[route[j]][route[j - 1]];
 
-            int gain = minus - (plus
-                                + (int) W[route[i - 1]][route[j]]
-                                + (int) W[route[i]][route[j + 1]]);
+            int gain = (int) minus - (
+                    (int) plus + (int) W[route[i - 1]][route[j]] + (int) W[route[i]][route[j + 1]]);
 
             if (gain > bestGain) {
                 bestI = i, bestJ = j;
@@ -278,14 +280,48 @@ int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
         }
     }
 
-    if (bestGain > 0) { // se houve ganho, inverte a subsequencia
-        int diff = bestJ - bestI;
-        for (int x = 0; x * 2 < diff; x++) {
-            swap(route[bestI + x], route[bestJ - x]);
+    if (bestGain > 0) // if improved, perform movement
+        reverse(route.begin() + bestI, route.begin() + bestJ + 1);
+
+    return bestGain;
+}
+
+unsigned int NeighborSearch::interSearch(Solution *solution) {
+    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
+
+    unsigned int oldTime = solution->time;
+
+    unsigned int N = 2; // number of inter searches algorithms
+    vector<unsigned int> searchOrder(N);
+    iota(searchOrder.begin(), searchOrder.end(), 1);
+    shuffle(searchOrder.begin(), searchOrder.end(), re);
+
+    for (int i = 0; i < searchOrder.size(); i++) {
+        unsigned int gain = callInterSearch(solution, searchOrder[i]);
+
+        if (gain > 0) {
+            unsigned int lastMovement = searchOrder[i];
+            i = -1;
+            shuffle(searchOrder.begin(), searchOrder.end(), re);
+            if (searchOrder[0] == lastMovement) {
+                swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
+            }
         }
     }
 
-    return bestGain;
+    unsigned int newTime = solution->update();
+    return oldTime - newTime;
+}
+
+unsigned int NeighborSearch::callInterSearch(Solution *solution, int which) {
+    switch (which) {
+        case 1:
+            return vertexRelocation(solution);
+        case 2:
+            return interSwap(solution);
+        default:
+            throw invalid_argument("Invalid neighbor search id");
+    }
 }
 
 // calculate the new ending time of route max(r1, r2) given that r1 and r2 changed
@@ -357,18 +393,33 @@ unsigned int NeighborSearch::verifySolutionChangingRoutes(
     return originalTime - newTime;
 }
 
+vector<pair<unsigned int, unsigned int> > getRoutesPairSequence(unsigned int nRoutes) {
+    vector<pair<unsigned int, unsigned int> > sequence(nRoutes * nRoutes);
+    sequence.resize(0); // resize but keep allocated space
+    for (unsigned int i = 0; i < nRoutes; i++) {
+        for (unsigned int j = i + 1; j < nRoutes; j++) {
+            sequence.emplace_back(i, j);
+        }
+    }
+    shuffle(sequence.begin(), sequence.end(),
+            default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
+    return sequence;
+}
+
 unsigned int NeighborSearch::vertexRelocation(Solution *solution) {
     const unsigned int originalTime = solution->time;
     unsigned int gain;
     do {
         gain = 0;
-        for (unsigned int r2 = solution->routes.size() - 1; r2 > 0; r2--) {
-            for (int r1 = (int) r2 - 1; r1 >= 0; r1--) {
-                // try to relocate a vertex from r2 to r1
-                gain += vertexRelocationIt(solution, r1, r2);
-                gain += vertexRelocationIt(solution, r2, r1);
-                gain += interSwapIt(solution, r1, r2);
-            }
+        for (auto &routePair: getRoutesPairSequence(solution->routes.size())) {
+            auto &r1 = routePair.first;
+            auto &r2 = routePair.second;
+            unsigned int gainIt;
+            do {
+                gainIt = vertexRelocationIt(solution, r1, r2);
+                gainIt += vertexRelocationIt(solution, r2, r1);
+                gain += gainIt;
+            } while (gainIt > 0);
         }
     } while (gain > 0);
     return originalTime - solution->time;
@@ -407,7 +458,7 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
         }
 
         unsigned int routeGain = verifySolutionChangingRoutes(solution, r1, r2, r1RD, r1Time, r2RD, r2Time);
-        if(routeGain > 0) { // perform the movement
+        if (routeGain > 0) { // perform the movement
             route2.erase(route2.begin() + i); // delete i-th element
             route1.insert(route1.begin() + bestJ + 1, vertex);
             solution->updateStartingTimes(min(r1, r2));
@@ -416,6 +467,22 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
     }
 
     return 0;
+}
+
+unsigned int NeighborSearch::interSwap(Solution *solution) {
+    const unsigned int originalTime = solution->time;
+    unsigned int gain;
+    do {
+        gain = 0;
+        for (auto &routePair: getRoutesPairSequence(solution->routes.size())) {
+            unsigned int gainIt;
+            do {
+                gainIt = interSwapIt(solution, routePair.first, routePair.second);
+                gain += gainIt;
+            } while (gainIt > 0);
+        }
+    } while (gain > 0);
+    return originalTime - solution->time;
 }
 
 unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, unsigned int r2) {
@@ -448,7 +515,7 @@ unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, un
                                         + W[route2[j - 1]][vertex1] + W[vertex1][route2[j + 1]];
 
             const unsigned int routeGain = verifySolutionChangingRoutes(solution, r1, r2, r1RD, r1Time, r2RD, r2Time);
-            if(routeGain > 0) { // perform movement
+            if (routeGain > 0) { // perform movement
                 swap(route1[i], route2[j]);
                 solution->updateStartingTimes(min(r1, r2));
                 return routeGain;
@@ -461,7 +528,7 @@ unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, un
     return 0;
 }
 
-int NeighborSearch::educate(Solution *solution) {
-    return intraSearch(solution) + (int) vertexRelocation(solution);
-}
 
+unsigned int NeighborSearch::educate(Solution *solution) {
+    return intraSearch(solution) + interSearch(solution);
+}
