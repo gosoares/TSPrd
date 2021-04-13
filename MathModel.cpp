@@ -10,7 +10,7 @@ unsigned int calcModK(const Instance &instance) {
 //    unsigned int biggerRD = 0;
 //    for (int i = 1; i < instance.nVertex(); i++) {
 //        x += instance.time(0, i) + instance.time(i, 0);
-//        biggerRD = max(biggerRD, instance.releaseTimeOf(i));
+//        biggerRD = max(biggerRD, instance.releaseDateOf(i));
 //    }
 //    x = (biggerRD * (instance.nClients() - 1)) / x;
 //    unsigned int modK = 1 + (unsigned int) floor(x);
@@ -208,7 +208,7 @@ void MathModel::addConstraints() {
 
     for (int k = 0; k < modK; k++) { // (8)
         for (int i = 1; i < modV; i++) {
-            model.add(Ts[k] >= (int) instance.releaseTimeOf(i) * y[i][k]);
+            model.add(Ts[k] >= (int) instance.releaseDateOf(i) * y[i][k]);
         }
     }
 
@@ -218,7 +218,7 @@ void MathModel::addConstraints() {
 
     int maxReleaseDate = 0;
     for (int i = 1; i < modV; i++) {
-        int rdi = (int) instance.releaseTimeOf(i);
+        int rdi = (int) instance.releaseDateOf(i);
         if (rdi > maxReleaseDate) {
             maxReleaseDate = rdi;
         }

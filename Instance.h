@@ -19,7 +19,7 @@ class Instance {
 public:
     explicit Instance(const string &filename);
 
-    unsigned int releaseTimeOf(unsigned int c) const;
+    unsigned int releaseDateOf(unsigned int c) const;
 
     unsigned int time(unsigned int i, unsigned int j) const;
 

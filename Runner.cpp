@@ -155,7 +155,7 @@ void runTSPLIBInstances() {
 void runATSPLIBInstances() {
     map<string, unsigned int> optimal = readOptimalFile("aTSPLIB/0ptimal.txt");
 
-    vector<string> names({"ft53", "ftv33", "ftv70", "kro124p", "rbg403"});
+    vector<string> names({"ftv33", "ft53", "ftv70", "kro124p", "rbg403"});
     vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
 
     vector<Instance> instances(names.size() + betas.size());

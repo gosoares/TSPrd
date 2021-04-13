@@ -112,7 +112,7 @@ unsigned int Instance::nClients() const {
     return V - 1;
 }
 
-unsigned int Instance::releaseTimeOf(unsigned int c) const {
+unsigned int Instance::releaseDateOf(unsigned int c) const {
     return RD[c];
 }
 

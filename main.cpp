@@ -6,12 +6,12 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-    unsigned int mi = 250;
-    unsigned int lambda = 1000;
-    unsigned int nbElite = 100; // el = 0.4; nbElite = el * mi
-    unsigned int nClose = 50;
+    unsigned int mi = 25;
+    unsigned int lambda = 100;
+    unsigned int nbElite = 10; // el = 0.4; nbElite = el * mi
+    unsigned int nClose = 5;
     unsigned int itNi = 2000; // max iterations without improvement to stop the algorithm
-    unsigned int itDiv = 1000; // iterations without improvement to diversify
+    unsigned int itDiv = 100; // iterations without improvement to diversify
     unsigned int timeLimit = 10 * 60; // in seconds
 
     string instanceFile = argv[1];

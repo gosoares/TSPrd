@@ -56,7 +56,7 @@ unsigned int Solution::update() {
             routeTime[r] += instance->time(route[i - 1], route[i]);
 
             // and verify the maximum release date of the route
-            unsigned int rdi = instance->releaseTimeOf(route[i]);
+            unsigned int rdi = instance->releaseDateOf(route[i]);
             if (rdi > routeRD[r]) {
                 routeRD[r] = rdi;
             }
@@ -138,7 +138,7 @@ void Solution::validate() {
     for (unsigned int r = 0; r < routes.size(); r++) {
         unsigned int rd = 0;
         for (unsigned int i = 1; i < routes[r].size(); i++) {
-            rd = max(rd, instance->releaseTimeOf(routes[r][i]));
+            rd = max(rd, instance->releaseDateOf(routes[r][i]));
         }
         if (routeRD[r] != rd) {
             throw logic_error("route " + to_string(r) + " has incorrect release date");
