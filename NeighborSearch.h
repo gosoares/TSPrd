@@ -35,7 +35,7 @@ private:
     unsigned int splitNs(Solution *solution);
 public:
     explicit NeighborSearch(const Instance& instance);
-    unsigned int intraSearch(Solution *solution);
+    unsigned int intraSearch(Solution *solution, bool all = false);
     unsigned int interSearch(Solution *solution);
     unsigned int educate(Solution *solution);
 };

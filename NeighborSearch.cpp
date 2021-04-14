@@ -12,7 +12,7 @@
 NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance), W(instance.getW()),
                                                            RD(instance.getRD()) {}
 
-unsigned int NeighborSearch::intraSearch(Solution *solution) {
+unsigned int NeighborSearch::intraSearch(Solution *solution, bool all) {
     auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
 
     unsigned int N = 3; // number of intra searchs algorithms
@@ -20,9 +20,12 @@ unsigned int NeighborSearch::intraSearch(Solution *solution) {
     iota(searchOrder.begin(), searchOrder.end(), 1);
     shuffle(searchOrder.begin(), searchOrder.end(), re);
 
-    for (vector<unsigned int> &route: solution->routes) {
+    for (int r = (int) solution->routes.size() - 1; r >= 0; r--) {
+//        if(!all && r != solution->routes.size() - 1
+//        && (solution->routeStart[r] + solution->routeTime[r]) < solution->routeRD[r+1])
+//            break; // improving this route do not improve the final solution
         for (unsigned int i = 0; i < searchOrder.size(); i++) {
-            unsigned int gain = callIntraSearch(route, searchOrder[i]);
+            unsigned int gain = callIntraSearch(solution->routes[r], searchOrder[i]);
 
             if (gain > 0) {
                 unsigned int lastMovement = searchOrder[i];
@@ -551,7 +554,7 @@ unsigned int NeighborSearch::splitNs(Solution *solution) {
 unsigned int NeighborSearch::educate(Solution *solution) {
     const unsigned int originalTime = solution->time;
 
-    intraSearch(solution);
+    intraSearch(solution, true);
     int which = 1; // 0: intraSearch   1: interSearch
     bool splitImproved;
     do {
