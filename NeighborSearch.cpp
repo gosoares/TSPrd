@@ -218,7 +218,7 @@ unsigned int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, un
 
     for (unsigned int i = 1; i + n - 1 <= L(route); i++) {
         int minusFixed = (int) W[route[i - 1]][route[i]]
-                                  + (int) W[route[i + n - 1]][route[i + n]];
+                         + (int) W[route[i + n - 1]][route[i + n]];
         int plusFixed = (int) W[route[i - 1]][route[i + n]];
 
         for (unsigned int j = 0; j <= L(route); j++) {
@@ -226,12 +226,12 @@ unsigned int NeighborSearch::reinsertionSearchIt(vector<unsigned int> &route, un
                 continue;
 
             int minus = minusFixed
-                                 + (int) W[route[j]][route[j + 1]];
+                        + (int) W[route[j]][route[j + 1]];
             int plus = plusFixed
-                                + (int) W[route[j]][route[i]]
-                                + (int) W[route[i + n - 1]][route[j + 1]];
+                       + (int) W[route[j]][route[i]]
+                       + (int) W[route[i + n - 1]][route[j + 1]];
 
-            int gain = minus -  plus;
+            int gain = minus - plus;
             if (gain > bestGain) {
                 bestI = i;
                 bestJ = j;
@@ -272,7 +272,7 @@ unsigned int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
 
     for (int i = 1; i <= L(route) - 1; i++) {
         int minus = (int) W[route[i - 1]][route[i]]
-                             + (int) W[route[i]][route[i + 1]];
+                    + (int) W[route[i]][route[i + 1]];
         int plus = 0;
         for (int j = i + 1; j <= L(route); j++) {
             minus += W[route[j]][route[j + 1]];
@@ -299,7 +299,7 @@ unsigned int NeighborSearch::interSearch(Solution *solution) {
 
     unsigned int oldTime = solution->time;
 
-    unsigned int N = 2; // number of inter searches algorithms
+    unsigned int N = 3; // number of inter searches algorithms
     vector<unsigned int> searchOrder(N);
     iota(searchOrder.begin(), searchOrder.end(), 1);
     shuffle(searchOrder.begin(), searchOrder.end(), re);
@@ -327,6 +327,8 @@ unsigned int NeighborSearch::callInterSearch(Solution *solution, int which) {
             return vertexRelocation(solution);
         case 2:
             return interSwap(solution);
+        case 3:
+            return insertDepotAndReorder(solution);
         default:
             cout << "ERROR invalid_neighbor_search_id" << endl;
             exit(1);
@@ -539,13 +541,100 @@ unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, un
     return 0;
 }
 
+unsigned int NeighborSearch::insertDepotAndReorder(Solution *solution) {
+    unsigned int originalTime = solution->time;
+    bool improved;
+    do {
+        improved = insertDepotAndReorderIt(solution);
+    } while (improved);
+
+    return originalTime - solution->time;
+}
+
+// try to insert a depot in a route, and reorder the routes per release time
+bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
+    unsigned int originalTime = s->time;
+
+    for (unsigned int r = 1; r < s->routes.size(); r++) {
+        // if the ending time of the previous route is higher than the current route release date
+        // its not possible to improve the ending time of the current route by adding a depot
+        // because the starting time of the newly generated route cant be less than the current route start time
+        if ((s->routeStart[r - 1] + s->routeTime[r - 1]) > s->routeRD[r]) continue;
+        vector<unsigned int> &route = s->routes[r];
+
+        unsigned int maxRD = 0;
+        int iMax;
+        // find the vertex with higher release date to try to insert depot only after it
+        for (int i = F(route); i <= L(route); i++) {
+            unsigned int rdi = RD[route[i]];
+            if (rdi > maxRD) {
+                maxRD = rdi;
+                iMax = i;
+            }
+        }
+
+
+        vector<unsigned int> totalTimeForward(route.size()); // total time of going from the depot to the i-th element
+        totalTimeForward[0] = W[0][route[0]];
+        for (int i = 1; i < route.size(); i++)
+            totalTimeForward[i] = totalTimeForward[i - 1] + W[route[i - 1]][route[i]];
+
+        vector<unsigned int> totalTimeBack(route.size()); // total time of going from the i-th element to the depot
+        vector<unsigned int> maxRDBack(route.size()); // max RD between all element from i to the end
+        totalTimeBack.back() = W[route.back()][0];
+        maxRDBack.back() = RD[route.back()];
+        for (int i = (int) route.size() - 2; i >= 0; i--) {
+            totalTimeBack[i] = totalTimeBack[i + 1] + W[route[i]][route[i + 1]];
+            maxRDBack[i] = max(RD[route[i]], maxRDBack[i + 1]);
+        }
+
+        const unsigned int rd1 = maxRD; // the first generated route always have the release date of the original route
+        // try to insert depot in each position after the vertex with higher release date
+        for (int i = iMax; i < L(route); i++) {
+            const unsigned int rd2 = maxRDBack[i + 1]; // release date of second route
+            const unsigned int time1 = totalTimeForward[i] + W[route[i]][0]; // time of the first route
+            const unsigned int time2 = W[0][route[i + 1]] + totalTimeBack[i + 1]; // time of the second route
+
+            // check if the time improve if we change the original route r(1, N) to the routes r(i+1, N) and R(1, i)
+            unsigned int time = max(s->routeStart[r - 1] + s->routeTime[r - 1], rd2); // starting time of first route
+            time += time2; // ending time of the first route
+            time = max(time, rd1); // starting time of the second route
+            time += time1; // ending time of the second route
+
+            if (time < s->routeStart[r] + s->routeTime[r]) {
+                // if the new route end time is better then the previous route end time
+                // update routes data as needed
+                s->routeRD.insert(s->routeRD.begin() + r, rd2);
+                s->routeTime[r] = time1;
+                s->routeTime.insert(s->routeTime.begin() + r, time2);
+                s->routeStart.push_back(0); // only increase the size to update after
+
+                // update routes
+                // move 1 element more in the beginning to change to the depot
+                s->routes.emplace(s->routes.begin() + r,
+                                  make_move_iterator(route.begin() + i), make_move_iterator(route.end()));
+
+                s->routes[r + 1][i] = s->routes[r][0]; // restore the moved element
+                s->routes[r][0] = 0; // change moved element to depot
+                s->routes[r + 1][i + 1] = 0; // end depot
+                s->routes[r + 1].resize(i + 2); // new route size after moving
+                s->updateStartingTimes(r);
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 unsigned int NeighborSearch::splitNs(Solution *solution) {
     Sequence *sequence = solution->toSequence();
     set<unsigned int> depotVisits;
     unsigned int splitTime = Split::split(depotVisits, instance.getW(), instance.getRD(), *sequence);
 
     unsigned int gain = 0;
-    if(splitTime < solution->time) {
+    if (splitTime < solution->time) {
         gain = solution->time - splitTime;
         Solution newSolution(instance, *sequence, &depotVisits);
         solution->mirror(&newSolution);

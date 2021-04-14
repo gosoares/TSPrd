@@ -32,6 +32,8 @@ private:
     unsigned int vertexRelocationIt(Solution *solution, unsigned int r1, unsigned int r2);
     unsigned int interSwap(Solution *solution);
     unsigned int interSwapIt(Solution *solution, unsigned int r1, unsigned int r2);
+    unsigned int insertDepotAndReorder(Solution *solution);
+    bool insertDepotAndReorderIt(Solution *s);
     unsigned int splitNs(Solution *solution);
 public:
     explicit NeighborSearch(const Instance& instance);
