@@ -127,7 +127,12 @@ Sequence *Solution::toSequence() const {
 
 void Solution::printRoutes() {
     for (int i = 0; i < routes.size(); i++) {
-        cout << "Route " << i + 1 << ": " << routes[i][0];
+        cout << "Route " << i + 1;
+        cout << "   RD(" << routeRD[i] << ")";
+        cout << "   starts at " << routeStart[i];
+        cout << "   ends at " << routeStart[i] + routeTime[i] << endl;
+
+        cout << routes[i][0];
         for (int j = 1; j < routes[i].size(); j++) {
             cout << " -> " << routes[i][j];
         }
