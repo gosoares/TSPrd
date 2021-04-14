@@ -31,14 +31,14 @@ string execute(const char *cmd) {
 }
 
 // read the integer after the string s appear
-unsigned int readInt(stringstream &in, const string &s) {
-    string x;
-    do {
-        in >> x;
-    } while (x != s);
-    unsigned int value;
-    in >> value;
-    return value;
+map<string, string> readValues(stringstream &in) {
+    string key, value;
+    map<string, string> values;
+    while(in.good()) {
+        in >> key >> value;
+        values[key] = value;
+    }
+    return values;
 }
 
 map<string, unsigned int> readOptimalFile(const string &location) {
@@ -54,35 +54,40 @@ map<string, unsigned int> readOptimalFile(const string &location) {
     return optimal;
 }
 
-void runInstances(const vector<Instance> &instances, string executionId = "") {
-    if (executionId.empty()) {
-        unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-        executionId = to_string(timeStamp);
-    }
+void runInstances(const vector<Instance> &instances, const string& executionId) {
+    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+
     char buffer[512];
 
-    sprintf(buffer, "output/log_%s.txt", executionId.c_str()); // output file
+    sprintf(buffer, "output/log_%s_%s.txt", executionId.c_str(), to_string(timeStamp).c_str()); // output file
     ofstream fout(buffer, ios::out);
 
     cout << fixed;
     cout.precision(2);
 
-    cout << "beta   Instance   TE(ms)  TI(ms)   Obj    opt   dev" << endl;
-    fout << "beta   Instance   TE(ms)  TI(ms)   Obj    opt   dev" << endl;
+    cout << "beta   Instance   TE(ms)  TI(ms)    Obj     opt   dev" << endl;
+    fout << "beta   Instance   TE(ms)  TI(ms)    Obj     opt   dev" << endl;
 
     unsigned int better = 0, worse = 0, same = 0;
 
     for (auto &instance: instances) {
         sprintf(buffer, "./TSPrd %s", instance.file.c_str());
         stringstream stream(execute(buffer));
-        string s;
 
-        unsigned int result, executionTime, bestSolutionTime;
+        map<string, string> values = readValues(stream);
 
-        result = readInt(stream, "RESULT");
-        executionTime = readInt(stream, "EXEC_TIME");
-        bestSolutionTime = readInt(stream, "SOL_TIME");
+        if (values.count("ERROR") > 0) {
+            string error = "Error: " + values["ERROR"];
+            sprintf(buffer, "%3s  %10s   %s", instance.beta.c_str(), instance.name.c_str(), error.c_str());
+            cout << buffer << endl;
+            fout << buffer << endl;
+            continue;
+        }
+
+        unsigned int result = stoi(values["RESULT"]);
+        unsigned int executionTime = stoi(values["EXEC_TIME"]);
+        unsigned int bestSolutionTime = stoi(values["SOL_TIME"]);
 
         if (result < instance.optimal) better++;
         else if (result > instance.optimal) worse++;
@@ -90,7 +95,7 @@ void runInstances(const vector<Instance> &instances, string executionId = "") {
 
         double deviation = (((double) result / instance.optimal) - 1) * 100;
 
-        sprintf(buffer, "%3s  %10s  %6d  %6d  %5d  %5d  % 2.2f%%", instance.beta.c_str(), instance.name.c_str(),
+        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d  %6d  % 2.2f%%", instance.beta.c_str(), instance.name.c_str(),
                 executionTime, bestSolutionTime, result, instance.optimal, deviation);
 
         cout << buffer << endl;
@@ -124,7 +129,7 @@ void runSolomonInstances() {
         }
 
         cout << "for n = " << n << endl;
-        runInstances(instances);
+        runInstances(instances, "Solomon" + to_string(n));
     }
 }
 
@@ -149,7 +154,7 @@ void runTSPLIBInstances() {
         }
     }
 
-    runInstances(instances);
+    runInstances(instances, "TSPLIB");
 }
 
 void runATSPLIBInstances() {
@@ -169,7 +174,7 @@ void runATSPLIBInstances() {
         }
     }
 
-    runInstances(instances);
+    runInstances(instances, "aTSPLIB");
 }
 
 int main() {

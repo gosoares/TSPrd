@@ -140,19 +140,24 @@ void Solution::printRoutes() {
     }
 }
 
+void printError(const string &error) {
+    cout << "ERROR " << error << endl;
+    exit(1);
+}
+
 void Solution::validate() {
     // check that all the routes are non-empty and start and end at the depot
     for (auto &route: routes) {
-        if (route.size() <= 2) {
-            throw logic_error("found empty route");
+        if (route.size() == 2) {
+            printError("found_empty_route");
         }
 
         if (route.front() != 0) {
-            throw logic_error("route does not start at depot");
+            printError("route_not_starting_at_depot");
         }
 
         if (route.back() != 0) {
-            throw logic_error("route does not end at depot");
+            printError("route_not_ending_at_depot");
         }
     }
 
@@ -162,7 +167,7 @@ void Solution::validate() {
     for (auto &route: routes) {
         for (unsigned int i = 1; i < route.size() - 1; i++) {
             if (visited[route[i]])
-                throw logic_error("client " + to_string(i) + " visited more than once");
+                printError("client_visited_more_than_once");
             visited[route[i]] = true;
         }
     }
@@ -174,7 +179,7 @@ void Solution::validate() {
             rd = max(rd, instance->releaseDateOf(routes[r][i]));
         }
         if (routeRD[r] != rd) {
-            throw logic_error("route " + to_string(r) + " has incorrect release date");
+            printError("route_with_incorrect_release_date");
         }
     }
 
@@ -185,7 +190,7 @@ void Solution::validate() {
             rtime += instance->time(routes[r][i - 1], routes[r][i]);
         }
         if (routeTime[r] != rtime) {
-            throw logic_error("route " + to_string(r) + " has incorrect time");
+            printError("route_with_incorrect_time");
         }
     }
 
@@ -193,13 +198,13 @@ void Solution::validate() {
     for (unsigned int r = 0; r < routes.size(); r++) {
         unsigned int start = r == 0 ? routeRD[r] : max(routeRD[r], routeStart[r - 1] + routeTime[r - 1]);
         if (routeStart[r] != start) {
-            throw logic_error("route " + to_string(r) + " has incorrect starting time");
+            printError("route_with_incorrect_starting_time");
         }
     }
 
     // check completion time
     if (time != routeStart.back() + routeTime.back()) {
-        throw logic_error("incorrect solution time");
+        printError("incorrect_solution_time");
     }
 }
 

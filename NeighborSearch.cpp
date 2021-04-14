@@ -5,6 +5,7 @@
 #include <random>
 #include <algorithm>
 #include <limits>
+#include <iostream>
 
 #define F(R) 1 // index of first client in a route
 #define L(R) R.size() - 2 // index of last client in a route
@@ -52,7 +53,8 @@ unsigned int NeighborSearch::callIntraSearch(vector<unsigned int> &route, unsign
         case 3:
             return twoOptSearch(route);
         default:
-            throw invalid_argument("Invalid neighbor search id");
+            cout << "ERROR invalid_neighbor_search_id" << endl;
+            exit(1);
     }
 }
 
@@ -326,7 +328,8 @@ unsigned int NeighborSearch::callInterSearch(Solution *solution, int which) {
         case 2:
             return interSwap(solution);
         default:
-            throw invalid_argument("Invalid neighbor search id");
+            cout << "ERROR invalid_neighbor_search_id" << endl;
+            exit(1);
     }
 }
 

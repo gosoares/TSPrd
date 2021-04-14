@@ -15,7 +15,7 @@ Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), sym
 
     ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
     if (!in) {
-        cout << "Falha ao abrir o arquivo!" << endl;
+        cout << "ERROR failed_open_file" << endl;
         exit(1);
     }
 
@@ -25,7 +25,8 @@ Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), sym
     } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon") {
         readCoordinatesListInstance(in);
     } else {
-        throw invalid_argument("unknown instance set");
+        cout << "ERROR unknown_instance_set" << endl;
+        exit(1);
     }
 
     in.close();
