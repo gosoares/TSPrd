@@ -29,6 +29,7 @@ public:
     // returns the new completion time
     unsigned int update();
     unsigned int updateStartingTimes(unsigned int from = 0);
+    bool removeEmptyRoutes();
 
     void validate();
     void printRoutes();
@@ -36,6 +37,8 @@ public:
     Sequence *toSequence() const;
 
     Solution *copy() const;
+
+    void mirror(Solution *s);
 
     static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences);
 };

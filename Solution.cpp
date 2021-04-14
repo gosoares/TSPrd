@@ -15,9 +15,10 @@ Solution::Solution(
     }
 }
 
-Solution::Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits) : N(sequence.size()), instance(&instance) {
+Solution::Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits) : N(sequence.size()),
+                                                                                                   instance(&instance) {
     set<unsigned int> depotVisitsTmp; // clients at the end of each route
-    if(depotVisits == nullptr) {
+    if (depotVisits == nullptr) {
         depotVisits = &depotVisitsTmp;
         Split::split(depotVisitsTmp, instance.getW(), instance.getRD(), sequence);
         // the split function return the time of the best routes and insert the last element of each route
@@ -77,16 +78,20 @@ unsigned int Solution::updateStartingTimes(unsigned int from) {
     return time;
 }
 
-
-// given a set of sequences, create a solution from each sequence
-vector<Solution *> *Solution::solutionsFromSequences(
-        const Instance &instance, vector<Sequence *> *sequences
-) {
-    auto *solutions = new vector<Solution *>(sequences->size());
-    for (int i = 0; i < solutions->size(); i++) {
-        solutions->at(i) = new Solution(instance, *(sequences->at(i)));
+// verify if r is a empty route, and if so, delete it from routes
+// return whether had a empty route
+bool Solution::removeEmptyRoutes() {
+    bool hasEmpty = false;
+    for (int r = (int) routes.size() - 1; r >= 0; r--) {
+        if (routes[r].size() == 2) { // just the depot at start and end
+            routes.erase(routes.begin() + r);
+            routeRD.erase(routeRD.begin() + r);
+            routeTime.erase(routeTime.begin() + r);
+            routeStart.erase(routeStart.begin() + r);
+            hasEmpty = true;
+        }
     }
-    return solutions;
+    return hasEmpty;
 }
 
 Solution *Solution::copy() const {
@@ -96,6 +101,16 @@ Solution *Solution::copy() const {
     sol->routeTime = this->routeTime;
     sol->routeStart = this->routeStart;
     return sol;
+}
+
+void Solution::mirror(Solution *s) {
+    this->routes = s->routes;
+    this->routeRD = s->routeRD;
+    this->routeTime = s->routeTime;
+    this->routeStart = s->routeStart;
+    this->time = s->time;
+    this->id = s->id;
+    this->N = s->N;
 }
 
 Sequence *Solution::toSequence() const {
@@ -121,6 +136,21 @@ void Solution::printRoutes() {
 }
 
 void Solution::validate() {
+    // check that all the routes are non-empty and start and end at the depot
+    for (auto &route: routes) {
+        if (route.size() <= 2) {
+            throw logic_error("found empty route");
+        }
+
+        if (route.front() != 0) {
+            throw logic_error("route does not start at depot");
+        }
+
+        if (route.back() != 0) {
+            throw logic_error("route does not end at depot");
+        }
+    }
+
     // check if all clients are visited once
     vector<bool> visited(instance->nVertex(), false);
     visited[0] = true;
@@ -166,4 +196,15 @@ void Solution::validate() {
     if (time != routeStart.back() + routeTime.back()) {
         throw logic_error("incorrect solution time");
     }
+}
+
+// given a set of sequences, create a solution from each sequence
+vector<Solution *> *Solution::solutionsFromSequences(
+        const Instance &instance, vector<Sequence *> *sequences
+) {
+    auto *solutions = new vector<Solution *>(sequences->size());
+    for (int i = 0; i < solutions->size(); i++) {
+        solutions->at(i) = new Solution(instance, *(sequences->at(i)));
+    }
+    return solutions;
 }
