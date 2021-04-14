@@ -311,6 +311,20 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
         solutions->at(i)->id = i;
     }
 
+    // look for clones and give them a very low biased fitness
+    // this way they will be removed from population
+    const double INF = instance.nVertex() * 10;
+    vector<bool> isClone(solutions->size(), false);
+    for(int i = 0; i < solutions->size(); i++) {
+        if(isClone[i]) continue;
+        for(int j = i+1; j < solutions->size(); j++) {
+            if(solutions->at(i)->equals(solutions->at(j))) {
+                isClone[j] = true;
+                biasedFitness[j] += INF;
+            }
+        }
+    }
+
     // sort the solutions based on the biased fitness and keep only the best 'mi' solutions
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution *s1, Solution *s2) {
         return biasedFitness[s1->id] < biasedFitness[s2->id];

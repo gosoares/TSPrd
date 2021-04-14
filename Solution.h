@@ -40,6 +40,8 @@ public:
 
     void mirror(Solution *s);
 
+    bool equals(Solution *solution) const;
+
     static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences);
 };
 

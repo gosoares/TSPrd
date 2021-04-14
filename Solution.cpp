@@ -198,6 +198,24 @@ void Solution::validate() {
     }
 }
 
+bool Solution::equals(Solution *other) const {
+    if (this->time != other->time || this->routes.size() != other->routes.size())
+        return false;
+
+    for (unsigned int r = 0; r < this->routes.size(); r++) {
+        if (this->routes[r].size() != other->routes[r].size()
+            || this->routeRD[r] != other->routeRD[r]
+            || this->routeTime[r] != other->routeTime[r])
+            return false;
+
+        for(unsigned int c = 1; c < this->routes[r].size() - 1; c++) {
+            if(this->routes[r][c] != other->routes[r][c])
+                return false;
+        }
+    }
+    return true;
+}
+
 // given a set of sequences, create a solution from each sequence
 vector<Solution *> *Solution::solutionsFromSequences(
         const Instance &instance, vector<Sequence *> *sequences
