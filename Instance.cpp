@@ -11,7 +11,7 @@ void readUntil(ifstream &in, const string &s) {
     }
 }
 
-Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0) {
+Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
 
     ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
     if (!in) {
@@ -51,9 +51,19 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
         if (RD[i] > biggerRD)
             biggerRD = RD[i];
     }
+
+    // verify matrix symmetry
+    symmetric = true;
+    for (int i = 0; i < V && symmetric; i++) {
+        for (int j = i + 1; j < V && symmetric; j++) {
+            symmetric = symmetric && (W[i][j] == W[j][i]);
+        }
+    }
 }
 
 void Instance::readCoordinatesListInstance(ifstream &in) {
+    symmetric = true;
+
     readUntil(in, "<DIMENSION>");
     in >> V;
 

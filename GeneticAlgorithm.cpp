@@ -111,44 +111,33 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
  *
  * the distance is calculated based in how many arcs the routes from the solutions have in common
  */
-double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2) {
-    const unsigned int N = s1->N + 1;
-    // each position i of the vector represents the client that comes after the client i in the solution
-    // s1Arcs[i] = x -> (i, x) ∈ Arcs(s1)
-    vector<unsigned int> s1Arcs(N), s2Arcs(N);
-    // destination of arcs with the origin in the depot (first client of each route)
-    set<unsigned int> s1Depots, s2Depots; // x: (0, x) ∈ arcs
-
-    for (const vector<unsigned int> &route: s1->routes) { // calcula os arcos em s1
-        s1Depots.insert(route[1]);
-        for (int i = 2; i < route.size() - 1; i++) {
-            s1Arcs[route[i - 1]] = route[i];
-        }
-    }
-    for (const vector<unsigned int> &route: s2->routes) { // calcula os arcos em s2
-        s2Depots.insert(route[1]);
-        for (int i = 2; i < route.size() - 1; i++) {
-            s2Arcs[route[i - 1]] = route[i];
-        }
-    }
-
+double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2, bool symmetric) {
+    unsigned int V = s1->N + 1, a, b;
     unsigned int I = 0; // number of arcs that exists in both solutions
     unsigned int U = 0; // number of arcs in Arcs(s1) U Arcs(s2)
-    for (unsigned int x: s1Depots) { // compara arcos que saem do deposito
-        I += s2Depots.erase(x);
-    }
-    U += s1Depots.size() + s2Depots.size();
-    // at that point we removed from s2 all the arcs in the intersection
 
-    for (int i = 1; i < s1Arcs.size(); i++) { // comparam restante das arcos
-        int equal = s1Arcs[i] == s2Arcs[i];
-        I += equal;
-
-        // when the arcs are different, there are 2 more arcs in the union of arcs of the solutions
-        // but when they are equal, there are only 1 more arc
-        U += 2 - equal;
+    vector<set<unsigned int> > adjList1(V);
+    for (auto &route: s1->routes) {
+        for (unsigned int c = 1; c < route.size(); c++) {
+            U++; // count arcs in s1
+            a = route[c - 1];
+            b = route[c];
+            adjList1[a].insert(b);
+            if (symmetric) adjList1[b].insert(a);
+        }
     }
 
+    for (auto &route: s2->routes) {
+        for (unsigned int c = 1; c < route.size(); c++) {
+            a = route[c - 1];
+            b = route[c];
+            if (adjList1[a].find(b) != adjList1[a].end()) {
+                I++;
+            } else {
+                U++;
+            }
+        }
+    }
 
     return 1 - ((double) I / U);
 }
@@ -201,7 +190,7 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
     vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
     for (int i = 0; i < N; i++) {
         for (int j = i + 1; j < N; j++) {
-            d[i][j] = solutionsDistances(solutions->at(i), solutions->at(j));
+            d[i][j] = solutionsDistances(solutions->at(i), solutions->at(j), instance.isSymmetric());
             d[j][i] = d[i][j];
         }
     }
@@ -315,10 +304,10 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
     // this way they will be removed from population
     const double INF = instance.nVertex() * 10;
     vector<bool> isClone(solutions->size(), false);
-    for(int i = 0; i < solutions->size(); i++) {
-        if(isClone[i]) continue;
-        for(int j = i+1; j < solutions->size(); j++) {
-            if(solutions->at(i)->equals(solutions->at(j))) {
+    for (int i = 0; i < solutions->size(); i++) {
+        if (isClone[i]) continue;
+        for (int j = i + 1; j < solutions->size(); j++) {
+            if (solutions->at(i)->equals(solutions->at(j))) {
                 isClone[j] = true;
                 biasedFitness[j] += INF;
             }

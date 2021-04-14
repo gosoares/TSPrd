@@ -29,7 +29,7 @@ private:
     vector<Sequence *> *initializePopulation();
     vector<double> getBiasedFitness(vector<Solution *> *solutions) const;
     vector<unsigned int> selectParents(vector<double> &biasedFitness) const;
-    static double solutionsDistances(Solution *s1, Solution *s2);
+    static double solutionsDistances(Solution *s1, Solution *s2, bool symmetric);
     static Sequence *orderCrossover(const Sequence &parent1, const Sequence &parent2);
     void survivalSelection(vector<Solution *> *solutions, unsigned int Mi);
     void survivalSelection(vector<Solution *> *solutions) { // default mi

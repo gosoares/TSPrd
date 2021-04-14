@@ -11,6 +11,7 @@ class Instance {
     vector<vector<unsigned int> > W;
     vector<unsigned int> RD;
     unsigned int biggerRD;
+    bool symmetric;
 
     void readDistanceMatrixInstance(ifstream &in);
 
@@ -30,6 +31,10 @@ public:
     const vector<vector<unsigned int> > &getW() const;
 
     const vector<unsigned int> &getRD() const;
+
+    bool isSymmetric() const {
+        return symmetric;
+    }
 };
 
 
