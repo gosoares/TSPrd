@@ -24,15 +24,15 @@ public:
          */
         vector<vector<unsigned int> > routesRD(N, vector<unsigned int>(N));
         vector<vector<unsigned int> > routesTime(N, vector<unsigned int>(N));
-        for (int i = 0; i < N; i++) {
+        for (unsigned int i = 0; i < N; i++) {
             unsigned int bigger = RD[S[i]];
             unsigned int sumTimes = W[0][S[i]];
 
             routesRD[i][i] = bigger;
             routesTime[i][i] = sumTimes + W[S[i]][0];
 
-            for (int j = i + 1; j < S.size(); j++) {
-                int rdj = (int) RD[S[j]];
+            for (unsigned int j = i + 1; j < S.size(); j++) {
+                unsigned int rdj = RD[S[j]];
                 if (rdj > bigger) {
                     bigger = rdj;
                 }
@@ -47,8 +47,8 @@ public:
         vector<unsigned int> delta(N + 1, numeric_limits<unsigned int>::max()); // value of the best arc arriving at i
         delta[0] = 0;
 
-        for (int i = 0; i < N; i++) {
-            for (int j = i + 1; j <= N; j++) {
+        for (unsigned int i = 0; i < N; i++) {
+            for (unsigned int j = i + 1; j <= N; j++) {
                 unsigned int deltaJ = max(routesRD[i][j - 1], delta[i]) + routesTime[i][j - 1];
                 if (deltaJ < delta[j]) {
                     delta[j] = deltaJ;

@@ -8,15 +8,16 @@ using namespace std;
 
 Solution::Solution(
         vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance
-) : routes(std::move(routes)), time(time), instance(instance) {
+) : instance(instance), routes(move(routes)), time(time) {
     this->N = 0;
     for (auto &r: routes) {
         this->N += r.size() - 2; // excluding the depot at the start and end of the route
     }
 }
 
-Solution::Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits) : N(sequence.size()),
-                                                                                                   instance(&instance) {
+Solution::Solution(
+        const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits
+) : instance(&instance), N(sequence.size()) {
     set<unsigned int> depotVisitsTmp; // clients at the end of each route
     if (depotVisits == nullptr) {
         depotVisits = &depotVisitsTmp;
@@ -45,12 +46,12 @@ unsigned int Solution::update() {
     routeRD.resize(routes.size());
     routeTime.resize(routes.size());
 
-    for (int r = 0; r < routes.size(); r++) {
+    for (unsigned int r = 0; r < routes.size(); r++) {
         auto &route = routes[r];
         routeRD[r] = 0;
         routeTime[r] = 0;
 
-        for (int i = 1; i < route.size(); i++) {
+        for (unsigned int i = 1; i < route.size(); i++) {
             // calculate time to perform route
             routeTime[r] += instance->time(route[i - 1], route[i]);
 
@@ -117,7 +118,7 @@ Sequence *Solution::toSequence() const {
     auto *s = new Sequence(this->N);
     int i = 0;
     for (const vector<unsigned int> &route: routes) {
-        for (int j = 1; j < route.size() - 1; j++) {
+        for (unsigned int j = 1; j < route.size() - 1; j++) {
             s->at(i) = route[j];
             i++;
         }
@@ -126,14 +127,14 @@ Sequence *Solution::toSequence() const {
 }
 
 void Solution::printRoutes() {
-    for (int i = 0; i < routes.size(); i++) {
+    for (unsigned int i = 0; i < routes.size(); i++) {
         cout << "Route " << i + 1;
         cout << "   RD(" << routeRD[i] << ")";
         cout << "   starts at " << routeStart[i];
         cout << "   ends at " << routeStart[i] + routeTime[i] << endl;
 
         cout << routes[i][0];
-        for (int j = 1; j < routes[i].size(); j++) {
+        for (unsigned int j = 1; j < routes[i].size(); j++) {
             cout << " -> " << routes[i][j];
         }
         cout << endl;
@@ -186,7 +187,7 @@ void Solution::validate() {
     // check all routes times
     for (unsigned int r = 0; r < routes.size(); r++) {
         unsigned int rtime = 0;
-        for (int i = 1; i < routes[r].size(); i++) {
+        for (unsigned int i = 1; i < routes[r].size(); i++) {
             rtime += instance->time(routes[r][i - 1], routes[r][i]);
         }
         if (routeTime[r] != rtime) {
@@ -218,8 +219,8 @@ bool Solution::equals(Solution *other) const {
             || this->routeTime[r] != other->routeTime[r])
             return false;
 
-        for(unsigned int c = 1; c < this->routes[r].size() - 1; c++) {
-            if(this->routes[r][c] != other->routes[r][c])
+        for (unsigned int c = 1; c < this->routes[r].size() - 1; c++) {
+            if (this->routes[r][c] != other->routes[r][c])
                 return false;
         }
     }
@@ -231,7 +232,7 @@ vector<Solution *> *Solution::solutionsFromSequences(
         const Instance &instance, vector<Sequence *> *sequences
 ) {
     auto *solutions = new vector<Solution *>(sequences->size());
-    for (int i = 0; i < solutions->size(); i++) {
+    for (unsigned int i = 0; i < solutions->size(); i++) {
         solutions->at(i) = new Solution(instance, *(sequences->at(i)));
     }
     return solutions;
