@@ -14,7 +14,7 @@ void freePopulation(vector<Sequence *> *population) {
 GeneticAlgorithm::GeneticAlgorithm(
         const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
         unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
-) : instance(instance), mi(mi), lambda(lambda), nClose(nClose), nbElite(nbElite), itNi(itNi), itDiv(itDiv),
+) : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
     timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, mi-1) {
 
     beginTime = steady_clock::now();
@@ -30,9 +30,9 @@ GeneticAlgorithm::GeneticAlgorithm(
     // and we transform the solutions in a population, removing the depot visits from the solutions
     // and constructing a vector with only the clients visit sequence
 
-    auto *bestSolution = new Solution(vector<vector<unsigned int> >(), 999999);
+    auto *bestSolution = Solution::INF();
 
-    int iterations_not_improved = 0;
+    unsigned int iterations_not_improved = 0;
 
     while (iterations_not_improved < this->itNi && steady_clock::now() < maxTime) {
         vector<double> biasedFitness = getBiasedFitness(solutions);
@@ -91,7 +91,7 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
     pop->resize(2 * mi);
     // reduces the size of the vector, but keeps enough space to store the max population without needing reallocation
 
-    for (int i = 0; i < 2 * mi; i++) {
+    for (unsigned int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
         shuffle(sequence->begin(), sequence->end(), generator);
         pop->at(i) = sequence;
@@ -151,7 +151,7 @@ double nCloseMean(const vector<vector<double> > &d, unsigned int n_close, unsign
     // criamos uma fila de prioridade para armazenar as n_close menores distancias
     priority_queue<double> pq;
     // insere as distancias dos primeiros n_close clientes
-    int j;
+    unsigned int j;
     for (j = 0; pq.size() < n_close; j++) {
         if (i == j)
             continue;
@@ -205,7 +205,7 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
 
     vector<unsigned int> rankDiversity(N); // rank of the solution with respect to the diversity contribution
     // best solutions (higher nMean distance) have the smaller ranks
-    for (int i = 0; i < rankDiversity.size(); i++) {
+    for (unsigned int i = 0; i < rankDiversity.size(); i++) {
         rankDiversity[sortedIndex[i]] = i + 1;
     }
 
@@ -215,14 +215,14 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
         return solutions->at(i)->time < solutions->at(j)->time;
     });
     vector<unsigned int> rankFitness(N);
-    for (int i = 0; i < rankFitness.size(); i++) {
+    for (unsigned int i = 0; i < rankFitness.size(); i++) {
         rankFitness[sortedIndex[i]] = i + 1;
     }
 
     // calculate the biased fitness with the equation 4 of the vidal article
     // best solutions have smaller biased fitness
     biasedFitness.resize(solutions->size());
-    for (int i = 0; i < biasedFitness.size(); i++) {
+    for (unsigned int i = 0; i < biasedFitness.size(); i++) {
         biasedFitness[i] = rankFitness[i] + (1 - ((double) nbElite / N)) * rankDiversity[i];
     }
 
@@ -295,7 +295,7 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
 
 void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned int Mi) {
     vector<double> biasedFitness = getBiasedFitness(solutions);
-    for (int i = 0; i < solutions->size(); i++) {
+    for (unsigned int i = 0; i < solutions->size(); i++) {
         solutions->at(i)->id = i;
     }
 
@@ -303,9 +303,9 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
     // this way they will be removed from population
     const double INF = instance.nVertex() * 10;
     vector<bool> isClone(solutions->size(), false);
-    for (int i = 0; i < solutions->size(); i++) {
+    for (unsigned int i = 0; i < solutions->size(); i++) {
         if (isClone[i]) continue;
-        for (int j = i + 1; j < solutions->size(); j++) {
+        for (unsigned int j = i + 1; j < solutions->size(); j++) {
             if (solutions->at(i)->equals(solutions->at(j))) {
                 isClone[j] = true;
                 biasedFitness[j] += INF;

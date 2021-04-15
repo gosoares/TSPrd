@@ -12,9 +12,10 @@ using Sequence = vector<unsigned int>;
 class Solution {
 private:
     const Instance *instance;
+    explicit Solution(const Instance *instance);
 public:
     Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits = nullptr); // create a solution given the sequence, by applying the split algorithm
-    Solution(vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance = nullptr); // create a solution given the routes
+    Solution(const Instance &instance, vector<vector<unsigned int> > routes); // create a solution given the routes
     vector<vector<unsigned int> > routes;
 
     vector<unsigned int> routeRD; // release date of each route
@@ -41,6 +42,12 @@ public:
     void mirror(Solution *s);
 
     bool equals(Solution *solution) const;
+
+    static Solution *INF() {
+        auto *sol = new Solution(nullptr);
+        sol->time = numeric_limits<unsigned int>::max();
+        return sol;
+    }
 
     static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences);
 };

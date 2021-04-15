@@ -269,11 +269,11 @@ unsigned int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
     unsigned int bestI, bestJ;
     int bestGain = 0;
 
-    for (int i = 1; i <= L(route) - 1; i++) {
+    for (unsigned int i = 1; i <= L(route) - 1; i++) {
         int minus = (int) W[route[i - 1]][route[i]]
                     + (int) W[route[i]][route[i + 1]];
         int plus = 0;
-        for (int j = i + 1; j <= L(route); j++) {
+        for (unsigned int j = i + 1; j <= L(route); j++) {
             minus += W[route[j]][route[j + 1]];
             plus += W[route[j]][route[j - 1]];
 
@@ -301,7 +301,7 @@ unsigned int NeighborSearch::interSearch(Solution *solution) {
     iota(searchOrder.begin(), searchOrder.end(), 1);
     shuffle(searchOrder.begin(), searchOrder.end(), generator);
 
-    for (int i = 0; i < searchOrder.size(); i++) {
+    for (unsigned int i = 0; i < searchOrder.size(); i++) {
         unsigned int gain = callInterSearch(solution, searchOrder[i]);
 
         if (gain > 0) {
@@ -355,7 +355,7 @@ unsigned int NeighborSearch::routeReleaseDateRemoving(
     if (RD[vertex] == rd) { // possibly removing the vertex with bigger RD in the route
         rd = 0;
         vector<unsigned int> &route = s->routes[r];
-        for (int j = F(route); j <= L(route); j++) {
+        for (unsigned int j = F(route); j <= L(route); j++) {
             if (route[j] == vertex) continue;
             unsigned int rdj = RD[route[j]];
             if (rdj > rd)
@@ -439,7 +439,7 @@ unsigned int NeighborSearch::vertexRelocationIt(Solution *solution, unsigned int
     vector<unsigned int> &route2 = solution->routes[r2];
 
     // try to remove a vertex from r2 and put in r1
-    for (int i = F(route2); i <= L(route2); i++) {
+    for (unsigned int i = F(route2); i <= L(route2); i++) {
         unsigned int vertex = route2[i];
 
         // check the new release date of route2 when removing 'vertex'
@@ -500,7 +500,7 @@ unsigned int NeighborSearch::interSwapIt(Solution *solution, unsigned int r1, un
     vector<unsigned int> &route2 = solution->routes[r2];
 
     // try to swap the i-th vertex from r1 with the j-th vertex from r2
-    for (int i = F(route1); i <= L(route1); i++) {
+    for (int i = F(route1); i <= (int) L(route1); i++) {
         const unsigned int vertex1 = route1[i];
 
         // check the new release date of route1 when removing 'vertex1'
@@ -550,8 +550,6 @@ unsigned int NeighborSearch::insertDepotAndReorder(Solution *solution) {
 
 // try to insert a depot in a route, and reorder the routes per release time
 bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
-    unsigned int originalTime = s->time;
-
     for (unsigned int r = 1; r < s->routes.size(); r++) {
         // if the ending time of the previous route is higher than the current route release date
         // its not possible to improve the ending time of the current route by adding a depot
@@ -562,7 +560,7 @@ bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
         unsigned int maxRD = 0;
         int iMax;
         // find the vertex with higher release date to try to insert depot only after it
-        for (int i = F(route); i <= L(route); i++) {
+        for (int i = F(route); i <= (int) L(route); i++) {
             unsigned int rdi = RD[route[i]];
             if (rdi > maxRD) {
                 maxRD = rdi;
@@ -573,7 +571,7 @@ bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
 
         vector<unsigned int> totalTimeForward(route.size()); // total time of going from the depot to the i-th element
         totalTimeForward[0] = W[0][route[0]];
-        for (int i = 1; i < route.size(); i++)
+        for (unsigned int i = 1; i < route.size(); i++)
             totalTimeForward[i] = totalTimeForward[i - 1] + W[route[i - 1]][route[i]];
 
         vector<unsigned int> totalTimeBack(route.size()); // total time of going from the i-th element to the depot
@@ -587,7 +585,7 @@ bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
 
         const unsigned int rd1 = maxRD; // the first generated route always have the release date of the original route
         // try to insert depot in each position after the vertex with higher release date
-        for (int i = iMax; i < L(route); i++) {
+        for (unsigned int i = iMax; i < L(route); i++) {
             const unsigned int rd2 = maxRDBack[i + 1]; // release date of second route
             const unsigned int time1 = totalTimeForward[i] + W[route[i]][0]; // time of the first route
             const unsigned int time2 = W[0][route[i + 1]] + totalTimeBack[i + 1]; // time of the second route

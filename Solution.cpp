@@ -6,13 +6,15 @@
 
 using namespace std;
 
+Solution::Solution(const Instance *instance) : instance(instance) {
+    if (instance != nullptr) this->N = instance->nClients();
+    time = 0;
+}
+
 Solution::Solution(
-        vector<vector<unsigned int> > routes, unsigned int time, const Instance *instance
-) : instance(instance), routes(move(routes)), time(time) {
-    this->N = 0;
-    for (auto &r: routes) {
-        this->N += r.size() - 2; // excluding the depot at the start and end of the route
-    }
+        const Instance &instance, vector<vector<unsigned int> > routes
+) : instance(&instance), routes(move(routes)), N(instance.nClients()) {
+    time = update();
 }
 
 Solution::Solution(
@@ -96,11 +98,12 @@ bool Solution::removeEmptyRoutes() {
 }
 
 Solution *Solution::copy() const {
-    vector<vector<unsigned int> > r(this->routes);
-    auto sol = new Solution(r, this->time, instance);
+    auto sol = new Solution(instance);
+    sol->routes = this->routes;
     sol->routeRD = this->routeRD;
     sol->routeTime = this->routeTime;
     sol->routeStart = this->routeStart;
+    sol->time = this->time;
     return sol;
 }
 
