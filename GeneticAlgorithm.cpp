@@ -250,8 +250,10 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitne
 }
 
 Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequence &parent2) {
+    static random_device rd;
+    static mt19937 generator(rd());
+
     int N = parent1.size();
-    mt19937 generator((random_device())());
     uniform_int_distribution<int> dist(0, N - 1);
 
     // choose radomly a sub sequence of the first parent that goes to the offspring
