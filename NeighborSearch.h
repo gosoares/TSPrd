@@ -1,7 +1,7 @@
 #ifndef TSPRD_NEIGHBORSEARCH_H
 #define TSPRD_NEIGHBORSEARCH_H
 
-
+#include <random>
 #include "Instance.h"
 #include "Solution.h"
 
@@ -10,6 +10,10 @@ private:
     const Instance& instance;
     const vector<vector<unsigned int> > &W;
     const vector<unsigned int> &RD;
+
+    const bool applySplit;
+
+    mt19937 generator;
 
     unsigned int callIntraSearch(vector<unsigned int> &route, unsigned int which);
     unsigned int swapSearch(vector<unsigned int> &route, unsigned int n1 = 1, unsigned int n2 = 1);
@@ -36,7 +40,7 @@ private:
     bool insertDepotAndReorderIt(Solution *s);
     unsigned int splitNs(Solution *solution);
 public:
-    explicit NeighborSearch(const Instance& instance);
+    explicit NeighborSearch(const Instance& instance, bool applySplit = true);
     unsigned int intraSearch(Solution *solution, bool all = false);
     unsigned int interSearch(Solution *solution);
     unsigned int educate(Solution *solution);

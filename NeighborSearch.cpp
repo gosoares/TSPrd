@@ -2,7 +2,6 @@
 #include "Split.h"
 #include <cassert>
 #include <chrono>
-#include <random>
 #include <algorithm>
 #include <limits>
 #include <iostream>
@@ -10,16 +9,16 @@
 #define F(R) 1 // index of first client in a route
 #define L(R) R.size() - 2 // index of last client in a route
 
-NeighborSearch::NeighborSearch(const Instance &instance) : instance(instance), W(instance.getW()),
-                                                           RD(instance.getRD()) {}
+NeighborSearch::NeighborSearch(
+        const Instance &instance, bool applySplit
+) : instance(instance), W(instance.getW()), RD(instance.getRD()), applySplit(applySplit),
+    generator((random_device()) ()) {}
 
 unsigned int NeighborSearch::intraSearch(Solution *solution, bool all) {
-    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-
     unsigned int N = 3; // number of intra searchs algorithms
     vector<unsigned int> searchOrder(N);
     iota(searchOrder.begin(), searchOrder.end(), 1);
-    shuffle(searchOrder.begin(), searchOrder.end(), re);
+    shuffle(searchOrder.begin(), searchOrder.end(), generator);
 
     for (int r = (int) solution->routes.size() - 1; r >= 0; r--) {
 //        if(!all && r != solution->routes.size() - 1
@@ -31,7 +30,7 @@ unsigned int NeighborSearch::intraSearch(Solution *solution, bool all) {
             if (gain > 0) {
                 unsigned int lastMovement = searchOrder[i];
                 i = -1;
-                shuffle(searchOrder.begin(), searchOrder.end(), re);
+                shuffle(searchOrder.begin(), searchOrder.end(), generator);
                 if (searchOrder[0] == lastMovement) {
                     swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
                 }
@@ -295,14 +294,12 @@ unsigned int NeighborSearch::twoOptSearchIt(vector<unsigned int> &route) {
 }
 
 unsigned int NeighborSearch::interSearch(Solution *solution) {
-    auto re = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-
     unsigned int oldTime = solution->time;
 
     unsigned int N = 3; // number of inter searches algorithms
     vector<unsigned int> searchOrder(N);
     iota(searchOrder.begin(), searchOrder.end(), 1);
-    shuffle(searchOrder.begin(), searchOrder.end(), re);
+    shuffle(searchOrder.begin(), searchOrder.end(), generator);
 
     for (int i = 0; i < searchOrder.size(); i++) {
         unsigned int gain = callInterSearch(solution, searchOrder[i]);
@@ -310,7 +307,7 @@ unsigned int NeighborSearch::interSearch(Solution *solution) {
         if (gain > 0) {
             unsigned int lastMovement = searchOrder[i];
             i = -1;
-            shuffle(searchOrder.begin(), searchOrder.end(), re);
+            shuffle(searchOrder.begin(), searchOrder.end(), generator);
             if (searchOrder[0] == lastMovement) {
                 swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
             }
@@ -648,7 +645,7 @@ unsigned int NeighborSearch::educate(Solution *solution) {
 
     intraSearch(solution, true);
     int which = 1; // 0: intraSearch   1: interSearch
-    bool splitImproved;
+    bool splitImproved = false;
     do {
         bool improved;
         do {
@@ -660,7 +657,8 @@ unsigned int NeighborSearch::educate(Solution *solution) {
             which = 1 - which;
         } while (improved);
 
-        splitImproved = splitNs(solution) > 0;
+        if (applySplit)
+            splitImproved = splitNs(solution) > 0;
     } while (splitImproved);
 
     return originalTime - solution->time;

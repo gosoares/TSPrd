@@ -15,11 +15,10 @@ GeneticAlgorithm::GeneticAlgorithm(
         const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
         unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
 ) : instance(instance), mi(mi), lambda(lambda), nClose(nClose), nbElite(nbElite), itNi(itNi), itDiv(itDiv),
-    timeLimit(timeLimit), ns(instance) {
-    srand(time(nullptr));
+    timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, mi-1) {
 
     beginTime = steady_clock::now();
-    const steady_clock::time_point maxTime = beginTime + seconds(timeLimit);
+    const steady_clock::time_point maxTime = beginTime + seconds(this->timeLimit);
 
     vector<Sequence *> *population = initializePopulation();
     // represents the population for the genetic algorithm
@@ -88,15 +87,13 @@ vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
     // will be shuffled for each element of the population
     iota(clients.begin(), clients.end(), 1);
 
-    auto rand = default_random_engine(chrono::system_clock::now().time_since_epoch().count());
-
     auto pop = new vector<Sequence *>(mi + lambda);
     pop->resize(2 * mi);
     // reduces the size of the vector, but keeps enough space to store the max population without needing reallocation
 
     for (int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
-        shuffle(sequence->begin(), sequence->end(), rand);
+        shuffle(sequence->begin(), sequence->end(), generator);
         pop->at(i) = sequence;
     }
 
@@ -232,18 +229,18 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
     return biasedFitness;
 }
 
-vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitness) const {
-    // seleciona o primeiro pai
+vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitness) {
+    // select first parent
     vector<unsigned int> p(2);
-    unsigned int p1a = rand() % mi, p1b = rand() % mi;
+    int p1a = distPopulation(generator), p1b = distPopulation(generator);
     p[0] = p1a;
     if (biasedFitness[p1b] < biasedFitness[p1a])
         p[0] = p1b;
 
 
-    // seleciona segundo pai, diferente do primeiro
+    // select second parent, different from first
     do {
-        int p2a = rand() % mi, p2b = rand() % mi;
+        int p2a = distPopulation(generator), p2b = distPopulation(generator);
         p[1] = p2a;
         if (biasedFitness[p2b] < biasedFitness[p2a])
             p[1] = p2b;
@@ -254,13 +251,15 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double> &biasedFitne
 
 Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequence &parent2) {
     int N = parent1.size();
+    mt19937 generator((random_device())());
+    uniform_int_distribution<int> dist(0, N - 1);
 
     // choose radomly a sub sequence of the first parent that goes to the offspring
     // a and b represents the start and end index of the sequence, respectively
     int a, b;
     do {
-        a = rand() % N;
-        b = rand() % N;
+        a = dist(generator);
+        b = dist(generator);
         if (a > b) {
             swap(a, b);
         }

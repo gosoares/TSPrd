@@ -26,9 +26,13 @@ private:
     steady_clock::time_point endTime;
     steady_clock::time_point bestSolutionFoundTime;
 
+    // random number generator
+    mt19937 generator;
+    uniform_int_distribution<int> distPopulation; // distribution for the population [0, mi)
+
     vector<Sequence *> *initializePopulation();
     vector<double> getBiasedFitness(vector<Solution *> *solutions) const;
-    vector<unsigned int> selectParents(vector<double> &biasedFitness) const;
+    vector<unsigned int> selectParents(vector<double> &biasedFitness);
     static double solutionsDistances(Solution *s1, Solution *s2, bool symmetric);
     static Sequence *orderCrossover(const Sequence &parent1, const Sequence &parent2);
     void survivalSelection(vector<Solution *> *solutions, unsigned int Mi);
