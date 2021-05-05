@@ -1,6 +1,7 @@
 #include <numeric>
 #include <chrono>
 #include <random>
+#include <algorithm>
 #include "Grasp.h"
 #include "NeighborSearch.h"
 

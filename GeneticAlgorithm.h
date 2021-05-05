@@ -2,6 +2,7 @@
 #define TSPRD_GENETICALGORITHM_H
 
 
+#include <chrono>
 #include "Instance.h"
 #include "NeighborSearch.h"
 
