@@ -8,6 +8,7 @@
 #include <string>
 #include <array>
 #include <map>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -34,7 +35,7 @@ string execute(const char *cmd) {
 map<string, string> readValues(stringstream &in) {
     string key, value;
     map<string, string> values;
-    while(in.good()) {
+    while (in.good()) {
         in >> key >> value;
         values[key] = value;
     }
@@ -54,13 +55,18 @@ map<string, unsigned int> readOptimalFile(const string &location) {
     return optimal;
 }
 
-void runInstances(const vector<Instance> &instances, const string& executionId) {
-    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+bool pathExists(const string &s)
+{
+    struct stat buffer;
+    return (stat (s.c_str(), &buffer) == 0);
+}
+
+void runInstances(const vector<Instance> &instances, const string &executionId, const string &outputFolder) {
+//    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+//            std::chrono::system_clock::now().time_since_epoch()).count();
 
     char buffer[512];
-
-    sprintf(buffer, "output/log_%s_%s.txt", executionId.c_str(), to_string(timeStamp).c_str()); // output file
+    sprintf(buffer, "output/%s/%s.txt", outputFolder.c_str(), executionId.c_str()); // output file
     ofstream fout(buffer, ios::out);
 
     cout << fixed;
@@ -72,7 +78,7 @@ void runInstances(const vector<Instance> &instances, const string& executionId) 
     unsigned int better = 0, worse = 0, same = 0;
 
     for (auto &instance: instances) {
-        sprintf(buffer, "./TSPrd %s", instance.file.c_str());
+        sprintf(buffer, "./TSPrd %s %s", instance.file.c_str(), outputFolder.c_str());
         stringstream stream(execute(buffer));
 
         map<string, string> values = readValues(stream);
@@ -108,7 +114,7 @@ void runInstances(const vector<Instance> &instances, const string& executionId) 
     fout.close();
 }
 
-void runSolomonInstances() {
+void runSolomonInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("Solomon/0ptimal.txt");
 
     vector<unsigned int> ns({10, 15, 20, 50, 100});
@@ -129,11 +135,11 @@ void runSolomonInstances() {
         }
 
         cout << "for n = " << n << endl;
-        runInstances(instances, "Solomon" + to_string(n));
+        runInstances(instances, "Solomon" + to_string(n), outputFolder);
     }
 }
 
-void runTSPLIBInstances() {
+void runTSPLIBInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("TSPLIB/0ptimal.txt");
 
     vector<string> names(
@@ -154,10 +160,10 @@ void runTSPLIBInstances() {
         }
     }
 
-    runInstances(instances, "TSPLIB");
+    runInstances(instances, "TSPLIB", outputFolder);
 }
 
-void runATSPLIBInstances() {
+void runATSPLIBInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("aTSPLIB/0ptimal.txt");
 
     vector<string> names({"ftv33", "ft53", "ftv70", "kro124p", "rbg403"});
@@ -174,12 +180,20 @@ void runATSPLIBInstances() {
         }
     }
 
-    runInstances(instances, "aTSPLIB");
+    runInstances(instances, "aTSPLIB", outputFolder);
 }
 
 int main() {
-    runSolomonInstances();
-//    runTSPLIBInstances();
-//    runATSPLIBInstances();
+    string outputFolder = "2021.05.05_15.40";
+
+    if(pathExists("output/" + outputFolder)) {
+        throw invalid_argument("output dir already exists!");
+    } else {
+        system(("mkdir -p output/" + outputFolder).c_str());
+    }
+
+    runSolomonInstances(outputFolder);
+    runTSPLIBInstances(outputFolder);
+    runATSPLIBInstances(outputFolder);
     return 0;
 }

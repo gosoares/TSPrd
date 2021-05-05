@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include "Solution.h"
 #include "GeneticAlgorithm.h"
 #include "Grasp.h"
@@ -34,5 +35,31 @@ int main(int argc, char **argv) {
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
     cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
 
+    // output to file
+    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    string outFile = to_string(timeStamp) + "/" + instanceFile;
+    if (argc > 2)
+        outFile = string(argv[2]) + "/" + instanceFile;
+    outFile = "output/" + outFile + ".txt";
+    string dir = outFile.substr(0, outFile.find_last_of('/'));
+    system(("mkdir -p " + dir).c_str());
+
+    ofstream fout(outFile, ios::out);
+    fout << "EXEC_TIME " << alg.getExecutionTime() << endl;
+    fout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+    fout << "OBJ " << s.time << endl;
+    fout << "N_ROUTES " << s.routes.size() << endl;
+    fout << "N_CLIENTS";
+    for (auto &r: s.routes) fout << " " << (r.size() - 2);
+    fout << endl << "ROUTES" << endl;
+    for (auto &r: s.routes) {
+        for (unsigned int c = 1; c < r.size() - 1; c++) {
+            fout << r[c] << " ";
+        }
+        cout << endl;
+    }
+    fout << endl;
+    fout.close();
     return 0;
 }
