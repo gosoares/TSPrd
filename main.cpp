@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         for (unsigned int c = 1; c < r.size() - 1; c++) {
             fout << r[c] << " ";
         }
-        cout << endl;
+        fout << endl;
     }
     fout << endl;
     fout.close();
