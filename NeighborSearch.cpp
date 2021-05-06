@@ -15,7 +15,7 @@ NeighborSearch::NeighborSearch(
     generator((random_device()) ()) {}
 
 unsigned int NeighborSearch::intraSearch(Solution *solution, bool all) {
-    unsigned int N = 3; // number of intra searchs algorithms
+    unsigned int N = 6; // number of intra searchs algorithms
     vector<unsigned int> searchOrder(N);
     iota(searchOrder.begin(), searchOrder.end(), 1);
     shuffle(searchOrder.begin(), searchOrder.end(), generator);
@@ -48,8 +48,14 @@ unsigned int NeighborSearch::callIntraSearch(vector<unsigned int> &route, unsign
         case 1:
             return swapSearch(route, 1, 1);
         case 2:
-            return reinsertionSearch(route, 1);
+            return swapSearch(route, 1, 2);
         case 3:
+            return swapSearch(route, 2, 2);
+        case 4:
+            return reinsertionSearch(route, 1);
+        case 5:
+            return reinsertionSearch(route, 2);
+        case 6:
             return twoOptSearch(route);
         default:
             cout << "ERROR invalid_neighbor_search_id" << endl;
