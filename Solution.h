@@ -15,8 +15,8 @@ private:
     explicit Solution(const Instance *instance);
 public:
     Solution(const Instance &instance, Sequence &sequence, set<unsigned int> *depotVisits = nullptr); // create a solution given the sequence, by applying the split algorithm
-    Solution(const Instance &instance, vector<vector<unsigned int> > routes); // create a solution given the routes
-    vector<vector<unsigned int> > routes;
+    Solution(const Instance &instance, vector<vector<unsigned int> *> routes); // create a solution given the routes
+    vector<vector<unsigned int>* > routes;
 
     vector<unsigned int> routeRD; // release date of each route
     vector<unsigned int> routeTime; // time to perform the route
@@ -50,6 +50,8 @@ public:
     }
 
     static vector<Solution *> *solutionsFromSequences(const Instance &instance, vector<Sequence *> *sequences);
+
+    ~Solution();
 };
 
 

@@ -12,7 +12,7 @@ Solution::Solution(const Instance *instance) : instance(instance) {
 }
 
 Solution::Solution(
-        const Instance &instance, vector<vector<unsigned int> > routes
+        const Instance &instance, vector<vector<unsigned int> *> routes
 ) : instance(&instance), routes(move(routes)), N(instance.nClients()) {
     time = update();
 }
@@ -29,17 +29,17 @@ Solution::Solution(
     }
 
     // create the routes given the depotVisits set
-    routes.push_back(vector<unsigned int>({0}));
+    routes.push_back(new vector<unsigned int>({0}));
     for (unsigned int i : sequence) {
-        routes.back().push_back(i);
+        routes.back()->push_back(i);
 
         const bool is_in = depotVisits->find(i) != depotVisits->end();
         if (is_in) {
-            routes.back().push_back(0);
-            routes.push_back(vector<unsigned int>({0}));
+            routes.back()->push_back(0);
+            routes.push_back(new vector<unsigned int>({0}));
         }
     }
-    routes.back().push_back(0);
+    routes.back()->push_back(0);
 
     time = update(); // calculate the times
 }
@@ -53,12 +53,12 @@ unsigned int Solution::update() {
         routeRD[r] = 0;
         routeTime[r] = 0;
 
-        for (unsigned int i = 1; i < route.size(); i++) {
+        for (unsigned int i = 1; i < route->size(); i++) {
             // calculate time to perform route
-            routeTime[r] += instance->time(route[i - 1], route[i]);
+            routeTime[r] += instance->time(route->at(i - 1), route->at(i));
 
             // and verify the maximum release date of the route
-            unsigned int rdi = instance->releaseDateOf(route[i]);
+            unsigned int rdi = instance->releaseDateOf(route->at(i));
             if (rdi > routeRD[r]) {
                 routeRD[r] = rdi;
             }
@@ -86,7 +86,8 @@ unsigned int Solution::updateStartingTimes(unsigned int from) {
 bool Solution::removeEmptyRoutes() {
     bool hasEmpty = false;
     for (int r = (int) routes.size() - 1; r >= 0; r--) {
-        if (routes[r].size() == 2) { // just the depot at start and end
+        if (routes[r]->size() == 2) { // just the depot at start and end
+            delete routes[r];
             routes.erase(routes.begin() + r);
             routeRD.erase(routeRD.begin() + r);
             routeTime.erase(routeTime.begin() + r);
@@ -99,7 +100,10 @@ bool Solution::removeEmptyRoutes() {
 
 Solution *Solution::copy() const {
     auto sol = new Solution(instance);
-    sol->routes = this->routes;
+    sol->routes.reserve(this->routes.size());
+    for (auto *route : this->routes) {
+        sol->routes.push_back(new vector<unsigned int>(*route));
+    }
     sol->routeRD = this->routeRD;
     sol->routeTime = this->routeTime;
     sol->routeStart = this->routeStart;
@@ -108,7 +112,12 @@ Solution *Solution::copy() const {
 }
 
 void Solution::mirror(Solution *s) {
-    this->routes = s->routes;
+    for (auto *r: this->routes) delete r;
+    this->routes.clear();
+    this->routes.reserve(s->routes.size());
+    for(auto *r: s->routes) {
+        this->routes.push_back(new vector<unsigned int>(*r));
+    }
     this->routeRD = s->routeRD;
     this->routeTime = s->routeTime;
     this->routeStart = s->routeStart;
@@ -120,9 +129,9 @@ void Solution::mirror(Solution *s) {
 Sequence *Solution::toSequence() const {
     auto *s = new Sequence(this->N);
     int i = 0;
-    for (const vector<unsigned int> &route: routes) {
-        for (unsigned int j = 1; j < route.size() - 1; j++) {
-            s->at(i) = route[j];
+    for (const vector<unsigned int> *route: routes) {
+        for (unsigned int j = 1; j < route->size() - 1; j++) {
+            s->at(i) = route->at(j);
             i++;
         }
     }
@@ -136,9 +145,9 @@ void Solution::printRoutes() {
         cout << "   starts at " << routeStart[i];
         cout << "   ends at " << routeStart[i] + routeTime[i] << endl;
 
-        cout << routes[i][0];
-        for (unsigned int j = 1; j < routes[i].size(); j++) {
-            cout << " -> " << routes[i][j];
+        cout << routes[i]->at(0);
+        for (unsigned int j = 1; j < routes[i]->size(); j++) {
+            cout << " -> " << routes[i]->at(j);
         }
         cout << endl;
     }
@@ -152,15 +161,15 @@ void printError(const string &error) {
 void Solution::validate() {
     // check that all the routes are non-empty and start and end at the depot
     for (auto &route: routes) {
-        if (route.size() == 2) {
+        if (route->size() == 2) {
             printError("found_empty_route");
         }
 
-        if (route.front() != 0) {
+        if (route->front() != 0) {
             printError("route_not_starting_at_depot");
         }
 
-        if (route.back() != 0) {
+        if (route->back() != 0) {
             printError("route_not_ending_at_depot");
         }
     }
@@ -169,18 +178,18 @@ void Solution::validate() {
     vector<bool> visited(instance->nVertex(), false);
     visited[0] = true;
     for (auto &route: routes) {
-        for (unsigned int i = 1; i < route.size() - 1; i++) {
-            if (visited[route[i]])
+        for (unsigned int i = 1; i < route->size() - 1; i++) {
+            if (visited[route->at(i)])
                 printError("client_visited_more_than_once");
-            visited[route[i]] = true;
+            visited[route->at(i)] = true;
         }
     }
 
     // check all routes release date
     for (unsigned int r = 0; r < routes.size(); r++) {
         unsigned int rd = 0;
-        for (unsigned int i = 1; i < routes[r].size(); i++) {
-            rd = max(rd, instance->releaseDateOf(routes[r][i]));
+        for (unsigned int i = 1; i < routes[r]->size(); i++) {
+            rd = max(rd, instance->releaseDateOf(routes[r]->at(i)));
         }
         if (routeRD[r] != rd) {
             printError("route_with_incorrect_release_date");
@@ -190,8 +199,8 @@ void Solution::validate() {
     // check all routes times
     for (unsigned int r = 0; r < routes.size(); r++) {
         unsigned int rtime = 0;
-        for (unsigned int i = 1; i < routes[r].size(); i++) {
-            rtime += instance->time(routes[r][i - 1], routes[r][i]);
+        for (unsigned int i = 1; i < routes[r]->size(); i++) {
+            rtime += instance->time(routes[r]->at(i - 1), routes[r]->at(i));
         }
         if (routeTime[r] != rtime) {
             printError("route_with_incorrect_time");
@@ -217,13 +226,13 @@ bool Solution::equals(Solution *other) const {
         return false;
 
     for (unsigned int r = 0; r < this->routes.size(); r++) {
-        if (this->routes[r].size() != other->routes[r].size()
+        if (this->routes[r]->size() != other->routes[r]->size()
             || this->routeRD[r] != other->routeRD[r]
             || this->routeTime[r] != other->routeTime[r])
             return false;
 
-        for (unsigned int c = 1; c < this->routes[r].size() - 1; c++) {
-            if (this->routes[r][c] != other->routes[r][c])
+        for (unsigned int c = 1; c < this->routes[r]->size() - 1; c++) {
+            if (this->routes[r]->at(c) != other->routes[r]->at(c))
                 return false;
         }
     }
@@ -239,4 +248,11 @@ vector<Solution *> *Solution::solutionsFromSequences(
         solutions->at(i) = new Solution(instance, *(sequences->at(i)));
     }
     return solutions;
+}
+
+Solution::~Solution() {
+    for (auto r : routes) {
+        delete r;
+    }
+    routes.clear();
 }

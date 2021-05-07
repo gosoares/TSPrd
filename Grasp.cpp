@@ -61,13 +61,13 @@ Solution *Grasp::constructSolution() {
     uniform_int_distribution<unsigned int> distClients(1, instance.nClients());
 
     // start solution with one route with two clients
-    vector<vector<unsigned int> > routes;
+    vector<vector<unsigned int> *> routes;
     vector<unsigned int> routeRD; // release date of a route
     vector<unsigned int> routeTime; // time to perform route
     vector<unsigned int> routeStart; // time which the route starts
     unsigned int a = distClients(generator), b;
     do b = distClients(generator); while (b == a);
-    routes.push_back({0, a, b, 0});
+    routes.push_back(new vector<unsigned int>({0, a, b, 0}));
     routeRD.push_back(max(RD[a], RD[b]));
     routeStart.push_back(routeRD.back());
     routeTime.push_back(W[0][a] + W[a][b] + W[b][0]);
@@ -86,8 +86,8 @@ Solution *Grasp::constructSolution() {
         insertions.reserve(totalInsertions);
 
         for (unsigned int r = 0; r < routes.size(); r++) {
-            const vector<unsigned int> &route = routes[r];
-            for (unsigned int i = 0; i < routes[r].size() - 1; i++) { // in each arc
+            const vector<unsigned int> &route = *(routes[r]);
+            for (unsigned int i = 0; i < routes[r]->size() - 1; i++) { // in each arc
                 unsigned int preRD = routeRD[r];
                 unsigned int preTime = routeTime[r] - W[route[i]][route[i + 1]];
                 for (const unsigned int &v: remainingClients) { // try to insert each client
@@ -112,7 +112,7 @@ Solution *Grasp::constructSolution() {
         }
 
         for (unsigned int r = 0; r < routes.size(); r++) {
-            const vector<unsigned int> &route = routes[r];
+            const vector<unsigned int> &route = *(routes[r]);
 
             vector<unsigned int> totalTimeForward(route.size()); // total time of going from the depot to the i-th clt
             vector<unsigned int> maxRDForward(route.size()); // higher RD between all from the depot to the i-th element
@@ -168,13 +168,15 @@ Solution *Grasp::constructSolution() {
 
         if (sel->vertex == 0) { // depot insertion
             // move 1 element more in the beginning to change to the depot
-            routes.emplace(routes.begin() + sel->route + 1,
-                           make_move_iterator(routes[sel->route].begin() + sel->position),
-                           make_move_iterator(routes[sel->route].end()));
+            routes.insert(routes.begin() + sel->route + 1,
+                         new vector<unsigned int>(
+                                 make_move_iterator(routes[sel->route]->begin() + sel->position),
+                                 make_move_iterator(routes[sel->route]->end())
+                                 ));
             routes[sel->route][sel->position] = routes[sel->route + 1][0]; // restore moved element
-            routes[sel->route + 1][0] = 0; // change moved element to depot
-            routes[sel->route][sel->position + 1] = 0; // end depot
-            routes[sel->route].resize(sel->position + 2);
+            routes[sel->route + 1]->at(0) = 0; // change moved element to depot
+            routes[sel->route]->at(sel->position + 1) = 0; // end depot
+            routes[sel->route]->resize(sel->position + 2);
 
             // update data on routes
             routeRD[sel->route] = sel->newRD;
@@ -183,7 +185,7 @@ Solution *Grasp::constructSolution() {
             routeTime.insert(routeTime.begin() + sel->route + 1, sel->newTime2);
             routeStart.push_back(0); // only increase the size to update after
         } else { // client insertion
-            routes[sel->route].insert(routes[sel->route].begin() + sel->position + 1, sel->vertex);
+            routes[sel->route]->insert(routes[sel->route]->begin() + sel->position + 1, sel->vertex);
             routeRD[sel->route] = sel->newRD;
             routeTime[sel->route] = sel->newTime;
         }

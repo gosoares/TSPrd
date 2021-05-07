@@ -51,11 +51,11 @@ int main(int argc, char **argv) {
     fout << "OBJ " << s.time << endl;
     fout << "N_ROUTES " << s.routes.size() << endl;
     fout << "N_CLIENTS";
-    for (auto &r: s.routes) fout << " " << (r.size() - 2);
+    for (auto &r: s.routes) fout << " " << (r->size() - 2);
     fout << endl << "ROUTES" << endl;
     for (auto &r: s.routes) {
-        for (unsigned int c = 1; c < r.size() - 1; c++) {
-            fout << r[c] << " ";
+        for (unsigned int c = 1; c < r->size() - 1; c++) {
+            fout << r->at(c) << " ";
         }
         fout << endl;
     }

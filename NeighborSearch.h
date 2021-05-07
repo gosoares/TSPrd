@@ -15,17 +15,17 @@ private:
 
     mt19937 generator;
 
-    unsigned int callIntraSearch(vector<unsigned int> &route, unsigned int which);
-    unsigned int swapSearch(vector<unsigned int> &route, unsigned int n1 = 1, unsigned int n2 = 1);
-    unsigned int swapSearchIt(vector<unsigned int> &route, unsigned int n1, unsigned int n2);
-    int verifySwap(vector<unsigned int> &route, unsigned int i1, unsigned int i2,
+    unsigned int callIntraSearch(vector<unsigned int> *route, unsigned int which);
+    unsigned int swapSearch(vector<unsigned int> *route, unsigned int n1 = 1, unsigned int n2 = 1);
+    unsigned int swapSearchIt(vector<unsigned int> *route, unsigned int n1, unsigned int n2);
+    int verifySwap(vector<unsigned int> *route, unsigned int i1, unsigned int i2,
                             unsigned int n1, unsigned int n2);
-    unsigned int reinsertionSearch(vector<unsigned int> &route, unsigned int n = 1);
-    unsigned int reinsertionSearchIt(vector<unsigned int> &route, unsigned int n);
-    unsigned int twoOptSearch(vector<unsigned int> &route);
-    unsigned int twoOptSearchIt(vector<unsigned int> &route);
+    unsigned int reinsertionSearch(vector<unsigned int> *route, unsigned int n = 1);
+    unsigned int reinsertionSearchIt(vector<unsigned int> *route, unsigned int n);
+    unsigned int twoOptSearch(vector<unsigned int> *route);
+    unsigned int twoOptSearchIt(vector<unsigned int> *route);
 
-    unsigned int callInterSearch(Solution *solution, int which);
+    unsigned int callInterSearch(Solution *solution, unsigned int which);
     static unsigned int calculateEndingTime(Solution *solution, unsigned int r1, unsigned int r2);
     unsigned int routeReleaseDateRemoving(Solution *s, unsigned int r, unsigned int vertex);
     static unsigned int verifySolutionChangingRoutes(

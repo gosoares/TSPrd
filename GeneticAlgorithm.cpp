@@ -15,7 +15,7 @@ GeneticAlgorithm::GeneticAlgorithm(
         const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
         unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
 ) : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
-    timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, mi-1) {
+    timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, (int) mi-1) {
 
     beginTime = steady_clock::now();
     const steady_clock::time_point maxTime = beginTime + seconds(this->timeLimit);
@@ -115,19 +115,19 @@ double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2, bool sym
 
     vector<set<unsigned int> > adjList1(V);
     for (auto &route: s1->routes) {
-        for (unsigned int c = 1; c < route.size(); c++) {
+        for (unsigned int c = 1; c < route->size(); c++) {
             U++; // count arcs in s1
-            a = route[c - 1];
-            b = route[c];
+            a = route->at(c-1);
+            b = route->at(c);
             adjList1[a].insert(b);
             if (symmetric) adjList1[b].insert(a);
         }
     }
 
     for (auto &route: s2->routes) {
-        for (unsigned int c = 1; c < route.size(); c++) {
-            a = route[c - 1];
-            b = route[c];
+        for (unsigned int c = 1; c < route->size(); c++) {
+            a = route->at(c-1);
+            b = route->at(c);
             if (adjList1[a].find(b) != adjList1[a].end()) {
                 I++;
             } else {
@@ -181,7 +181,7 @@ double nCloseMean(const vector<vector<double> > &d, unsigned int n_close, unsign
 }
 
 vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions) const {
-    int N = solutions->size(); // nbIndiv
+    unsigned int N = solutions->size(); // nbIndiv
     vector<double> biasedFitness(N);
 
     vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
@@ -253,7 +253,7 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
     static random_device rd;
     static mt19937 generator(rd());
 
-    int N = parent1.size();
+    unsigned int N = parent1.size();
     uniform_int_distribution<int> dist(0, N - 1);
 
     // choose radomly a sub sequence of the first parent that goes to the offspring
@@ -319,6 +319,9 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution *s1, Solution *s2) {
         return biasedFitness[s1->id] < biasedFitness[s2->id];
     });
+    for(unsigned int c = Mi + 1; c < solutions->size(); c++) {
+        delete solutions->at(c);
+    }
     solutions->resize(Mi);
 }
 
