@@ -3,6 +3,7 @@
 #include <queue>
 #include <algorithm>
 #include "GeneticAlgorithm.h"
+#include "Timer.h"
 
 void freePopulation(vector<Sequence *> *population) {
     for (auto p: *population) {
@@ -17,8 +18,9 @@ GeneticAlgorithm::GeneticAlgorithm(
 ) : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
     timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, (int) mi-1) {
 
-    beginTime = steady_clock::now();
-    const steady_clock::time_point maxTime = beginTime + seconds(this->timeLimit);
+    Timer<milliseconds, steady_clock> timer;
+    timer.start();
+    milliseconds maxTime(this->timeLimit * 1000);
 
     vector<Sequence *> *population = initializePopulation();
     // represents the population for the genetic algorithm
@@ -34,7 +36,7 @@ GeneticAlgorithm::GeneticAlgorithm(
 
     unsigned int iterations_not_improved = 0;
 
-    while (iterations_not_improved < this->itNi && steady_clock::now() < maxTime) {
+    while (iterations_not_improved < this->itNi && timer.elapsedTime() < maxTime) {
         vector<double> biasedFitness = getBiasedFitness(solutions);
 
         while (solutions->size() < mi + lambda) {
@@ -50,7 +52,7 @@ GeneticAlgorithm::GeneticAlgorithm(
             solutions->push_back(sol);
 
             if (sol->time < bestSolution->time) {
-                bestSolutionFoundTime = steady_clock::now();
+                bestSolutionFoundTime = timer.elapsedTime();
                 delete bestSolution;
                 bestSolution = sol->copy();
                 // cout << "Best Solution Found: " << bestSolution->time << endl;
@@ -64,7 +66,7 @@ GeneticAlgorithm::GeneticAlgorithm(
                     break;
                 }
             }
-            if (steady_clock::now() > maxTime) break; // time limit
+            if (timer.elapsedTime() > maxTime) break; // time limit
         }
 
         survivalSelection(solutions);
@@ -76,7 +78,7 @@ GeneticAlgorithm::GeneticAlgorithm(
         }
     }
 
-    endTime = steady_clock::now();
+    endTime = timer.elapsedTime();
 
     this->solution = bestSolution;
 }

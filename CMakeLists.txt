@@ -15,7 +15,7 @@ link_directories("${CPLEX_DIR}/cplex/lib/${CPLEX_ARCH}/static_pic" "${CPLEX_DIR}
 
 add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h
         MathModel.cpp MathModel.h NeighborSearch.cpp NeighborSearch.h GeneticAlgorithm.cpp
-        GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp)
+        GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp Timer.h)
 add_executable(Runner Runner.cpp)
 add_dependencies(Runner TSPrd)
 

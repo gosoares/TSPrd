@@ -23,9 +23,8 @@ private:
     NeighborSearch ns;
     Solution *solution;
 
-    steady_clock::time_point beginTime;
-    steady_clock::time_point endTime;
-    steady_clock::time_point bestSolutionFoundTime;
+    chrono::milliseconds endTime;
+    chrono::milliseconds bestSolutionFoundTime;
 
     // random number generator
     mt19937 generator;
@@ -49,10 +48,10 @@ public:
         return *solution;
     };
     unsigned int getExecutionTime() {
-        return duration_cast<milliseconds>(endTime - beginTime).count();
+        return endTime.count();
     }
     unsigned int getBestSolutionTime() {
-        return duration_cast<milliseconds>(bestSolutionFoundTime - beginTime).count();
+        return bestSolutionFoundTime.count();
     }
 };
 
