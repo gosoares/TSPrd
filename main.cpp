@@ -61,5 +61,13 @@ int main(int argc, char **argv) {
     }
     fout << endl;
     fout.close();
+
+    // output search progress
+    string spFile = outFile.substr(0, outFile.find_last_of('.')) + "_SP.txt";
+    ofstream spout(spFile, ios::out);
+    for (auto x: alg.getSearchProgress()) {
+        spout << x.first << "\t" << x.second << endl;
+    }
+    spout.close();
     return 0;
 }

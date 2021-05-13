@@ -3,7 +3,6 @@
 #include <queue>
 #include <algorithm>
 #include "GeneticAlgorithm.h"
-#include "Timer.h"
 
 void freePopulation(vector<Sequence *> *population) {
     for (auto p: *population) {
@@ -16,11 +15,11 @@ GeneticAlgorithm::GeneticAlgorithm(
         const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
         unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
 ) : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
-    timeLimit(timeLimit), ns(instance), generator((random_device())()), distPopulation(0, (int) mi-1) {
+    timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0), generator((random_device()) ()),
+    distPopulation(0, (int) mi - 1) {
 
-    Timer<milliseconds, steady_clock> timer;
-    timer.start();
     milliseconds maxTime(this->timeLimit * 1000);
+    timer.start();
 
     vector<Sequence *> *population = initializePopulation();
     // represents the population for the genetic algorithm
@@ -32,7 +31,15 @@ GeneticAlgorithm::GeneticAlgorithm(
     // and we transform the solutions in a population, removing the depot visits from the solutions
     // and constructing a vector with only the clients visit sequence
 
-    auto *bestSolution = Solution::INF();
+    // get best solution in inicial population
+    bestSolution = nullptr;
+    for (auto s: *solutions) {
+        if (bestSolution == nullptr || s->time < bestSolution->time) {
+            bestSolution = s;
+        }
+    }
+    bestSolution = bestSolution->copy();
+    searchProgress.emplace_back(timer.elapsedTime().count(), bestSolution->time);
 
     unsigned int iterations_not_improved = 0;
 
@@ -56,6 +63,7 @@ GeneticAlgorithm::GeneticAlgorithm(
                 delete bestSolution;
                 bestSolution = sol->copy();
                 // cout << "Best Solution Found: " << bestSolution->time << endl;
+                searchProgress.emplace_back(bestSolutionFoundTime.count(), bestSolution->time);
 
                 iterations_not_improved = 0;
             } else {
@@ -79,8 +87,6 @@ GeneticAlgorithm::GeneticAlgorithm(
     }
 
     endTime = timer.elapsedTime();
-
-    this->solution = bestSolution;
 }
 
 vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
@@ -119,7 +125,7 @@ double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2, bool sym
     for (auto &route: s1->routes) {
         for (unsigned int c = 1; c < route->size(); c++) {
             U++; // count arcs in s1
-            a = route->at(c-1);
+            a = route->at(c - 1);
             b = route->at(c);
             adjList1[a].insert(b);
             if (symmetric) adjList1[b].insert(a);
@@ -128,7 +134,7 @@ double GeneticAlgorithm::solutionsDistances(Solution *s1, Solution *s2, bool sym
 
     for (auto &route: s2->routes) {
         for (unsigned int c = 1; c < route->size(); c++) {
-            a = route->at(c-1);
+            a = route->at(c - 1);
             b = route->at(c);
             if (adjList1[a].find(b) != adjList1[a].end()) {
                 I++;
@@ -187,15 +193,15 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
     vector<double> biasedFitness(N);
 
     vector<vector<double> > d(N, vector<double>(N)); // guarda a distancia entre cada par de cromossomo
-    for (int i = 0; i < N; i++) {
-        for (int j = i + 1; j < N; j++) {
+    for (unsigned int i = 0; i < N; i++) {
+        for (unsigned int j = i + 1; j < N; j++) {
             d[i][j] = solutionsDistances(solutions->at(i), solutions->at(j), instance.isSymmetric());
             d[j][i] = d[i][j];
         }
     }
 
     vector<double> nMean(N);
-    for (int i = 0; i < N; i++) {
+    for (unsigned int i = 0; i < N; i++) {
         nMean[i] = nCloseMean(d, nClose, i);
     }
 
@@ -256,11 +262,11 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
     static mt19937 generator(rd());
 
     unsigned int N = parent1.size();
-    uniform_int_distribution<int> dist(0, N - 1);
+    uniform_int_distribution<int> dist(0, (int) N - 1);
 
     // choose radomly a sub sequence of the first parent that goes to the offspring
     // a and b represents the start and end index of the sequence, respectively
-    int a, b;
+    unsigned int a, b;
     do {
         a = dist(generator);
         b = dist(generator);
@@ -272,21 +278,21 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
     // copy the chosen subsequence from the first parent to the offspring
     vector<bool> has(N, false);
     auto *offspring = new vector<unsigned int>(N);
-    for (int i = a; i <= b; i++) {
+    for (unsigned int i = a; i <= b; i++) {
         offspring->at(i) = parent1[i];
         has[offspring->at(i)] = true;
     }
 
     // copy the remaining elements keeping the relative order that they appear in the second parent
     int x = 0;
-    for (int i = 0; i < a; i++) {
+    for (unsigned int i = 0; i < a; i++) {
         while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
             x++;
 
         offspring->at(i) = parent2[x];
         x++;
     }
-    for (int i = b + 1; i < N; i++) {
+    for (unsigned int i = b + 1; i < N; i++) {
         while (has[parent2[x]]) // pula os elementos que já foram copiados do primeiro pai
             x++;
 
@@ -321,7 +327,7 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution *s1, Solution *s2) {
         return biasedFitness[s1->id] < biasedFitness[s2->id];
     });
-    for(unsigned int c = Mi + 1; c < solutions->size(); c++) {
+    for (unsigned int c = Mi + 1; c < solutions->size(); c++) {
         delete solutions->at(c);
     }
     solutions->resize(Mi);
@@ -335,7 +341,13 @@ void GeneticAlgorithm::diversify(vector<Solution *> *solutions) {
     vector<Sequence *> *population = initializePopulation();
 
     for (auto *sequence: *population) {
-        solutions->push_back(new Solution(instance, *sequence));
+        auto *s = new Solution(instance, *sequence);
+        if (s->time < this->bestSolution->time) {
+            delete this->bestSolution;
+            this->bestSolution = s->copy();
+            searchProgress.emplace_back(timer.elapsedTime().count(), s->time);
+        }
+        solutions->push_back(s);
         delete sequence;
     }
     delete population;
