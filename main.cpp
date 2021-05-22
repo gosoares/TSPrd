@@ -12,10 +12,10 @@ int main(int argc, char **argv) {
     // genetic algorithm parameters
     unsigned int mi = 25;
     unsigned int lambda = 100;
-    unsigned int nbElite = 10; // el = 0.4; nbElite = el * mi
-    unsigned int nClose = 5;
+    auto nbElite = (unsigned int) (0.4 * mi);
+    auto nClose = (unsigned int) (0.2 * mi);
     unsigned int itNi = 2000; // max iterations without improvement to stop the algorithm
-    unsigned int itDiv = 100; // iterations without improvement to diversify
+    auto itDiv = (unsigned int) (0.4 * itNi); // iterations without improvement to diversify
 
     // grasp parameters
     unsigned int itNiGrasp = 1000;
@@ -41,7 +41,10 @@ int main(int argc, char **argv) {
     string outFile = to_string(timeStamp) + "/" + instanceFile;
     if (argc > 2)
         outFile = string(argv[2]) + "/" + instanceFile;
-    outFile = "output/" + outFile + ".txt";
+    string id = "1";
+    if (argc > 3)
+        id = string(argv[3]);
+    outFile = "output/" + outFile + "_" + id + ".txt";
     string dir = outFile.substr(0, outFile.find_last_of('/'));
     system(("mkdir -p " + dir).c_str());
 

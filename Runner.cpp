@@ -55,15 +55,33 @@ map<string, unsigned int> readOptimalFile(const string &location) {
     return optimal;
 }
 
-bool pathExists(const string &s)
-{
+bool pathExists(const string &s) {
     struct stat buffer;
-    return (stat (s.c_str(), &buffer) == 0);
+    return (stat(s.c_str(), &buffer) == 0);
+}
+
+string devToFormattedString(double dev) {
+    char buffer[20];
+    sprintf(buffer, "%.2f", dev);
+    int stringEnd;
+    for (stringEnd = 0; buffer[stringEnd] != '\0'; stringEnd++);
+
+    if (buffer[stringEnd - 1] == '0') {
+        buffer[stringEnd - 1] = ' ';
+        if (buffer[stringEnd - 2] == '0') {
+            buffer[stringEnd - 2] = ' ';
+            buffer[stringEnd - 3] = ' ';
+        }
+    }
+
+    return string(buffer);
 }
 
 void runInstances(const vector<Instance> &instances, const string &executionId, const string &outputFolder) {
 //    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 //            std::chrono::system_clock::now().time_since_epoch()).count();
+
+    static const unsigned int NUMBER_EXECUTIONS = 5;
 
     char buffer[512];
     sprintf(buffer, "output/%s/%s.txt", outputFolder.c_str(), executionId.c_str()); // output file
@@ -72,37 +90,54 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
     cout << fixed;
     cout.precision(2);
 
-    cout << "beta   Instance   TE(ms)  TI(ms)    Obj     opt   dev" << endl;
-    fout << "beta   Instance   TE(ms)  TI(ms)    Obj     opt   dev" << endl;
+    cout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj  BestDev       MeanObj  MeanDev" << endl;
+    fout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj  BestDev       MeanObj  MeanDev" << endl;
 
     unsigned int better = 0, worse = 0, same = 0;
 
     for (auto &instance: instances) {
-        sprintf(buffer, "./TSPrd %s %s", instance.file.c_str(), outputFolder.c_str());
-        stringstream stream(execute(buffer));
+        unsigned int sumObj = 0;
+        unsigned int bestObj = numeric_limits<unsigned int>::max();
+        unsigned int sumExecutionTime = 0;
+        unsigned int sumBestSolutionTime = 0;
 
-        map<string, string> values = readValues(stream);
+        for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
+            sprintf(buffer, "./TSPrd %s %s %d", instance.file.c_str(), outputFolder.c_str(), i+1);
+            stringstream stream(execute(buffer));
 
-        if (values.count("ERROR") > 0) {
-            string error = "Error: " + values["ERROR"];
-            sprintf(buffer, "%3s  %10s   %s", instance.beta.c_str(), instance.name.c_str(), error.c_str());
-            cout << buffer << endl;
-            fout << buffer << endl;
-            continue;
+            map<string, string> values = readValues(stream);
+
+            if (values.count("ERROR") > 0) {
+                string error = "Error: " + values["ERROR"];
+                sprintf(buffer, "%3s  %10s   %s", instance.beta.c_str(), instance.name.c_str(), error.c_str());
+                cout << buffer << endl;
+                fout << buffer << endl;
+                continue;
+            }
+
+            unsigned int result = stoi(values["RESULT"]);
+            unsigned int executionTime = stoi(values["EXEC_TIME"]);
+            unsigned int bestSolutionTime = stoi(values["SOL_TIME"]);
+            sumObj += result;
+            bestObj = min(bestObj, result);
+            sumExecutionTime += executionTime;
+            sumBestSolutionTime += bestSolutionTime;
         }
 
-        unsigned int result = stoi(values["RESULT"]);
-        unsigned int executionTime = stoi(values["EXEC_TIME"]);
-        unsigned int bestSolutionTime = stoi(values["SOL_TIME"]);
+        const double meanObj = (double) sumObj / NUMBER_EXECUTIONS;
+        const unsigned int meanExecutionTime = sumExecutionTime / NUMBER_EXECUTIONS;
+        const unsigned int meanBestSolutionTime = sumBestSolutionTime / NUMBER_EXECUTIONS;
 
-        if (result < instance.optimal) better++;
-        else if (result > instance.optimal) worse++;
+        if (meanObj < instance.optimal) better++;
+        else if (meanObj > instance.optimal) worse++;
         else same++;
 
-        double deviation = (((double) result / instance.optimal) - 1) * 100;
+        double deviationMean = (((double) meanObj / instance.optimal) - 1) * 100;
+        double deviationBest = (((double) bestObj / instance.optimal) - 1) * 100;
 
-        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d  %6d  % 2.2f%%", instance.beta.c_str(), instance.name.c_str(),
-                executionTime, bestSolutionTime, result, instance.optimal, deviation);
+        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d       %6d   % 2.2f%%      %9.2f   % 2.2f%%", instance.beta.c_str(),
+                instance.name.c_str(), meanExecutionTime, meanBestSolutionTime, instance.optimal, bestObj,
+                deviationBest, meanObj, deviationMean);
 
         cout << buffer << endl;
         fout << buffer << endl;
@@ -117,7 +152,8 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
 void runSolomonInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("Solomon/0ptimal.txt");
 
-    vector<unsigned int> ns({10, 15, 20, 50, 100});
+//    vector<unsigned int> ns({10, 15, 20, 50, 100});
+    vector<unsigned int> ns({100});
     vector<string> names({"C101", "C201", "R101", "RC101"});
     vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
 
@@ -184,16 +220,17 @@ void runATSPLIBInstances(const string &outputFolder) {
 }
 
 int main() {
-    string outputFolder = "2021.05.05_15.40";
+    string outputFolder = "teste2";
+    bool allowExistentFolder = false;
 
-    if(pathExists("output/" + outputFolder)) {
+    if(pathExists("output/" + outputFolder) && !allowExistentFolder) {
         throw invalid_argument("output dir already exists!");
     } else {
         system(("mkdir -p output/" + outputFolder).c_str());
     }
 
     runSolomonInstances(outputFolder);
-    runTSPLIBInstances(outputFolder);
-    runATSPLIBInstances(outputFolder);
+//    runTSPLIBInstances(outputFolder);
+//    runATSPLIBInstances(outputFolder);
     return 0;
 }
