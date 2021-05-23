@@ -90,8 +90,8 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
     cout << fixed;
     cout.precision(2);
 
-    cout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj  BestDev       MeanObj  MeanDev" << endl;
-    fout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj  BestDev       MeanObj  MeanDev" << endl;
+    cout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev" << endl;
+    fout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev" << endl;
 
     unsigned int better = 0, worse = 0, same = 0;
 
@@ -135,7 +135,7 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
         double deviationMean = (((double) meanObj / instance.optimal) - 1) * 100;
         double deviationBest = (((double) bestObj / instance.optimal) - 1) * 100;
 
-        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d       %6d   % 2.2f%%      %9.2f   % 2.2f%%", instance.beta.c_str(),
+        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d       %6d   % 6.2f%%      %9.2f   % 6.2f%%", instance.beta.c_str(),
                 instance.name.c_str(), meanExecutionTime, meanBestSolutionTime, instance.optimal, bestObj,
                 deviationBest, meanObj, deviationMean);
 
@@ -152,8 +152,7 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
 void runSolomonInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("Solomon/0ptimal.txt");
 
-//    vector<unsigned int> ns({10, 15, 20, 50, 100});
-    vector<unsigned int> ns({100});
+    vector<unsigned int> ns({10, 15, 20, 50, 100});
     vector<string> names({"C101", "C201", "R101", "RC101"});
     vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
 
@@ -220,7 +219,7 @@ void runATSPLIBInstances(const string &outputFolder) {
 }
 
 int main() {
-    string outputFolder = "teste2";
+    string outputFolder = "Runner";
     bool allowExistentFolder = false;
 
     if(pathExists("output/" + outputFolder) && !allowExistentFolder) {
@@ -230,7 +229,7 @@ int main() {
     }
 
     runSolomonInstances(outputFolder);
-//    runTSPLIBInstances(outputFolder);
-//    runATSPLIBInstances(outputFolder);
+    runATSPLIBInstances(outputFolder);
+    runTSPLIBInstances(outputFolder);
     return 0;
 }
