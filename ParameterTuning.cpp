@@ -98,19 +98,38 @@ void saveOptionalValues() {
 //             {25, 50, 0.4, 0.2, 2000},
 //     });
 
-    vector<string> instances;
-    for (const auto &entry : filesystem::directory_iterator("instances/testSet")) {
-        if(entry.path().filename().string().at(0) != '0')
-            instances.push_back(entry.path().filename());
-    }
-    sort(instances.begin(), instances.end());
+//    vector<pair<unsigned int, string>> instances;
+//    for (const auto &entry : filesystem::directory_iterator("instances/testSet")) {
+//        string filename = entry.path().filename().string();
+//        if(filename.at(0) != '0') {
+//            unsigned int n = stoi(regex_replace(filename, regex("[^0-9]*([0-9]+).*"), string("$1")));
+//            instances.emplace_back(n, filename.substr(0, filename.find_last_of('.')));
+//        }
+//    }
+//    sort(instances.begin(), instances.end());
+//    for(auto i : instances) {
+//        cout << '"' <<  i.second << "\", ";
+//    }
 
+    vector<string> instances(
+            {"ch150_0.5", "ch150_1", "ch150_1.5", "ch150_2", "ch150_2.5", "ch150_3", "kroA150_0.5", "kroA150_1",
+             "kroA150_1.5", "kroA150_2", "kroA150_2.5", "kroA150_3", "kroB150_0.5", "kroB150_1", "kroB150_1.5",
+             "kroB150_2", "kroB150_2.5", "kroB150_3", "pr152_0.5", "pr152_1", "pr152_1.5", "pr152_2", "pr152_2.5",
+             "pr152_3", "u159_0.5", "u159_1", "u159_1.5", "u159_2", "u159_2.5", "u159_3", "rat195_0.5", "rat195_1",
+             "rat195_1.5", "rat195_2", "rat195_2.5", "rat195_3", "d198_0.5", "d198_1", "d198_1.5", "d198_2", "d198_2.5",
+             "d198_3", "kroA200_0.5", "kroA200_1", "kroA200_1.5", "kroA200_2", "kroA200_2.5", "kroA200_3",
+             "kroB200_0.5", "kroB200_1", "kroB200_1.5", "kroB200_2", "kroB200_2.5", "kroB200_3", "ts225_0.5", "ts225_1",
+             "ts225_1.5", "ts225_2", "ts225_2.5", "ts225_3", "tsp225_0.5", "tsp225_1", "tsp225_1.5", "tsp225_2",
+             "tsp225_2.5", "tsp225_3", "pr226_0.5", "pr226_1", "pr226_1.5", "pr226_2", "pr226_2.5", "pr226_3",
+             "gil262_0.5", "gil262_1", "gil262_1.5", "gil262_2", "gil262_2.5", "gil262_3", "pr264_0.5", "pr264_1",
+             "pr264_1.5", "pr264_2", "pr264_2.5", "pr264_3", "a280_0.5", "a280_1", "a280_1.5", "a280_2", "a280_2.5",
+             "a280_3", "pr299_0.5", "pr299_1", "pr299_1.5", "pr299_2", "pr299_2.5", "pr299_3"});
     ofstream fout("instances/testSet/0ref.txt", ios::out);
 
-    for(const auto &instanceName: instances) {
+    for (const auto &instanceName: instances) {
         unsigned int bestObj = numeric_limits<unsigned int>::max();
-        for(int i = 0; i < 10; i++) {
-            Instance instance("testSet/" + instanceName.substr(0, instanceName.find_last_of('.')));
+        for (int i = 0; i < 10; i++) {
+            Instance instance("testSet/" + instanceName);
             auto result = runWith(instance, {25, 100, 0.4, 0.2, 2000});
             bestObj = min(bestObj, result.obj);
         }
