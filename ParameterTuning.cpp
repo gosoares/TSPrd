@@ -23,16 +23,21 @@ struct Params {
     double nc;
     unsigned int itNi;
 
-    [[nodiscard]] unsigned int nClose() const {
+    unsigned int nClose() const {
         return (unsigned int) (nc * mi);
     }
 
-    [[nodiscard]] unsigned int nbElit() const {
+    unsigned int nbElit() const {
         return (unsigned int) (el * mi);
     }
 
-    [[nodiscard]] unsigned int itDiv() const {
+    unsigned int itDiv() const {
         return (unsigned int) (0.4 * itNi);
+    }
+
+    void print() const {
+        cout << "mi: " << mi << "  lambda: " << lambda;
+        cout << "  el: " << el << "  nc: " << nc << endl;
     }
 };
 
@@ -147,6 +152,7 @@ map<string, unsigned int> readOptimalFile() {
 }
 
 void testParams(const Params &params, const vector<string> &instances, const map<string, unsigned int> &optimals) {
+    params.print();
     const unsigned int NUMBER_EXECUTIONS = 10;
     const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size();
 
@@ -154,9 +160,14 @@ void testParams(const Params &params, const vector<string> &instances, const map
     unsigned totalTimeExec = 0;
     unsigned totalTimeBest = 0;
 
+    int nInstance = 0;
     for (auto const &instanceName : instances) {
+        nInstance++;
         Instance instance("testSet/" + instanceName);
         for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
+            cout << "\rRuning: " << nInstance << "/" << instances.size();
+            cout << "  " << (i + 1) << "/" << NUMBER_EXECUTIONS << "       ";
+            fflush(stdout);
             auto result = runWith(instance, params);
             double gap = (((double) result.obj / optimals.at(instanceName)) - 1) * 100;
             totalGap += gap;
@@ -179,7 +190,7 @@ void testParams(const Params &params, const vector<string> &instances, const map
     fout.close();
 }
 
-void run() {
+void run(int which = -1) {
     vector<Params> paramsSet({
                                      {25, 100, 0.4, 0.2, 2000},
                                      {13, 50,  0.4, 0.2, 2000},
@@ -191,15 +202,29 @@ void run() {
     instances.reserve(optimal.size());
     for (auto const &x : optimal) instances.push_back(x.first);
 
-    for (const auto &params: paramsSet) {
-        testParams(params, instances, optimal);
+    if(which == -1) {
+        for (const auto &params: paramsSet) {
+            testParams(params, instances, optimal);
+        }
+    } else {
+        testParams(paramsSet[which], instances, optimal);
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
+    cout << fixed;
+    cout.precision(2);
 //    copyInstances();
 //    saveOptionalValues();
-    run();
+
+    int which = -1;
+    if(argc > 1) {
+        which = stoi(argv[1]);
+    } else {
+        cout << "Runing all params" << endl;
+    }
+
+    run(which);
     return 0;
 }
 
