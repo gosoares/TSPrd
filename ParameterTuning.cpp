@@ -91,13 +91,6 @@ Result runWith(const Instance &instance, const Params &params) {
 }
 
 void saveOptionalValues() {
-//    vector<Params> cenarios = vector<Params>({
-//             {25, 100, 0.4, 0.2, 2000},
-//             {13, 50, 0.4, 0.2, 2000},
-//             {50, 200, 0.4, 0.2, 2000},
-//             {25, 50, 0.4, 0.2, 2000},
-//     });
-
 //    vector<pair<unsigned int, string>> instances;
 //    for (const auto &entry : filesystem::directory_iterator("instances/testSet")) {
 //        string filename = entry.path().filename().string();
@@ -140,9 +133,73 @@ void saveOptionalValues() {
     fout.close();
 }
 
+map<string, unsigned int> readOptimalFile() {
+    map<string, unsigned int> optimal;
+    ifstream fin("instances/testSet/0ref.txt", ios::in);
+    string instName;
+    unsigned int opt;
+    while (fin.good()) {
+        fin >> instName >> opt;
+        optimal[instName] = opt;
+    }
+    fin.close();
+    return optimal;
+}
+
+void testParams(const Params &params, const vector<string> &instances, const map<string, unsigned int> &optimals) {
+    const unsigned int NUMBER_EXECUTIONS = 10;
+    const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size();
+
+    double totalGap = 0;
+    unsigned totalTimeExec = 0;
+    unsigned totalTimeBest = 0;
+
+    for (auto const &instanceName : instances) {
+        Instance instance("testSet/" + instanceName);
+        for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
+            auto result = runWith(instance, params);
+            double gap = (((double) result.obj / optimals.at(instanceName)) - 1) * 100;
+            totalGap += gap;
+            totalTimeExec += result.timeStop;
+            totalTimeBest += result.timeBest;
+        }
+    }
+
+    double meanGap = totalGap / TOTAL_EXECUTIONS;
+    unsigned int meanTimeExec = totalTimeExec / TOTAL_EXECUTIONS;
+    unsigned int meanTimeBest = totalTimeBest / TOTAL_EXECUTIONS;
+
+    char buffer[200];
+    sprintf(buffer, "(%2d %3d %.2f %.2f) -> %8d %8d % 7.2f%%", params.mi, params.lambda, params.el, params.nc,
+            meanTimeExec, meanTimeBest, meanGap);
+    cout << buffer << endl;
+
+    ofstream fout("instances/testSet/0results.txt", ios::app);
+    fout << buffer << endl;
+    fout.close();
+}
+
+void run() {
+    vector<Params> paramsSet({
+                                     {25, 100, 0.4, 0.2, 2000},
+                                     {13, 50,  0.4, 0.2, 2000},
+                                     {50, 200, 0.4, 0.2, 2000},
+                                     {25, 50,  0.4, 0.2, 2000},
+                             });
+    map<string, unsigned int> optimal = readOptimalFile();
+    vector<string> instances;
+    instances.reserve(optimal.size());
+    for (auto const &x : optimal) instances.push_back(x.first);
+
+    for (const auto &params: paramsSet) {
+        testParams(params, instances, optimal);
+    }
+}
+
 int main() {
 //    copyInstances();
-    saveOptionalValues();
+//    saveOptionalValues();
+    run();
     return 0;
 }
 
