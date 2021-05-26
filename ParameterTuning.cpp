@@ -4,9 +4,11 @@
 #include <map>
 #include <iostream>
 #include "GeneticAlgorithm.h"
-#include <filesystem>
+#include <experimental/filesystem>
 #include <regex>
 #include <fstream>
+
+namespace filesystem = experimental::filesystem;
 
 struct Result {
     unsigned int obj;
@@ -120,6 +122,7 @@ void saveOptionalValues() {
 }
 
 int main() {
+//    copyInstances();
     saveOptionalValues();
     return 0;
 }
