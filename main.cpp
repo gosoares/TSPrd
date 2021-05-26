@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     unsigned int itNiGrasp = 1000;
     double alpha = 0.2;
 
-    unsigned int timeLimit = 10 * 60; // in seconds
+    auto timeLimit = (unsigned int) (10 * 60 * (1976.0 / 1201.0)); // in seconds
 
     string instanceFile = argv[1];
     Instance instance(instanceFile);
