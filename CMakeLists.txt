@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(TSPrd)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(Boost_USE_STATIC_LIBS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIL_STD")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
@@ -13,10 +13,12 @@ set(CPLEX_ARCH "x86-64_osx")
 include_directories("${CPLEX_DIR}/cplex/include" "${CPLEX_DIR}/concert/include")
 link_directories("${CPLEX_DIR}/cplex/lib/${CPLEX_ARCH}/static_pic" "${CPLEX_DIR}/concert/lib/${CPLEX_ARCH}/static_pic")
 
-add_executable(TSPrd main.cpp Instance.cpp Instance.h Solution.cpp Solution.h
-        MathModel.cpp MathModel.h NeighborSearch.cpp NeighborSearch.h GeneticAlgorithm.cpp
-        GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp Timer.h)
+set(mainFiles Instance.cpp Instance.h Solution.cpp Solution.h NeighborSearch.cpp NeighborSearch.h
+        GeneticAlgorithm.cpp GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp Timer.h)
+set(modelFiles MathModel.cpp MathModel.h)
+add_executable(TSPrd main.cpp ${mainFiles})
 add_executable(Runner Runner.cpp)
 add_dependencies(Runner TSPrd)
+add_executable(Param ParameterTuning.cpp ${mainFiles})
 
 target_link_libraries(TSPrd ilocplex concert cplex m pthread dl)

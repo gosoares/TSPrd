@@ -22,7 +22,7 @@ Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), sym
     string instanceSet = instance.substr(0, instance.find('/'));
     if (instanceSet == "aTSPLIB") {
         readDistanceMatrixInstance(in);
-    } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon") {
+    } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon" || instanceSet == "testSet") {
         readCoordinatesListInstance(in);
     } else {
         cout << "ERROR unknown_instance_set" << endl;

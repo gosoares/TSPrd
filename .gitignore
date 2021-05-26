@@ -2,4 +2,5 @@ cmake-build-*/
 .idea/
 TSPrd
 Runner
+Param
 output/
