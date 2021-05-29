@@ -95,7 +95,7 @@ Result runWith(const Instance &instance, const Params &params) {
     return {ga.getSolution().time, ga.getBestSolutionTime(), ga.getExecutionTime()};
 }
 
-void saveOptionalValues() {
+void saveOptionalValues(int which = 0) {
 //    vector<pair<unsigned int, string>> instances;
 //    for (const auto &entry : filesystem::directory_iterator("instances/testSet")) {
 //        string filename = entry.path().filename().string();
@@ -110,29 +110,31 @@ void saveOptionalValues() {
 //    }
 
     vector<string> instances(
-            {"ch150_0.5", "ch150_1", "ch150_1.5", "ch150_2", "ch150_2.5", "ch150_3", "kroA150_0.5", "kroA150_1",
-             "kroA150_1.5", "kroA150_2", "kroA150_2.5", "kroA150_3", "kroB150_0.5", "kroB150_1", "kroB150_1.5",
-             "kroB150_2", "kroB150_2.5", "kroB150_3", "pr152_0.5", "pr152_1", "pr152_1.5", "pr152_2", "pr152_2.5",
-             "pr152_3", "u159_0.5", "u159_1", "u159_1.5", "u159_2", "u159_2.5", "u159_3", "rat195_0.5", "rat195_1",
-             "rat195_1.5", "rat195_2", "rat195_2.5", "rat195_3", "d198_0.5", "d198_1", "d198_1.5", "d198_2", "d198_2.5",
-             "d198_3", "kroA200_0.5", "kroA200_1", "kroA200_1.5", "kroA200_2", "kroA200_2.5", "kroA200_3",
-             "kroB200_0.5", "kroB200_1", "kroB200_1.5", "kroB200_2", "kroB200_2.5", "kroB200_3", "ts225_0.5", "ts225_1",
-             "ts225_1.5", "ts225_2", "ts225_2.5", "ts225_3", "tsp225_0.5", "tsp225_1", "tsp225_1.5", "tsp225_2",
-             "tsp225_2.5", "tsp225_3", "pr226_0.5", "pr226_1", "pr226_1.5", "pr226_2", "pr226_2.5", "pr226_3",
-             "gil262_0.5", "gil262_1", "gil262_1.5", "gil262_2", "gil262_2.5", "gil262_3", "pr264_0.5", "pr264_1",
-             "pr264_1.5", "pr264_2", "pr264_2.5", "pr264_3", "a280_0.5", "a280_1", "a280_1.5", "a280_2", "a280_2.5",
-             "a280_3", "pr299_0.5", "pr299_1", "pr299_1.5", "pr299_2", "pr299_2.5", "pr299_3"});
+            {"ch150", "kroA150", "kroB150", "pr152", "u159", "rat195", "d198", "kroA200", "kroB200", "ts225", "tsp225",
+             "pr226", "gil262", "pr264", "a280", "pr299"});
+    vector<string> betas = {"0.5", "1", "1.5", "2", "2.5", "3"};
+    if(which == 1) {
+        betas = {"0.5", "1"};
+    } else if(which == 2) {
+        betas = {"1.5", "2"};
+    } else if(which == 3) {
+        betas = {"2.5", "3"};
+    }
+
     ofstream fout("instances/testSet/0ref.txt", ios::out);
 
-    for (const auto &instanceName: instances) {
-        unsigned int bestObj = numeric_limits<unsigned int>::max();
-        for (int i = 0; i < 10; i++) {
-            Instance instance("testSet/" + instanceName);
-            auto result = runWith(instance, {25, 100, 0.4, 0.2, 2000});
-            bestObj = min(bestObj, result.obj);
+    for (const auto &instName: instances) {
+        for(const auto &beta: betas) {
+            string instanceName = instName + '_' + beta; // NOLINT(performance-inefficient-string-concatenation)
+            unsigned int bestObj = numeric_limits<unsigned int>::max();
+            for (int i = 0; i < 10; i++) {
+                Instance instance("testSet/" + instanceName);
+                auto result = runWith(instance, {25, 100, 0.4, 0.2, 2000});
+                bestObj = min(bestObj, result.obj);
+            }
+            fout << instanceName << " " << bestObj << endl;
+            cout << instanceName << " " << bestObj << endl;
         }
-        fout << instanceName << " " << bestObj << endl;
-        cout << instanceName << " " << bestObj << endl;
     }
 
     fout.close();
@@ -202,7 +204,7 @@ void run(int which = -1) {
     instances.reserve(optimal.size());
     for (auto const &x : optimal) instances.push_back(x.first);
 
-    if(which == -1) {
+    if (which == -1) {
         for (const auto &params: paramsSet) {
             testParams(params, instances, optimal);
         }
@@ -215,65 +217,17 @@ int main(int argc, char **argv) {
     cout << fixed;
     cout.precision(2);
 //    copyInstances();
-//    saveOptionalValues();
+    saveOptionalValues();
 
     int which = -1;
-    if(argc > 1) {
+    if (argc > 1) {
         which = stoi(argv[1]);
     } else {
         cout << "Runing all params" << endl;
     }
 
-    run(which);
+//    run(which);
     return 0;
 }
-
-
-// void run() {
-//    map<string, double> params;
-//    params["mi"] = 25;
-//    params["lambda"] = 100;
-//    params["el"] = 0.4;
-//    params["nc"] = 0.2;
-//    params["itNi"] = 500;
-//
-//    map<string, double> bestDev;
-//    for (const auto &k : params) {
-//        bestDev[k.first] = numeric_limits<double>::max();
-//    }
-//
-//    map<string, vector<double>> possibleParams;
-//    possibleParams["mi"] = {15, 25, 40, 60, 80, 100, 140, 200};
-//    possibleParams["lambda"] = {50, 100, 150, 200, 300};
-//    possibleParams["el"] = {0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
-//    possibleParams["nc"] = {0.05, 0.1, 0.2, 0.3, 0.5};
-//
-//    for (string which: {"mi", "lambda", "el", "nc"}) {
-//        for (double testParam : possibleParams[which]) {
-//            double previousParam = params[which];
-//            params[which] = testParam;
-//
-//            double paramDev = 0;
-//            for (const auto &inst: instances) {
-//                for (int i = 0; i < 1; i++) {
-//                    Instance instance(inst.first);
-//                    auto r = runWith(instance, params);
-//                    double deviation = ((double) r.obj / inst.second) - 1;
-//                    paramDev += deviation;
-//                }
-//            }
-//
-//            if (bestDev[which] - paramDev > 0.000001) { // if is better than current best
-//                bestDev[which] = paramDev;
-//            } else {
-//                params[which] = previousParam; // restore previous param
-//            }
-//
-//            cout << testParam << " " << paramDev << endl;
-//        }
-//
-//        cout << endl << which << ": " << params[which] << endl;
-//    }
-//}
 
 #endif //TSPRD_PARAMETERTUNING_CPP
