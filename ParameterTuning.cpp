@@ -113,27 +113,32 @@ void saveOptionalValues(int which = 0) {
             {"ch150", "kroA150", "kroB150", "pr152", "u159", "rat195", "d198", "kroA200", "kroB200", "ts225", "tsp225",
              "pr226", "gil262", "pr264", "a280", "pr299"});
     vector<string> betas = {"0.5", "1", "1.5", "2", "2.5", "3"};
-    if(which == 1) {
+    if (which == 1) {
         betas = {"0.5", "1"};
-    } else if(which == 2) {
+    } else if (which == 2) {
         betas = {"1.5", "2"};
-    } else if(which == 3) {
+    } else if (which == 3) {
         betas = {"2.5", "3"};
+    } else if (which < 0) {
+        which = 0;
     }
 
-    ofstream fout("instances/testSet/0ref.txt", ios::out);
+    string outfile = "instances/testSet/0ref" + to_string(which) + ".txt";
+    ofstream fout(outfile, ios::out);
 
     for (const auto &instName: instances) {
-        for(const auto &beta: betas) {
+        for (const auto &beta: betas) {
             string instanceName = instName + '_' + beta; // NOLINT(performance-inefficient-string-concatenation)
             unsigned int bestObj = numeric_limits<unsigned int>::max();
             for (int i = 0; i < 10; i++) {
+                cout << "\rRunning " << instanceName << "  ";
+                cout << to_string(i+1) << "/10       ";
                 Instance instance("testSet/" + instanceName);
                 auto result = runWith(instance, {25, 100, 0.4, 0.2, 2000});
                 bestObj = min(bestObj, result.obj);
             }
             fout << instanceName << " " << bestObj << endl;
-            cout << instanceName << " " << bestObj << endl;
+            cout << endl << instanceName << " " << bestObj << endl;
         }
     }
 
@@ -167,7 +172,7 @@ void testParams(const Params &params, const vector<string> &instances, const map
         nInstance++;
         Instance instance("testSet/" + instanceName);
         for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
-            cout << "\rRuning: " << nInstance << "/" << instances.size();
+            cout << "\rRunning: " << nInstance << "/" << instances.size();
             cout << "  " << (i + 1) << "/" << NUMBER_EXECUTIONS << "       ";
             fflush(stdout);
             auto result = runWith(instance, params);
@@ -217,7 +222,6 @@ int main(int argc, char **argv) {
     cout << fixed;
     cout.precision(2);
 //    copyInstances();
-    saveOptionalValues();
 
     int which = -1;
     if (argc > 1) {
@@ -226,6 +230,7 @@ int main(int argc, char **argv) {
         cout << "Runing all params" << endl;
     }
 
+    saveOptionalValues(which);
 //    run(which);
     return 0;
 }
