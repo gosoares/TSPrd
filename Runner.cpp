@@ -81,7 +81,7 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
 //    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 //            std::chrono::system_clock::now().time_since_epoch()).count();
 
-    static const unsigned int NUMBER_EXECUTIONS = 5;
+    static const unsigned int NUMBER_EXECUTIONS = 10;
 
     char buffer[512];
     sprintf(buffer, "output/%s/%s.txt", outputFolder.c_str(), executionId.c_str()); // output file
@@ -174,7 +174,7 @@ void runSolomonInstances(const string &outputFolder) {
     }
 }
 
-void runTSPLIBInstances(const string &outputFolder) {
+void runTSPLIBInstances(const string &outputFolder, int which = -1) {
     map<string, unsigned int> optimal = readOptimalFile("TSPLIB/0ptimal.txt");
 
     vector<string> names(
@@ -183,6 +183,9 @@ void runTSPLIBInstances(const string &outputFolder) {
              "kroA150", "kroB150", "pr152", "u159", "rat195", "d198", "kroA200", "kroB200", "ts225", "tsp225", "pr226",
              "gil262", "pr264", "a280", "pr299", "lin318", "rd400", "fl417", "pr439", "pcb442", "d493"});
     vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
+    if(which > 0) {
+        betas = {betas[which-1]};
+    }
 
     vector<Instance> instances(names.size() + betas.size());
     instances.resize(0); // resize but keep allocated memory
@@ -195,7 +198,7 @@ void runTSPLIBInstances(const string &outputFolder) {
         }
     }
 
-    runInstances(instances, "TSPLIB", outputFolder);
+    runInstances(instances, "TSPLIB", outputFolder + "_" + betas.back());
 }
 
 void runATSPLIBInstances(const string &outputFolder) {
@@ -218,18 +221,28 @@ void runATSPLIBInstances(const string &outputFolder) {
     runInstances(instances, "aTSPLIB", outputFolder);
 }
 
-int main() {
-    string outputFolder = "Runner";
-    bool allowExistentFolder = false;
+int main(int argc, char **argv) {
+    string outputFolder = "Results";
+    bool allowExistentFolder = true;
 
-    if(pathExists("output/" + outputFolder) && !allowExistentFolder) {
-        throw invalid_argument("output dir already exists!");
+    int which;
+    if (argc > 1) {
+        which = stoi(argv[1]);
+    } else {
+        throw invalid_argument("missing argument");
+    }
+
+    if(pathExists("output/" + outputFolder)) {
+        if(!allowExistentFolder) throw invalid_argument("output dir already exists!");
     } else {
         system(("mkdir -p output/" + outputFolder).c_str());
     }
 
-    runSolomonInstances(outputFolder);
-    runATSPLIBInstances(outputFolder);
-    runTSPLIBInstances(outputFolder);
+    if(which == 0) {
+        runSolomonInstances(outputFolder);
+        runATSPLIBInstances(outputFolder);
+    } else {
+        runTSPLIBInstances(outputFolder, which);
+    }
     return 0;
 }

@@ -57,7 +57,6 @@ public:
                      unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit);
 
     const Solution &getSolution() {
-        bestSolution->validate();
         return *bestSolution;
     };
 
