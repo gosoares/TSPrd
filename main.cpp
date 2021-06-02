@@ -10,11 +10,11 @@ using namespace std;
 int main(int argc, char **argv) {
 
     // genetic algorithm parameters
-    unsigned int mi = 25;
-    unsigned int lambda = 100;
-    auto nbElite = (unsigned int) (0.4 * mi);
-    auto nClose = (unsigned int) (0.2 * mi);
-    unsigned int itNi = 2000; // max iterations without improvement to stop the algorithm
+    unsigned int mi = 20;
+    unsigned int lambda = 40;
+    auto nbElite = (unsigned int) (0.5 * mi);
+    auto nClose = (unsigned int) (0.3 * mi);
+    unsigned int itNi = 10000; // max iterations without improvement to stop the algorithm
     auto itDiv = (unsigned int) (0.4 * itNi); // iterations without improvement to diversify
 
     // grasp parameters
