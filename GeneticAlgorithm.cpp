@@ -13,10 +13,10 @@ void freePopulation(vector<Sequence *> *population) {
 
 GeneticAlgorithm::GeneticAlgorithm(
         const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose, unsigned int nbElite,
-        unsigned int itNi, unsigned int itDiv, unsigned int timeLimit
+        unsigned int itNi, unsigned int itDiv, unsigned int timeLimit, RoutePool &routePool
 ) : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
     timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0), generator((random_device()) ()),
-    distPopulation(0, (int) mi - 1) {
+    distPopulation(0, (int) mi - 1), routePool(routePool) {
 
     milliseconds maxTime(this->timeLimit * 1000);
     timer.start();
@@ -57,6 +57,8 @@ GeneticAlgorithm::GeneticAlgorithm(
             // EDUCACAO
             ns.educate(sol);
             solutions->push_back(sol);
+
+            routePool.addRoutesFrom(*sol);
 
             if (sol->time < bestSolution->time) {
                 bestSolutionFoundTime = timer.elapsedTime();

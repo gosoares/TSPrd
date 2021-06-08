@@ -4,6 +4,7 @@
 #include "Solution.h"
 #include "GeneticAlgorithm.h"
 #include "Grasp.h"
+#include "RoutePool.h"
 
 using namespace std;
 
@@ -26,10 +27,14 @@ int main(int argc, char **argv) {
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
-    auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit);
+    RoutePool routePool(10000);
+
+    auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit, routePool);
 //    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
     Solution s = alg.getSolution();
     s.validate();
+
+    // chamar modelo aqui
 
     cout << "RESULT " << s.time << endl;
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;

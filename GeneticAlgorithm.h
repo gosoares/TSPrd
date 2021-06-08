@@ -6,6 +6,7 @@
 #include "Instance.h"
 #include "NeighborSearch.h"
 #include "Timer.h"
+#include "RoutePool.h"
 
 using namespace chrono;
 
@@ -29,6 +30,8 @@ private:
     chrono::milliseconds bestSolutionFoundTime;
 
     vector<pair<unsigned int, unsigned int> > searchProgress; // stores (time, value) of each best solution found
+
+    RoutePool &routePool;
 
     // random number generator
     mt19937 generator;
@@ -54,7 +57,8 @@ private:
 
 public:
     GeneticAlgorithm(const Instance &instance, unsigned int mi, unsigned int lambda, unsigned int nClose,
-                     unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit);
+                     unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit,
+                     RoutePool &routePool);
 
     const Solution &getSolution() {
         return *bestSolution;
