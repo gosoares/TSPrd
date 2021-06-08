@@ -246,3 +246,9 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+
+struct RouteDate {
+    vector<vector<unsigned int> > route;
+    unsigned int releaseTime;
+    unsigned int duration;
+};

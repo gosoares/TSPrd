@@ -3,5 +3,6 @@ cmake-build-*/
 TSPrd
 Runner
 Param
+rp
 output/
 instances/testSet
