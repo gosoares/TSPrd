@@ -1,9 +1,12 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "performance-inefficient-string-concatenation"
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <vector>
+#include <regex>
 
 using namespace std;
 
@@ -97,33 +100,44 @@ void convertToCsvTSPLIB() {
 
     map<string, unsigned int> archObjs = readOptimalFile("TSPLIB/0ptimal.txt");
 
-    ofstream fout("output/0Result/TSPLIB.csv", ios::out);
-    fout << fixed << setprecision(2);
     for(auto &beta: betas) {
-        fout << "Beta," << beta << ",," << endl;
+        ofstream fout("output/0Result/TSPLIB_" + beta + ".csv", ios::out);
+        fout << fixed << setprecision(2);
         for(auto &name: names) {
             string instance = name + "_" + beta;
             unsigned int bestObj = numeric_limits<unsigned int>::max();
-            unsigned int sumObj = 0;
+            unsigned int sumObj = 0, sumTI = 0, sumTE = 0;
             for(unsigned int i = 1; i <= 10; i++) {
                 string path = "output/0Result/Results/TSPLIB/" + instance + "_" + to_string(i) + ".txt";
                 ifstream fin(path, ios::in);
-                fin >> aux >> obj;
-                fin >> aux >> obj;
-                fin >> aux >> obj;
-                fin.close();
 
+                fin >> aux >> obj;
+                sumTE += obj;
+
+                fin >> aux >> obj;
+                sumTI += obj;
+
+                fin >> aux >> obj;
                 sumObj += obj;
                 bestObj = min(bestObj, obj);
+
+                fin.close();
             }
 
-            double gap = (((double) bestObj / archObjs[instance]) - 1) * 100;
-            fout << name << "," << archObjs[instance] << "," << bestObj << "," << gap << endl;
-        }
+            double meanObj = sumObj / 10.0;
+            unsigned int meanTE = (sumTE / 10) / 1000;
+            unsigned int meanTI = (sumTI / 10) / 1000;
 
-        fout << ",,," << endl;
+            double gapBest = (((double) bestObj / archObjs[instance]) - 1) * 100;
+            double gapMean = (((double) meanObj / archObjs[instance]) - 1) * 100;
+
+            fout << name << ",," << archObjs[instance] << ",,";
+            fout << bestObj << "," << gapBest << ",,";
+            fout << meanObj << "," << gapMean << ",";
+            fout << meanTE << "," << meanTI << endl;
+        }
+        fout.close();
     }
-    fout.close();
 }
 #pragma clang diagnostic pop
 
@@ -173,9 +187,79 @@ void convertToCsvATSPLIB() {
     fout.close();
 }
 
+void tsplibStats() {
+    vector<string> names(
+            {"eil51", "berlin52", "st70", "eil76", "pr76", "rat99", "kroA100", "kroB100", "kroC100", "kroD100",
+             "kroE100", "rd100", "eil101", "lin105", "pr107", "pr124", "bier127", "ch130", "pr136", "pr144", "ch150",
+             "kroA150", "kroB150", "pr152", "u159", "rat195", "d198", "kroA200", "kroB200", "ts225", "tsp225", "pr226",
+             "gil262", "pr264", "a280", "pr299", "lin318", "rd400", "fl417", "pr439", "pcb442", "d493"});
+    vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
+
+    vector<pair<unsigned int, unsigned int> > intervals({
+                                                                {50, 100},
+                                                                {101, 150},
+                                                                {151, 250},
+                                                                {251, 500},
+
+    });
+
+    map<string, unsigned int> archObjs = readOptimalFile("TSPLIB/0ptimal.txt");
+    string aux;
+    unsigned int obj;
+
+    for(const auto &interval: intervals) {
+        unsigned int qnt = 0, qntArchBest = 0, qntMyBest = 0, meanTE = 0, meanTI = 0;
+        double sumGaps = 0.0;
+        for(const auto &name: names) {
+            unsigned int n = stoi(regex_replace(name, regex("[^0-9]*([0-9]+).*"), string("$1")));
+            if(n < interval.first || n > interval.second) continue;
+
+            for(const auto &beta: betas) {
+                qnt++;
+
+                string instance = name + "_" + beta;
+                unsigned int bestObj = numeric_limits<unsigned int>::max();
+                unsigned int sumTI = 0, sumTE = 0, meanObj = 0;
+                for(unsigned int i = 1; i <= 10; i++) {
+                    string path = "output/0Result/Results/TSPLIB/" + instance + "_" + to_string(i) + ".txt";
+                    ifstream fin(path, ios::in);
+                    fin >> aux >> obj;
+                    sumTE += obj;
+                    fin >> aux >> obj;
+                    sumTI += obj;
+                    fin >> aux >> obj;
+                    meanObj += obj;
+                    bestObj = min(bestObj, obj);
+                    fin.close();
+                }
+
+
+                if(archObjs[instance] < bestObj) qntArchBest++;
+                else if (bestObj < archObjs[instance]) qntMyBest++;
+
+                meanObj /= 10;
+                meanTE += (sumTE / 10) / 1000;
+                meanTI += (sumTI / 10) / 1000;
+                double gapBest = (((double) bestObj / archObjs[instance]) - 1) * 100;
+                double gapMean = (((double) meanObj / archObjs[instance]) - 1) * 100;
+                sumGaps += gapBest;
+            }
+        }
+        cout << interval.first << "-" << interval.second << endl;
+        cout << "qnt: " << qnt << endl;
+        cout << "qntArch: " << qntArchBest << "   ";
+        cout << "qntMy: " << qntMyBest << endl;
+        cout << "TM: " << to_string(meanTI / qnt) << endl;
+        cout << "gap: " << to_string(sumGaps / qnt) << endl;
+        cout << endl;
+    }
+
+}
+
 int main(int argc, char **argv) {
     cout << fixed << setprecision(2);
 
-    convertToCsvTSPLIB();
+    tsplibStats();
     return 0;
 }
+#pragma clang diagnostic pop
