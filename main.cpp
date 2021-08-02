@@ -5,6 +5,7 @@
 #include "GeneticAlgorithm.h"
 #include "Grasp.h"
 #include "RoutePool.h"
+#include "MathModelRoutes.h"
 
 using namespace std;
 
@@ -35,6 +36,14 @@ int main(int argc, char **argv) {
     s.validate();
 
     // chamar modelo aqui
+    MathModelRoutes model(routePool, routePool.routes.size(), instance.nClients());
+    
+    Solution sModel = Solution(instance, model.solve());
+
+    cout << "solucao obtida" << endl;
+
+    getchar();
+
 
     cout << "RESULT " << s.time << endl;
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
