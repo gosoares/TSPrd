@@ -42,12 +42,11 @@ int main(int argc, char **argv) {
 
     cout << "solucao obtida" << endl;
 
-    getchar();
-
-
     cout << "RESULT " << s.time << endl;
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
     cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+
+    cout << "RESULT_MODEL " << sModel.time << endl;
 
     // output to file
     unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
