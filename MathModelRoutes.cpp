@@ -246,7 +246,7 @@ void MathModelRoutes::addConstraints(){
 
 vector<vector<unsigned int>*> MathModelRoutes::solve(){
     IloCplex cplex(this->env);
-    cout << this->model << endl;
+    //cout << this->model << endl;
 
     try{
         cout << "extrair" << endl;
