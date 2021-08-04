@@ -122,16 +122,26 @@ void MathModelRoutes::addVariables(){
         }
     }
 
-    this->T0 = IloIntVarArray(this->env, nClients, 0, INF);
-    this->Tf = IloIntVarArray(this->env, nClients, 0, INF);
 
 
-    //Adiciona variáveis T0 e Tf ao modelo
-    for(int i = 0; i < nClients; i++){
-        this->T0[i].setName(std::string("T0_" + std::to_string(i)).c_str());
+    try{
+        this->T0 = IloIntVarArray(this->env, nClients, 0, INF);
+        this->Tf = IloIntVarArray(this->env, nClients, 0, INF);
 
-        this->Tf[i].setName(std::string("Tf_" + std::to_string(i)).c_str());
-    }
+
+        //Adiciona variáveis T0 e Tf ao modelo
+        for(int i = 0; i < nClients; i++){
+            this->T0[i].setName(std::string("T0_" + std::to_string(i)).c_str());
+
+            this->Tf[i].setName(std::string("Tf_" + std::to_string(i)).c_str());
+        }
+
+    }catch(IloException& e){
+        cerr << "CPLEX found the following exception: " << e << endl;
+        e.end();
+    }catch(...){
+        cerr << "The following unknown exception was found: " << endl;
+    }    
 }
 
 void MathModelRoutes::addObjFunction(){
@@ -176,7 +186,7 @@ void MathModelRoutes::addConstraints(){
     }
 
 
-    /*for (int k = 0; k < nClients; k++) { // (3)
+    for (int k = 0; k < nClients; k++) { // (3)
         IloExpr sum2(this->env);
         for (int i = 0; i < nRoutes; i++) {
             sum2 += (int) routePool.routes[i]->releaseTime * x[i][k];
@@ -212,7 +222,7 @@ void MathModelRoutes::addConstraints(){
 
         this->model.add(c5);
         sum3.end();
-    }*/
+    }
 
     for (int k = 0; k < nClients-1; k++) { // (6)
         IloExpr sum4(this->env);
@@ -236,13 +246,24 @@ void MathModelRoutes::addConstraints(){
 
 vector<vector<unsigned int>*> MathModelRoutes::solve(){
     IloCplex cplex(this->env);
+    cout << this->model << endl;
 
-    cplex.extract(this->model);
+    try{
+        cout << "extrair" << endl;
+        cplex.extract(this->model);
 
-    cplex.exportModel("output/model.lp");
-    cout << "resolver o modelo" << endl;
+        //cplex.exportModel("output/model.lp");
+        cout << "resolver o modelo" << endl;
+
+        cplex.solve();
+
+    }catch(IloException& e){
+        cerr << "CPLEX found the following exception: " << e << endl;
+        e.end();
+    }catch(...){
+        cerr << "The following unknown exception was found: " << endl;
+    }
     
-    cplex.solve();
 
     cout << "------------- Results -------------------" << endl;
     cout << cplex.getCplexStatus() << endl;
