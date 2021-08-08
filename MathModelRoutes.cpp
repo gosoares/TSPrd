@@ -279,6 +279,9 @@ vector<vector<unsigned int>*> MathModelRoutes::solve(){
         }
     }
 
+    this->env.end();
+
+
     return routes;
 }
 
