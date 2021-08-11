@@ -73,7 +73,7 @@ MathModelRoutes::MathModelRoutes(
     execute();
 }*/
 
-void MathModelRoutes::getA(vector<vector<unsigned int>> &a){
+void MathModelRoutes::getA(vector<vector<int>> &a){
     int lenRoute = 0;
 
     for(int i = 0; i < nRoutes; i++){
@@ -89,9 +89,9 @@ MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, uns
     this->nRoutes = nRoutes;
     this->nClients = nClients;
 
-    vector<vector<unsigned int>> a;
+    vector<vector<int>> a;
     for(int i = 0; i < nRoutes; i++){
-        vector<unsigned int> vectorA(nClients, 0);
+        vector<int> vectorA(nClients, 0);
         a.push_back(vectorA);
     }
 
@@ -100,7 +100,7 @@ MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, uns
     routes = addConstraints(a);
 }
 
-vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<unsigned int>> a){
+vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<int>> a){
     IloEnv env;
     IloModel model(env);
     IloArray<IloBoolVarArray> x;
