@@ -283,8 +283,6 @@ vector<vector<unsigned int>*> MathModelRoutes::addConstraints(){
         }
     }
 
-    env.end();
-
     return routes;
 }
 
