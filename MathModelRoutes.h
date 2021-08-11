@@ -30,7 +30,7 @@ private:
     
     
 
-    vector<vector<unsigned int>*> addConstraints();
+    vector<vector<unsigned int>*> addConstraints(vector<vector<unsigned int>> a);
     void getA(vector<vector<unsigned int>> &a);
 };
 

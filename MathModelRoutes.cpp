@@ -89,23 +89,25 @@ MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, uns
     this->nRoutes = nRoutes;
     this->nClients = nClients;
 
-    
-    routes = addConstraints();
-}
-
-vector<vector<unsigned int>*> MathModelRoutes::addConstraints(){
-    IloEnv env;
-    IloModel model(env);
-    IloArray<IloBoolVarArray> x;
-    IloIntVarArray T0;
-    IloIntVarArray Tf;
-
     vector<vector<unsigned int>> a;
     for(int i = 0; i < nRoutes; i++){
         vector<unsigned int> vectorA(nClients, 0);
         a.push_back(vectorA);
     }
 
+
+    
+    routes = addConstraints(a);
+}
+
+vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<unsigned int>> a){
+    IloEnv env;
+    IloModel model(env);
+    IloArray<IloBoolVarArray> x;
+    IloIntVarArray T0;
+    IloIntVarArray Tf;
+
+    
     getA(a);
 
     //Cria matriz
