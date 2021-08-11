@@ -14,12 +14,10 @@ public:
     //explicit MathModelRoutes(const Instance &instance, const vector<unsigned int> &sequence);
     //MathModelRoutes(const Instance &instance, vector<set<unsigned int> > &adjList);
     MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients, vector<vector<unsigned int>*> &routes);
-    vector<vector<unsigned int>*> solve();   
 
 
 private:
     RoutePool &routePool;
-    vector<vector<unsigned int>> a;
 
     unsigned int nRoutes;
     unsigned int nClients;
@@ -33,7 +31,7 @@ private:
     
 
     vector<vector<unsigned int>*> addConstraints();
-    void getA();
+    void getA(vector<vector<unsigned int>> &a);
 };
 
 
