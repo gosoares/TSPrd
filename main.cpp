@@ -35,10 +35,11 @@ int main(int argc, char **argv) {
     Solution s = alg.getSolution();
     s.validate();
 
+    vector<vector<unsigned int>*> routes;
     // chamar modelo aqui
-    MathModelRoutes model(routePool, routePool.routes.size(), instance.nClients());
+    MathModelRoutes model(routePool, routePool.routes.size(), instance.nClients(), routes);
     
-    Solution sModel = Solution(instance, model.solve());
+    Solution sModel = Solution(instance, routes);
 
     cout << "solucao obtida" << endl;
 

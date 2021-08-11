@@ -84,7 +84,7 @@ void MathModelRoutes::getA(){
     }
 }
 
-MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients) : routePool(routePool), model(env){
+MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients, vector<vector<unsigned int>*> &routes) : routePool(routePool){
     //this->routePool = routePool;
     this->nRoutes = nRoutes;
     this->nClients = nClients;
@@ -94,46 +94,44 @@ MathModelRoutes::MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, uns
         this->a.push_back(vectorA);
     }
 
-
-    addVariables();
-
-    addObjFunction();
-
-    addConstraints();
-
-    cout << "fiz o model" << endl;
+    routes = addConstraints();
 }
 
+vector<vector<unsigned int>*> MathModelRoutes::addConstraints(){
+    IloEnv env;
+    IloModel model(env);
+    IloArray<IloBoolVarArray> x;
+    IloIntVarArray T0;
+    IloIntVarArray Tf;
 
-void MathModelRoutes::addVariables(){
+    getA();
+
     //Cria matriz
-    this->x = IloArray< IloBoolVarArray > (this->env, nRoutes);
+    x = IloArray< IloBoolVarArray > (env, nRoutes);
     for(int i = 0; i < nRoutes; i++) {
-        IloBoolVarArray vetor_i(this->env, nClients);
-        this->x[i] = vetor_i;
+        IloBoolVarArray vetor_i(env, nClients);
+        x[i] = vetor_i;
     }
 
     //Adiciona variáveis x ao modelo
     char var[100];
     for(int i = 0; i < nRoutes; i++) {
         for(int j = 0; j < nClients; j++) {
-            this->x[i][j].setName(std::string("x" + std::to_string(i) + "_" + std::to_string(j)).c_str());
+            x[i][j].setName(std::string("x" + std::to_string(i) + "_" + std::to_string(j)).c_str());
             //model.add(x[i][j]);
         }
     }
 
-
-
     try{
-        this->T0 = IloIntVarArray(this->env, nClients, 0, INF);
-        this->Tf = IloIntVarArray(this->env, nClients, 0, INF);
+        T0 = IloIntVarArray(env, nClients, 0, INF);
+        Tf = IloIntVarArray(env, nClients, 0, INF);
 
 
         //Adiciona variáveis T0 e Tf ao modelo
         for(int i = 0; i < nClients; i++){
-            this->T0[i].setName(std::string("T0_" + std::to_string(i)).c_str());
+            T0[i].setName(std::string("T0_" + std::to_string(i)).c_str());
 
-            this->Tf[i].setName(std::string("Tf_" + std::to_string(i)).c_str());
+            Tf[i].setName(std::string("Tf_" + std::to_string(i)).c_str());
         }
 
     }catch(IloException& e){
@@ -141,23 +139,28 @@ void MathModelRoutes::addVariables(){
         e.end();
     }catch(...){
         cerr << "The following unknown exception was found: " << endl;
-    }    
-}
+    }   
 
-void MathModelRoutes::addObjFunction(){
-    this->model.add(IloMinimize(this->env, Tf[nClients - 1])); // FO
-}
 
-void MathModelRoutes::addConstraints(){
-    getA();
+    //------------------- Modelo ----------------------------//
+    try{
+        cout << Tf << endl;
+
+        model.add(IloMinimize(env, Tf[nClients - 1])); // FO
+    }catch(IloException& e){
+        cerr << "CPLEX found the following exception: " << e << endl;
+        e.end();
+    }catch(...){
+        cerr << "The following unknown exception was found: " << endl;
+    } 
 
     char c_name[32];
 
     for(int j = 0; j < nClients; j++){ // (1)
-        IloExpr sum(this->env);   
+        IloExpr sum(env);   
         for(int k = 0; k < nClients; k++){
             for(int i = 0; i < nRoutes; i++){
-                sum += (int) a[i][j] * this->x[i][k];
+                sum += (int) a[i][j] * x[i][k];
             }
         }
 
@@ -166,14 +169,14 @@ void MathModelRoutes::addConstraints(){
         sprintf(c_name, "c_1(%d)", j);
         c1.setName((char*) c_name);
 
-        this->model.add(c1);
+        model.add(c1);
         sum.end();
     }
 
     for (int k = 0; k < nClients; k++) { // (2)
-        IloExpr sum1(this->env);
+        IloExpr sum1(env);
         for (int i = 0; i < nRoutes; i++) {
-            sum1 += this->x[i][k];
+            sum1 += x[i][k];
         }
 
         IloConstraint c2 = (sum1 <= 1);
@@ -181,13 +184,13 @@ void MathModelRoutes::addConstraints(){
         sprintf(c_name, "c_2(%d)", k);
         c2.setName((char*) c_name);
 
-        this->model.add(c2);
+        model.add(c2);
         sum1.end();
     }
 
 
     for (int k = 0; k < nClients; k++) { // (3)
-        IloExpr sum2(this->env);
+        IloExpr sum2(env);
         for (int i = 0; i < nRoutes; i++) {
             sum2 += (int) routePool.routes[i]->releaseTime * x[i][k];
         }
@@ -197,21 +200,21 @@ void MathModelRoutes::addConstraints(){
         sprintf(c_name, "c_3(%d)", k);
         c3.setName((char*) c_name);
 
-        this->model.add(c3);
+        model.add(c3);
         sum2.end();
     }
 
     for (int k = 1; k < nClients; k++) { // (4)
         IloConstraint c4 = (T0[k] >= Tf[k-1]);
-
+        
         sprintf(c_name, "c_4(%d)", k);
         c4.setName((char*) c_name);
 
-        this->model.add(c4);
+        model.add(c4);
     }
 
     for (int k = 0; k < nClients; k++) { // (5)
-        IloExpr sum3(this->env);
+        IloExpr sum3(env);
         for (int i = 0; i < nRoutes; i++) {
             sum3 += (int) routePool.routes[i]->duration * x[i][k];
         }
@@ -220,37 +223,36 @@ void MathModelRoutes::addConstraints(){
         sprintf(c_name, "c_5(%d)", k);
         c5.setName((char*) c_name);
 
-        this->model.add(c5);
+        model.add(c5);
         sum3.end();
     }
 
     for (int k = 0; k < nClients-1; k++) { // (6)
-        IloExpr sum4(this->env);
-        IloExpr sum5(this->env);
+        IloExpr sum4(env);
+        IloExpr sum5(env);
 
         for (int i = 0; i < nRoutes; i++) {
-            sum4 += this->x[i][k];
-            sum5 += this->x[i][k+1];
+            sum4 += x[i][k];
+            sum5 += x[i][k+1];
         }
         IloConstraint c6 = (sum4 >= sum5);
 
         sprintf(c_name, "c_6(%d)", k);
         c6.setName((char*) c_name);
 
-        this->model.add(c6);
+        model.add(c6);
         sum4.end();
         sum5.end();
     }
 
-}
+    // ------------------ Resolução do modelo ------------------//
 
-vector<vector<unsigned int>*> MathModelRoutes::solve(){
-    IloCplex cplex(this->env);
+    IloCplex cplex(env);
     //cout << this->model << endl;
 
     try{
         cout << "extrair" << endl;
-        cplex.extract(this->model);
+        cplex.extract(model);
 
         //cplex.exportModel("output/model.lp");
         cout << "resolver o modelo" << endl;
@@ -279,8 +281,7 @@ vector<vector<unsigned int>*> MathModelRoutes::solve(){
         }
     }
 
-    this->env.end();
-
+    env.end();
 
     return routes;
 }

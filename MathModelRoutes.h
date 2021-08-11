@@ -13,7 +13,7 @@ public:
     // uses the math model to perform a split on the sequence
     //explicit MathModelRoutes(const Instance &instance, const vector<unsigned int> &sequence);
     //MathModelRoutes(const Instance &instance, vector<set<unsigned int> > &adjList);
-    MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients);
+    MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients, vector<vector<unsigned int>*> &routes);
     vector<vector<unsigned int>*> solve();   
 
 
@@ -30,16 +30,9 @@ private:
     unsigned int modK; // size of the routes set
     */
     
-    IloEnv env;
-    IloModel model;
-    IloArray<IloBoolVarArray> x;
-    IloIntVarArray T0;
-    IloIntVarArray Tf;
+    
 
-    void addConstraints();
-    void addObjFunction();
-    void addVariables();
-    void execute();
+    vector<vector<unsigned int>*> addConstraints();
     void getA();
 };
 
