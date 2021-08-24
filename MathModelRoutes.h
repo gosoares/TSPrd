@@ -14,6 +14,7 @@ public:
     //explicit MathModelRoutes(const Instance &instance, const vector<unsigned int> &sequence);
     //MathModelRoutes(const Instance &instance, vector<set<unsigned int> > &adjList);
     MathModelRoutes(RoutePool &routePool, unsigned int nRoutes, unsigned int nClients, vector<vector<unsigned int>*> &routes);
+    IloNum getTime();
 
 
 private:
@@ -27,6 +28,8 @@ private:
     unsigned int modV; // size of the vertex set
     unsigned int modK; // size of the routes set
     */
+
+    IloNum time;
     
     
 

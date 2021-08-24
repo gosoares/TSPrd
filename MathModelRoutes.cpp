@@ -77,9 +77,9 @@ void MathModelRoutes::getA(vector<vector<int>> &a){
     int lenRoute = 0;
 
     for(int i = 0; i < nRoutes; i++){
-        lenRoute = routePool.routes[i]->route.size();
-        for(int j = 0; j < lenRoute; j++){
-            a[i][j] = 1;
+        lenRoute = routePool.routes[i]->route.size() -1;
+        for(int j = 1; j < lenRoute; j++){
+            a[i][routePool.routes[i]->route[j] - 1] = 1;
         }
     }
 }
@@ -148,7 +148,7 @@ vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<int>
 
     //------------------- Modelo ----------------------------//
     try{
-        cout << Tf << endl;
+        //cout << Tf << endl;
 
         model.add(IloMinimize(env, Tf[nClients - 1])); // FO
     }catch(IloException& e){
@@ -255,11 +255,11 @@ vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<int>
     //cout << this->model << endl;
 
     try{
-        cout << "extrair" << endl;
+        //cout << "extrair" << endl;
         cplex.extract(model);
 
         //cplex.exportModel("output/model.lp");
-        cout << "resolver o modelo" << endl;
+        //cout << "resolver o modelo" << endl;
 
         cplex.solve();
 
@@ -271,9 +271,12 @@ vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<int>
     }
     
 
-    cout << "------------- Results -------------------" << endl;
-    cout << cplex.getCplexStatus() << endl;
-    cout << "Result: " << cplex.getObjValue() << endl << endl;
+    //cout << "------------- Results -------------------" << endl;
+    //cout << cplex.getCplexStatus() << endl;
+    //cout << "Result: " << cplex.getObjValue() << endl << endl;
+    //cout << "Time: " << cplex.getTime() << endl;
+
+    this->time = cplex.getTime();
 
     vector<vector<unsigned int>*> routes;
 
@@ -285,7 +288,13 @@ vector<vector<unsigned int>*> MathModelRoutes::addConstraints(vector<vector<int>
         }
     }
 
+    env.end();
+
     return routes;
+}
+
+IloNum MathModelRoutes::getTime(){
+    return this->time;
 }
 
 /*

@@ -81,7 +81,7 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
 //    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
 //            std::chrono::system_clock::now().time_since_epoch()).count();
 
-    static const unsigned int NUMBER_EXECUTIONS = 10;
+    static const unsigned int NUMBER_EXECUTIONS = 1;
 
     char buffer[512];
     sprintf(buffer, "output/%s/%s.txt", outputFolder.c_str(), executionId.c_str()); // output file
@@ -90,16 +90,23 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
     cout << fixed;
     cout.precision(2);
 
-    cout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev" << endl;
-    fout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev" << endl;
+    cout << "betas  Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev    ResultModel    GapModelHeuristc    GapOptimalModel TimeModel   QuantRoutes" << endl;
+    fout << "beta   Instance   TE(ms)  TI(ms)    opt       BestObj   BestDev       MeanObj   MeanDev    ResultModel    GapModelHeuristc    GapOptimalModel TimeModel   QuantRoutes" << endl;
 
     unsigned int better = 0, worse = 0, same = 0;
+    unsigned int betterModelHeuristc = 0, worseModelHeuristc = 0, sameModelHeuristc = 0;
+    unsigned int betterOptimalModel = 0, worseOptimalModel = 0, sameOptimalModel = 0;
+
+
 
     for (auto &instance: instances) {
         unsigned int sumObj = 0;
         unsigned int bestObj = numeric_limits<unsigned int>::max();
         unsigned int sumExecutionTime = 0;
         unsigned int sumBestSolutionTime = 0;
+        unsigned int resultModel = 0;
+        unsigned int executionTimeModel = 0;
+        unsigned int routesInModel = 0;
 
         for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
             sprintf(buffer, "./TSPrd %s %s %d", instance.file.c_str(), outputFolder.c_str(), i+1);
@@ -118,6 +125,12 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
             unsigned int result = stoi(values["RESULT"]);
             unsigned int executionTime = stoi(values["EXEC_TIME"]);
             unsigned int bestSolutionTime = stoi(values["SOL_TIME"]);
+            unsigned int resultModel = stoi(values["RESULT_MODEL"]);
+            unsigned int executionTimeModel = stoi(values["EXEC_TIME_MODEL"]);
+            unsigned int routesInModel = stoi(values["COUNT_ROUTES"]);
+
+
+
             sumObj += result;
             bestObj = min(bestObj, result);
             sumExecutionTime += executionTime;
@@ -132,19 +145,36 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
         else if (meanObj > instance.optimal) worse++;
         else same++;
 
+        double gapModelHeuristic = resultModel - meanObj;
+        double gapOptimalModel = resultModel - instance.optimal;
+
+        if (resultModel < meanObj) betterModelHeuristc++;
+        else if (resultModel > meanObj) worseModelHeuristc++;
+        else sameModelHeuristc++;
+
+        if (resultModel < instance.optimal) betterOptimalModel++;
+        else if (resultModel > instance.optimal) worseOptimalModel++;
+        else sameOptimalModel++;
+
+
         double deviationMean = (((double) meanObj / instance.optimal) - 1) * 100;
         double deviationBest = (((double) bestObj / instance.optimal) - 1) * 100;
 
-        sprintf(buffer, "%3s  %10s  %6d  %6d  %6d       %6d   % 6.2f%%      %9.2f   % 6.2f%%", instance.beta.c_str(),
+        sprintf(buffer, "%3s    %10s    %6d %6d %6d %6d % 6.2f%%    %9.2f   % 6.2f%%  %6d   %6.2f   %6.2f   %6.2d   %6d", instance.beta.c_str(),
                 instance.name.c_str(), meanExecutionTime, meanBestSolutionTime, instance.optimal, bestObj,
-                deviationBest, meanObj, deviationMean);
+                deviationBest, meanObj, deviationMean, resultModel, gapModelHeuristic, gapOptimalModel, executionTimeModel, routesInModel);
 
         cout << buffer << endl;
         fout << buffer << endl;
         fout.flush();
     }
     cout << "Better: " << better << "  |  Worse: " << worse << "  |  Same: " << same << endl;
+    cout << "BetterModelHeuristc: " << betterModelHeuristc << "  |  WorseModelHeuristc: " << worseModelHeuristc << "  |  SameModelHeuristc: " << sameModelHeuristc << endl;
+    cout << "BetterOptimalModel: " << betterOptimalModel << "  |  WorseOptimalModel: " << worseOptimalModel << "  |  SameOptimalModel: " << sameOptimalModel << endl;
+
     fout << "Better: " << better << "  |  Worse: " << worse << "  |  Same: " << same << endl;
+    fout << "BetterModelHeuristc: " << betterModelHeuristc << "  |  WorseModelHeuristc: " << worseModelHeuristc << "  |  SameModelHeuristc: " << sameModelHeuristc << endl;
+    fout << "BetterOptimalModel: " << betterOptimalModel << "  |  WorseOptimalModel: " << worseOptimalModel << "  |  SameOptimalModel: " << sameOptimalModel << endl;
 
     fout.close();
 }
@@ -152,9 +182,13 @@ void runInstances(const vector<Instance> &instances, const string &executionId, 
 void runSolomonInstances(const string &outputFolder) {
     map<string, unsigned int> optimal = readOptimalFile("Solomon/0ptimal.txt");
 
-    vector<unsigned int> ns({10, 15, 20, 50, 100});
-    vector<string> names({"C101", "C201", "R101", "RC101"});
-    vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
+    vector<unsigned int> ns({10, 15});
+    //vector<unsigned int> ns({10, 15, 20, 50, 100});
+    vector<string> names({"C101"});
+    //vector<string> names({"C101", "C201", "R101", "RC101"});
+    vector<string> betas({"0.5"});
+    //vector<string> betas({"0.5", "1", "1.5", "2", "2.5", "3"});
+
 
     vector<Instance> instances;
     instances.reserve(betas.size() * names.size());
@@ -240,9 +274,9 @@ int main(int argc, char **argv) {
 
     if(which == 0) {
         runSolomonInstances(outputFolder);
-        runATSPLIBInstances(outputFolder);
+        //runATSPLIBInstances(outputFolder);
     } else {
-        runTSPLIBInstances(outputFolder, which);
+        //runTSPLIBInstances(outputFolder, which);
     }
     return 0;
 }
