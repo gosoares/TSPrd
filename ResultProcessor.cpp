@@ -125,8 +125,8 @@ void convertToCsvTSPLIB() {
             }
 
             double meanObj = sumObj / 10.0;
-            unsigned int meanTE = (sumTE / 10) / 1000;
-            unsigned int meanTI = (sumTI / 10) / 1000;
+            unsigned int meanTE = (unsigned int) ((sumTE / 10.0) / (1976.0 / 1201.0)) / 1000;
+            unsigned int meanTI = (unsigned int) ((sumTI / 10.0) / (1976.0 / 1201.0)) / 1000;
 
             double gapBest = (((double) bestObj / archObjs[instance]) - 1) * 100;
             double gapMean = (((double) meanObj / archObjs[instance]) - 1) * 100;
@@ -238,8 +238,8 @@ void tsplibStats() {
                 else if (bestObj < archObjs[instance]) qntMyBest++;
 
                 meanObj /= 10;
-                meanTE += (sumTE / 10) / 1000;
-                meanTI += (sumTI / 10) / 1000;
+                meanTE += (unsigned int) ((sumTE / 10.0) / (1976.0 / 1201.0)) / 1000;
+                meanTI += (unsigned int) ((sumTI / 10.0) / (1976.0 / 1201.0)) / 1000;
                 double gapBest = (((double) bestObj / archObjs[instance]) - 1) * 100;
                 double gapMean = (((double) meanObj / archObjs[instance]) - 1) * 100;
                 sumGaps += gapBest;
