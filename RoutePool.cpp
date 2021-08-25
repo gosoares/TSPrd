@@ -4,9 +4,14 @@
 
 using namespace std;    
 
-RoutePool::RoutePool(unsigned int maxRoutes): maxRoutes(maxRoutes) {}
+RoutePool::RoutePool(unsigned int maxRoutes, int nClients): maxRoutes(maxRoutes) {
+    this->nClients = nClients;
+}
 
 void RoutePool::addRoutesFrom(const Solution &solution) {
+    pair<set<RouteData *>::iterator, bool> pointer;
+    //cout << solution.routes.size() << endl;
+
     for(unsigned int i = 0; i < solution.routes.size(); i++) {
         auto routeData = new RouteData();
         routeData->route = vector<unsigned int>(*(solution.routes[i]));
@@ -18,13 +23,17 @@ void RoutePool::addRoutesFrom(const Solution &solution) {
         //printRoute(routeData);
 
         //getchar();
-        pair<set<RouteData *>::iterator, bool> pointer;
 
         pointer = this->routesSet.insert(routeData);
-        if (!pointer.second)
+        if (!pointer.second){
+            //cout << "entrei pq era igual" << endl;
             delete routeData;
+        }
+            
     }
 }
+
+
 
 unsigned long long int RoutePool::getHash(RouteData *route)
 {
@@ -41,11 +50,28 @@ unsigned long long int RoutePool::getHash(RouteData *route)
 }
 
 void RoutePool::setToVector(){
-    for (auto r : this->routesSet) {
+    auto it = this->routesSet.begin();
+    auto end = this->routesSet.begin();
+    int subset = maxRoutes;
+
+    if(this->routesSet.size() > maxRoutes){
+        subset = maxRoutes - this->nClients;
+    }
+
+    advance(end, subset);
+    set<RouteData *, RoutePtrComp> routeinSet(it, end);
+
+    for (auto r : routeinSet) {
         this->routes.push_back(new RouteData(*r));
         if(this->routes.size() == this->maxRoutes){
             break;
         }
+    }
+}
+
+void RoutePool::printPool(){
+    for (auto r : this->routes) {
+        printRoute(r);
     }
 }
 

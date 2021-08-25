@@ -28,19 +28,20 @@ int main(int argc, char **argv) {
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
-    RoutePool routePool(10000);
+    RoutePool routePool(10000, instance.nClients());
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit, routePool);
 //    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
     Solution s = alg.getSolution();
     s.validate();
 
-    //cout << "set: " << routePool.routesSet.size() << endl;
-    //cout << "vector: " << routePool.routes.size() << endl;
+    cout << "set: " << routePool.routesSet.size() << endl;
+    cout << "vector: " << routePool.routes.size() << endl;
 
     routePool.setToVector();
-    //cout << "set: " << routePool.routesSet.size() << endl;
-    //cout << "vector: " << routePool.routes.size() << endl;
+    routePool.printPool();
+    cout << "set: " << routePool.routesSet.size() << endl;
+    cout << "vector: " << routePool.routes.size() << endl;
 
 
     vector<vector<unsigned int>*> routes;

@@ -53,19 +53,33 @@ public:
     {
         bool operator()(RouteData *lhs, RouteData *rhs)
         {
-            return lhs->hash < rhs->hash;
+            //return lhs->hash < rhs->hash;
+
+            for (unsigned int r = 0; r < rhs->route.size(); r++) {
+                if (lhs->route.at(r) != rhs->route.at(r))
+                    return true;
+            }
+
+            if (lhs->solTime != rhs->solTime || lhs->route.size() != rhs->route.size() || lhs->duration != rhs->duration || lhs->releaseTime != rhs->releaseTime)
+                return true;
+
+            
+            
+            return false;
         }
     };
 
-    explicit RoutePool(unsigned int maxRoutes);
+    explicit RoutePool(unsigned int maxRoutes, int nClients);
     unsigned int maxRoutes;
     vector<RouteData *> routes;
     set<RouteData *, RoutePtrComp> routesSet;
+    int nClients;
 
 
     void addRoutesFrom(const Solution &solution);
     unsigned long long int getHash(RouteData *route);
     void printRoute(RouteData *route);
+    void printPool();
     void setToVector();
 
 };
