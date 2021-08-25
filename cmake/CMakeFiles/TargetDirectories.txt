@@ -1,6 +1,0 @@
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/rebuild_cache.dir
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/edit_cache.dir
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/rp.dir
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/Param.dir
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/Runner.dir
-/home/lygia/Downloads/PO/forkTSPrd/TSPrd/cmake/CMakeFiles/TSPrd.dir

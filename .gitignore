@@ -6,3 +6,5 @@ Param
 rp
 output/
 instances/testSet
+cmake
+.DS_Store
