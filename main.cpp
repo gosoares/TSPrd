@@ -5,6 +5,7 @@
 #include "GeneticAlgorithm.h"
 #include "Grasp.h"
 #include "RoutePool.h"
+#include "MathModelRoutes.h"
 
 using namespace std;
 
@@ -27,18 +28,37 @@ int main(int argc, char **argv) {
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
-    RoutePool routePool(10000);
+    RoutePool routePool(10000, instance.nClients());
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit, routePool);
 //    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
     Solution s = alg.getSolution();
     s.validate();
 
-    // chamar modelo aqui
+    cout << "set: " << routePool.routesSet.size() << endl;
+    cout << "vector: " << routePool.routes.size() << endl;
 
-    cout << "RESULT " << s.time << endl;
-    cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
-    cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+    routePool.setToVector();
+    routePool.printPool();
+    cout << "set: " << routePool.routesSet.size() << endl;
+    cout << "vector: " << routePool.routes.size() << endl;
+
+
+    vector<vector<unsigned int>*> routes;
+    // chamar modelo aqui
+    MathModelRoutes model(routePool, routePool.routes.size(), instance.nClients(), routes);
+    
+    Solution sModel = Solution(instance, routes);
+
+    cout << endl << endl;
+    cout << "\tRESULT \t" << s.time << endl;
+    cout << "\tEXEC_TIME \t" << alg.getExecutionTime() << endl;
+    cout << "\tSOL_TIME \t" << alg.getBestSolutionTime() << endl;
+
+    cout << "\tRESULT_MODEL \t" << sModel.time << endl;
+    cout << "\tEXEC_TIME_MODEL \t" << model.getTime() << endl;
+    cout << "\tCOUNT_ROUTES \t" << routePool.routes.size() << endl;
+
 
     // output to file
     unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -62,6 +82,21 @@ int main(int argc, char **argv) {
     for (auto &r: s.routes) fout << " " << (r->size() - 2);
     fout << endl << "ROUTES" << endl;
     for (auto &r: s.routes) {
+        for (unsigned int c = 1; c < r->size() - 1; c++) {
+            fout << r->at(c) << " ";
+        }
+        fout << endl;
+    }
+    fout << endl;
+
+    fout << "EXEC_TIME " << model.getTime() << endl;
+    //fout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+    fout << "OBJ_MODEL " << sModel.time << endl;
+    fout << "N_ROUTES_MODEL " << sModel.routes.size() << endl;
+    fout << "N_CLIENTS_MODEL";
+    for (auto &r: sModel.routes) fout << " " << (r->size() - 2);
+    fout << endl << "ROUTES" << endl;
+    for (auto &r: sModel.routes) {
         for (unsigned int c = 1; c < r->size() - 1; c++) {
             fout << r->at(c) << " ";
         }

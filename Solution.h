@@ -5,6 +5,7 @@
 #include <set>
 #include "Instance.h"
 #include <memory>
+#include <limits>
 
 using namespace std;
 using Sequence = vector<unsigned int>;
