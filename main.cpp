@@ -5,7 +5,7 @@
 #include "GeneticAlgorithm.h"
 #include "Grasp.h"
 #include "RoutePool.h"
-#include "MathModelRoutes.h"
+#include "SetPartitioningModel.h"
 
 using namespace std;
 
@@ -28,27 +28,17 @@ int main(int argc, char **argv) {
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
-    RoutePool routePool(10000, instance.nClients());
+    RoutePool routePool(10000);
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit, routePool);
 //    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
     Solution s = alg.getSolution();
     s.validate();
 
-    cout << "set: " << routePool.routesSet.size() << endl;
-    cout << "vector: " << routePool.routes.size() << endl;
-
-    routePool.setToVector();
-    routePool.printPool();
-    cout << "set: " << routePool.routesSet.size() << endl;
-    cout << "vector: " << routePool.routes.size() << endl;
-
-
-    vector<vector<unsigned int>*> routes;
-    // chamar modelo aqui
-    MathModelRoutes model(routePool, routePool.routes.size(), instance.nClients(), routes);
+    vector<RouteData *> routes(routePool.getRoutes());
+    SetPartitioningModel model(routes, instance.nClients());
     
-    Solution sModel = Solution(instance, routes);
+    Solution sModel = Solution(instance, model.routes);
 
     cout << endl << endl;
     cout << "\tRESULT \t" << s.time << endl;
@@ -57,7 +47,7 @@ int main(int argc, char **argv) {
 
     cout << "\tRESULT_MODEL \t" << sModel.time << endl;
     cout << "\tEXEC_TIME_MODEL \t" << model.getTime() << endl;
-    cout << "\tCOUNT_ROUTES \t" << routePool.routes.size() << endl;
+    cout << "\tCOUNT_ROUTES \t" << routes.size() << endl;
 
 
     // output to file

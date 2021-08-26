@@ -14,9 +14,9 @@ include_directories("${CPLEX_DIR}/cplex/include" "${CPLEX_DIR}/concert/include")
 link_directories("${CPLEX_DIR}/cplex/lib/${CPLEX_ARCH}/static_pic" "${CPLEX_DIR}/concert/lib/${CPLEX_ARCH}/static_pic")
 
 set(mainFiles Instance.cpp Instance.h Solution.cpp Solution.h NeighborSearch.cpp NeighborSearch.h
-        GeneticAlgorithm.cpp GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp Timer.h RoutePool.h RoutePool.cpp MathModelRoutes.cpp MathModelRoutes.h)
-set(modelFiles MathModel.cpp MathModel.h)
-add_executable(TSPrd main.cpp ${mainFiles})
+        GeneticAlgorithm.cpp GeneticAlgorithm.h Split.h Grasp.h Grasp.cpp Timer.h RoutePool.h RoutePool.cpp)
+set(modelFiles MathModel.cpp MathModel.h SetPartitioningModel.h SetPartitioningModel.cpp)
+add_executable(TSPrd main.cpp ${mainFiles} ${modelFiles})
 add_executable(Runner Runner.cpp)
 add_dependencies(Runner TSPrd)
 add_executable(Param ParameterTuning.cpp ${mainFiles})

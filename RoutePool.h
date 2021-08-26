@@ -2,86 +2,107 @@
 #define TSPRD_ROUTEPOOL_H
 
 #include <vector>
+#include <unordered_set>
 #include "Solution.h"
 
 using namespace std;
-
-struct hashCode
-{
-    int duration;
-    int size;
-    int solTime;
-    int releaseTime;
-    int first;
-    int middle;
-    int last;
-};
-
-// custom specialization of std::hash for my Route
-namespace std
-{
-    template <>
-    struct hash<hashCode>
-    {
-        std::size_t operator()(hashCode const &s) const noexcept
-        {
-            size_t h1 = hash<int>{}(s.duration);
-            size_t h2 = hash<int>{}(s.size);
-            size_t h3 = hash<int>{}(s.solTime);
-            size_t h4 = hash<int>{}(s.releaseTime);
-            size_t h5 = hash<int>{}(s.first);
-            size_t h6 = hash<int>{}(s.middle);
-            size_t h7 = hash<int>{}(s.last);
-            return (((((h1 ^ (h2 << 1)) ^ (h3 << 2)) ^ (h4 << 3)) ^ (h5 << 4)) ^ (h6 << 5)) ^ (h7 << 6);
-        }
-    };
-}
 
 struct RouteData {
     vector<unsigned int> route;
     unsigned int releaseTime;
     unsigned int duration;
     unsigned int solTime;
-    unsigned long long int hash;
-};
 
+    bool operator==(const RouteData &other) const {
 
-
-class RoutePool {
-public:
-    struct RoutePtrComp
-    {
-        bool operator()(RouteData *lhs, RouteData *rhs)
-        {
-            //return lhs->hash < rhs->hash;
-
-            for (unsigned int r = 0; r < rhs->route.size(); r++) {
-                if (lhs->route.at(r) != rhs->route.at(r))
-                    return true;
-            }
-
-            if (lhs->solTime != rhs->solTime || lhs->route.size() != rhs->route.size() || lhs->duration != rhs->duration || lhs->releaseTime != rhs->releaseTime)
-                return true;
-
-            
-            
+        if(route.size()!= other.route.size() ||
+            releaseTime != other.releaseTime || duration != other.duration)
             return false;
+
+        for (unsigned int r = 0; r < route.size(); r++) {
+            if (route.at(r) != other.route.at(r))
+                return false; // se algum elemento não é igual, então as rotas são diferentes
+        }
+
+        return true; // se chegou aqui, as rotas são iguais
+    }
+
+    struct Hasher {
+        size_t operator()(const RouteData* r) const {
+            size_t h1 = std::hash<unsigned int>{}(r->duration);
+            size_t h2 = std::hash<unsigned int>{}(r->route.size());
+            size_t h3 = std::hash<unsigned int>{}(r->releaseTime);
+            size_t h4 = std::hash<unsigned int>{}(r->route[1]);
+            size_t h5 = std::hash<unsigned int>{}(r->route[r->route.size() / 2]);
+            size_t h6 = std::hash<unsigned int>{}(r->route[r->route.size() - 2]);
+            return (((((h1 ^ (h2 << 1)) ^ (h3 << 2)) ^ (h4 << 3)) ^ (h5 << 4)) ^ (h6 << 5));
         }
     };
 
-    explicit RoutePool(unsigned int maxRoutes, int nClients);
-    unsigned int maxRoutes;
-    vector<RouteData *> routes;
-    set<RouteData *, RoutePtrComp> routesSet;
-    int nClients;
+    struct Comparator {
+        bool operator()(const RouteData* r1, const RouteData* r2) {
+            return *r1 == *r2;
+        }
+    };
+};
 
+class RoutePool {
+public:
+    explicit RoutePool(unsigned int maxRoutes);
 
+    void addRoute(RouteData *);
     void addRoutesFrom(const Solution &solution);
-    unsigned long long int getHash(RouteData *route);
-    void printRoute(RouteData *route);
-    void printPool();
-    void setToVector();
+    vector<RouteData *> getRoutes();
 
+    static void printRoute(RouteData *route);
+    void printPool();
+
+
+    void test() {
+        auto r1 = new RouteData();
+        r1->route = vector<unsigned int>({1, 2, 3});
+        r1->releaseTime = 10;
+        r1->duration = 10;
+        r1->solTime = 10;
+
+        auto r2 = new RouteData();
+        r2->route = vector<unsigned int>({1, 2, 3, 4});
+        r2->releaseTime = 10;
+        r2->duration = 10;
+        r2->solTime = 5;
+
+        auto r3 = new RouteData();
+        r3->route = vector<unsigned int>({1, 2, 3});
+        r3->releaseTime = 10;
+        r3->duration = 10;
+        r3->solTime = 5;
+
+        auto r4 = new RouteData();
+        r4->route = vector<unsigned int>({1, 2, 3, 4});
+        r4->releaseTime = 10;
+        r4->duration = 10;
+        r4->solTime = 15;
+
+        auto r5 = new RouteData();
+        r5->route = vector<unsigned int>({1, 2, 3, 4, 5});
+        r5->releaseTime = 10;
+        r5->duration = 10;
+        r5->solTime = 3;
+
+        addRoute(r1);
+        printPool();
+        addRoute(r2);
+        printPool();
+        addRoute(r3);
+        printPool();
+        addRoute(r4);
+        printPool();
+        addRoute(r5);
+    }
+
+private:
+    unsigned int maxRoutes;
+    unordered_set<RouteData *, RouteData::Hasher, RouteData::Comparator> routes;
 };
 
 #endif //TSPRD_ROUTEPOOL_H
