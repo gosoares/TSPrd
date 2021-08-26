@@ -98,6 +98,8 @@ public:
         addRoute(r4);
         printPool();
         addRoute(r5);
+
+        auto r = getRoutes();
     }
 
 private:

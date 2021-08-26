@@ -12,12 +12,7 @@ void RoutePool::addRoute(RouteData* routeData) {
     pair<unordered_set<RouteData *>::iterator, bool> pointer;
     pointer = routes.insert(routeData);
 
-    if(pointer.second) { // o elemento foi inserido no set
-        // o conjunto aumentou de tamanho, é verificado se ultrapassou o tamanho máximo
-//        if(routes.size() > maxRoutes) {
-//            routes.erase(prev(routes.end())); // FIXME complexidade linear??
-//        }
-    } else {
+    if(pointer.second == false) {
         // existe uma rota identica no set, verificamremos o solTime
         auto existing = *(pointer.first);
 
@@ -48,11 +43,19 @@ void RoutePool::addRoutesFrom(const Solution &solution) {
     }
 }
 
+bool routeDataComparator(RouteData *a, RouteData *b) {
+    return a->solTime < b->solTime;
+}
+
 vector<RouteData *> RoutePool::getRoutes(){
     vector<RouteData *> r;
     r.reserve(routes.size());
-
     copy(routes.begin(), routes.end(), back_inserter(r));
+
+    if(r.size() > maxRoutes) {
+        sort(r.begin(), r.end(), routeDataComparator);
+        r.resize(maxRoutes);
+    }
 
     return r;
 }
