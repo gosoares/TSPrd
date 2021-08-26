@@ -28,7 +28,12 @@ int main(int argc, char **argv) {
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
-    RoutePool routePool(10000);
+    int sizePool = 10000;
+
+    if (argc > 4)
+        sizePool = atoi(argv[4]);
+
+    RoutePool routePool(sizePool);
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit, routePool);
 //    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
@@ -41,13 +46,13 @@ int main(int argc, char **argv) {
     Solution sModel = Solution(instance, model.routes);
 
     cout << endl << endl;
-    cout << "\tRESULT \t" << s.time << endl;
-    cout << "\tEXEC_TIME \t" << alg.getExecutionTime() << endl;
-    cout << "\tSOL_TIME \t" << alg.getBestSolutionTime() << endl;
+    cout << "RESULT " << s.time << endl;
+    cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
+    cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
 
-    cout << "\tRESULT_MODEL \t" << sModel.time << endl;
-    cout << "\tEXEC_TIME_MODEL \t" << model.getTime() << endl;
-    cout << "\tCOUNT_ROUTES \t" << routes.size() << endl;
+    cout << "RESULT_MODEL " << sModel.time << endl;
+    cout << "EXEC_TIME_MODEL " << model.getTime() << endl;
+    cout << "COUNT_ROUTES " << routes.size() << endl;
 
 
     // output to file

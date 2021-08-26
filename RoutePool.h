@@ -28,6 +28,7 @@ struct RouteData {
     }
 
     struct Hasher {
+    public:
         size_t operator()(const RouteData* r) const {
             size_t h1 = std::hash<unsigned int>{}(r->duration);
             size_t h2 = std::hash<unsigned int>{}(r->route.size());
@@ -40,7 +41,8 @@ struct RouteData {
     };
 
     struct Comparator {
-        bool operator()(const RouteData* r1, const RouteData* r2) {
+    public:
+        bool operator()(const RouteData* r1, const RouteData* r2) const {
             return *r1 == *r2;
         }
     };
@@ -91,13 +93,21 @@ public:
 
         addRoute(r1);
         printPool();
+        getchar();
         addRoute(r2);
         printPool();
+        getchar();
         addRoute(r3);
         printPool();
+        getchar();
+
         addRoute(r4);
         printPool();
+        getchar();
+
         addRoute(r5);
+        printPool();
+        getchar();
 
         auto r = getRoutes();
     }

@@ -9,8 +9,8 @@ RoutePool::RoutePool(unsigned int maxRoutes): maxRoutes(maxRoutes) {
 
 void RoutePool::addRoute(RouteData* routeData) {
 
-    pair<unordered_set<RouteData *>::iterator, bool> pointer;
-    pointer = routes.insert(routeData);
+    //pair<unordered_set<RouteData *>::iterator, bool> pointer;
+    auto pointer = routes.insert(routeData);
 
     if(pointer.second == false) {
         // existe uma rota identica no set, verificamremos o solTime
