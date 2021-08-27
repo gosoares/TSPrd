@@ -180,7 +180,7 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
 
     IloCplex cplex(env);
     cplex.setParam(IloCplex::Threads, 1);
-    
+
     //cout << this->model << endl;
 
     try{
@@ -200,10 +200,11 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
     }
     
 
-    //cout << "------------- Results -------------------" << endl;
-    //cout << cplex.getCplexStatus() << endl;
-    //cout << "Result: " << cplex.getObjValue() << endl << endl;
-    //cout << "Time: " << cplex.getTime() << endl;
+    cout << "------------- Results -------------------" << endl;
+    cout << "Status: " << cplex.getStatus() << endl;
+    cout << "Cplex status: " << cplex.getCplexStatus() << endl;
+    cout << "Result: " << cplex.getObjValue() << endl << endl;
+    cout << "Time: " << cplex.getTime() << endl;
 
     this->time = cplex.getTime();
 
