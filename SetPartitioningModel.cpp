@@ -179,6 +179,8 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
     // ------------------ Resolução do modelo ------------------//
 
     IloCplex cplex(env);
+    cplex.setParam(IloCplex::Threads, 1);
+    
     //cout << this->model << endl;
 
     try{
