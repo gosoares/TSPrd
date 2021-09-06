@@ -17,15 +17,15 @@ void SetPartitioningModel::getA(vector<vector<int>> &a){
     }
 }
 
-SetPartitioningModel::SetPartitioningModel(vector<RouteData *> &routesData, unsigned int nClients) : routesData(routesData), nClients(nClients) {
+SetPartitioningModel::SetPartitioningModel(vector<RouteData *> &routesData, unsigned int nClients, unsigned int bestSolutionHeuristic) : routesData(routesData), nClients(nClients) {
     this->nClients = nClients;
 
     vector<vector<int>> a(routesData.size(), vector<int>(nClients, 0));
     
-    routes = addConstraints(a);
+    routes = addConstraints(a, bestSolutionHeuristic);
 }
 
-vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector<int>> a){
+vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector<int>> a, unsigned int bestSolutionHeuristic){
     IloEnv env;
     IloModel model(env);
     IloArray<IloBoolVarArray> x;
@@ -180,6 +180,8 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
 
     IloCplex cplex(env);
     cplex.setParam(IloCplex::Threads, 1);
+    cplex.setParam(IloCplex::CutUp, ((double) bestSolutionHeuristic) + 0.1);
+    cplex.setParam(IloCplex::TiLim,3*60*60);
 
     //cout << this->model << endl;
 
@@ -203,16 +205,27 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
     cout << "------------- Results -------------------" << endl;
     cout << "Status: " << cplex.getStatus() << endl;
     cout << "Cplex status: " << cplex.getCplexStatus() << endl;
-    cout << "Result: " << cplex.getObjValue() << endl << endl;
+    cout << "Result: " << cplex.getObjValue() << endl;
+    cout << "LowerBound: " << cplex.getBestObjValue() << endl;
     cout << "Time: " << cplex.getTime() << endl;
+    cout << "Clpex time: " << cplex.getCplexTime() << endl;
+    cout << "Nnodes: " << cplex.getNnodes() << endl;
+    cout << "Cutoff: " << cplex.getCutoff() << endl;
 
+    this->status = cplex.getStatus();
+    this->cplexStatus = cplex.getCplexStatus();
+    this->objValue = cplex.getObjValue();
+    this->bestObjValue = cplex.getBestObjValue();
     this->time = cplex.getTime();
+    this->cplexTime = cplex.getCplexTime();
+    this->Nnodes = cplex.getNnodes();
+    this->cutoff = cplex.getCutoff();
 
     vector<vector<unsigned int>*> routes;
 
     for(unsigned int k = 0; k < nClients; k++){
         for(unsigned int i = 0; i < nRoutes; i++){
-            if(cplex.getValue(x[i][k]) == true){
+            if(cplex.getValue(x[i][k]) > 0.9){
                 routes.push_back(&routesData[i]->route);
             }
         }
@@ -223,6 +236,34 @@ vector<vector<unsigned int>*> SetPartitioningModel::addConstraints(vector<vector
     return routes;
 }
 
+IloAlgorithm::Status SetPartitioningModel::getstatus(){
+    return this->status;
+}
+
+IloCplex::CplexStatus SetPartitioningModel::getcplexStatus(){
+    return this->cplexStatus;
+}
+
+IloNum SetPartitioningModel::getobjValue(){
+    return this->objValue;
+}
+
+IloNum SetPartitioningModel::getbestObjValue(){
+    return this->bestObjValue;
+}
+
 IloNum SetPartitioningModel::getTime(){
     return this->time;
+}
+
+IloNum SetPartitioningModel::getcplexTime(){
+    return this->cplexTime;
+}
+
+IloInt SetPartitioningModel::getNnodes(){
+    return this->Nnodes;
+}
+
+IloNum SetPartitioningModel::getcutoff(){
+    return this->cutoff;
 }

@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     s.validate();
 
     vector<RouteData *> routes(routePool.getRoutes());
-    SetPartitioningModel model(routes, instance.nClients());
+    SetPartitioningModel model(routes, instance.nClients(), s.time);
     
     Solution sModel = Solution(instance, model.routes);
 
@@ -107,5 +107,23 @@ int main(int argc, char **argv) {
         spout << x.first << "\t" << x.second << endl;
     }
     spout.close();
+
+    string name = "output/resultado/" + id + "_" + to_string(sizePool) + ".csv";
+    cout << name << endl;
+    ifstream f(name.c_str());
+
+    if(f.good()){
+        f.close();
+        ofstream outfile(name.c_str(), std::ofstream::out | std::ofstream::app);
+
+        outfile << instanceFile << "\t" << sizePool << "\t" << routes.size() << "\t" << s.time << "\t" << sModel.time << "\t" << model.getobjValue() << "\t" << model.getbestObjValue() << "\t" << alg.getExecutionTime() << "\t" << model.getTime() << "\t" << model.getcplexTime() << "\t" << model.getstatus() << "\t" << model.getcplexStatus() << "\t" << model.getNnodes() << "\t" << model.getcutoff() << endl;
+    }else{
+        f.close();
+        ofstream outfile(name.c_str(), std::ofstream::out | std::ofstream::app);
+        outfile << "Instance\t" << "LimitePoll\t" << "QuantPool\t" << "ResultHeuristic\t" << "ResultModelWithSolution\t" << "ResultModelCplexUpper\t" << "LowerBoundModel\t" << "ExecHeuristic\t" << "ExecModel\t" << "ExecCplexModel\t" << "Status\t" << "StatusCplex\t" << "Nnodes\t" << "Cutoff" << endl; 
+        outfile << instanceFile << "\t" << sizePool << "\t" << routes.size() << "\t" << s.time << "\t" << sModel.time << "\t" << model.getobjValue() << "\t" << model.getbestObjValue() << "\t" << alg.getExecutionTime() << "\t" << model.getTime() << "\t" << model.getcplexTime() << "\t" << model.getstatus() << "\t" << model.getcplexStatus() << "\t" << model.getNnodes() << "\t" << model.getcutoff() << endl;
+        
+    }
+
     return 0;
 }
