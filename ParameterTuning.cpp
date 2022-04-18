@@ -44,7 +44,7 @@ struct Params {
 static void copyInstances() {
     vector<string> paths = vector<string>({"TSPLIB", "aTSPLIB"});
 
-    for (auto &p : paths) {
+    for (auto &p: paths) {
         string path = "instances/" + p;
         for (const auto &f: filesystem::directory_iterator(path)) {
             string filename = f.path().filename();
@@ -61,7 +61,7 @@ static void copyInstances() {
 
 static void selectInstances() {
     vector<string> instances;
-    for (const auto &entry : filesystem::directory_iterator("instances/testSet")) {
+    for (const auto &entry: filesystem::directory_iterator("instances/testSet")) {
         instances.push_back(entry.path());
     }
 
@@ -132,7 +132,7 @@ void saveOptionalValues(int which = 0) {
             unsigned int bestObj = numeric_limits<unsigned int>::max();
             for (int i = 0; i < 10; i++) {
                 cout << "\rRunning " << instanceName << "  ";
-                cout << to_string(i+1) << "/10       ";
+                cout << to_string(i + 1) << "/10       ";
                 Instance instance("testSet/" + instanceName);
                 auto result = runWith(instance, {25, 100, 0.4, 0.2, 2000});
                 bestObj = min(bestObj, result.obj);
@@ -168,7 +168,7 @@ void testParams(const Params &params, const vector<string> &instances, const map
     unsigned totalTimeBest = 0;
 
     int nInstance = 0;
-    for (auto const &instanceName : instances) {
+    for (auto const &instanceName: instances) {
         nInstance++;
         Instance instance("testSet/" + instanceName);
         for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
@@ -207,7 +207,7 @@ void run(int which = -1) {
     map<string, unsigned int> optimal = readOptimalFile();
     vector<string> instances;
     instances.reserve(optimal.size());
-    for (auto const &x : optimal) instances.push_back(x.first);
+    for (auto const &x: optimal) instances.push_back(x.first);
 
     if (which == -1) {
         for (const auto &params: paramsSet) {
@@ -230,8 +230,8 @@ int main(int argc, char **argv) {
         cout << "Runing all params" << endl;
     }
 
-    saveOptionalValues(which);
-//    run(which);
+//    saveOptionalValues(which);
+    run(which);
     return 0;
 }
 
