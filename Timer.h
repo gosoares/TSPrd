@@ -1,6 +1,8 @@
 #ifndef TSPRD_TIMER_H
 #define TSPRD_TIMER_H
 
+#include <stdexcept>
+
 template<class TimeT = std::chrono::milliseconds,
         class ClockT = std::chrono::steady_clock>
 class Timer {
