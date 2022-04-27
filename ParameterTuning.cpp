@@ -156,51 +156,69 @@ map<string, unsigned int> readOptimalFile() {
     return optimal;
 }
 
-void testParams(const Params &params, const vector<string> &instances, const map<string, unsigned int> &optimals) {
-    params.print();
+void testParams(const vector<Params> &paramsSet, const vector<string> &instances, const map<string, unsigned int> &optimals) {
     const unsigned int NUMBER_EXECUTIONS = 10;
-    const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size();
+    const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size(); // per scenario
+    char buffer[200];
 
-    double totalGap = 0;
-    unsigned totalTimeExec = 0;
-    unsigned totalTimeBest = 0;
+    ofstream scenesOut("output/scenarios_mi_lambda.csv", ios::app);
+    scenesOut << "id,mi,lambda,el,nc,itni,te,ti,gap" << endl;
 
-    int nInstance = 0;
-    for (auto const &instanceName: instances) {
-        nInstance++;
-        Instance instance("testSet/" + instanceName);
-        for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
-            cout << "\rRunning: " << nInstance << "/" << instances.size();
-            cout << "  " << (i + 1) << "/" << NUMBER_EXECUTIONS << "       ";
-            fflush(stdout);
-            auto result = runWith(instance, params);
-            double gap = (((double) result.obj / optimals.at(instanceName)) - 1) * 100;
-            totalGap += gap;
-            totalTimeExec += result.timeStop;
-            totalTimeBest += result.timeBest;
+    ofstream resultsOut("output/results_mi_lambda.csv", ios::app);
+    resultsOut << "scenario,instance,run,te,ti,gap" << endl;
+
+    for (int paramsId = 0; paramsId < paramsSet.size(); paramsId++) {
+        auto& params = paramsSet[paramsId];
+        params.print();
+
+        double totalGap = 0;
+        unsigned totalTimeExec = 0;
+        unsigned totalTimeBest = 0;
+
+        int nInstance = 0;
+        for (auto const &instanceName: instances) {
+            nInstance++;
+            Instance instance("testSet/" + instanceName);
+            for (unsigned int i = 0; i < NUMBER_EXECUTIONS; i++) {
+                cout << "\rRunning: " << nInstance << "/" << instances.size();
+                cout << "  " << (i + 1) << "/" << NUMBER_EXECUTIONS << "       ";
+                fflush(stdout);
+
+                auto result = runWith(instance, params);
+                double gap = (((double) result.obj / optimals.at(instanceName)) - 1) * 100;
+                totalGap += gap;
+                totalTimeExec += result.timeStop;
+                totalTimeBest += result.timeBest;
+
+                sprintf(buffer, "%d,%s,%d,%d,%d,%.2f", paramsId + 1, instanceName.c_str(), i + 1, result.timeStop, result.timeBest, gap);
+                resultsOut << buffer << endl;
+            }
         }
+
+        double meanGap = totalGap / TOTAL_EXECUTIONS;
+        unsigned int meanTimeExec = totalTimeExec / TOTAL_EXECUTIONS;
+        unsigned int meanTimeBest = totalTimeBest / TOTAL_EXECUTIONS;
+
+        sprintf(buffer, "%d,%d,%d,%.2f,%.2f,%d,%d,%d,%.2f", paramsId + 1, params.mi, params.lambda, params.el, params.nc, params.itNi, meanTimeExec, meanTimeBest, meanGap);
+        scenesOut << buffer << endl;
     }
 
-    double meanGap = totalGap / TOTAL_EXECUTIONS;
-    unsigned int meanTimeExec = totalTimeExec / TOTAL_EXECUTIONS;
-    unsigned int meanTimeBest = totalTimeBest / TOTAL_EXECUTIONS;
-
-    char buffer[200];
-    sprintf(buffer, "(%2d %3d %.2f %.2f) -> %8d %8d % 7.2f%%", params.mi, params.lambda, params.el, params.nc,
-            meanTimeExec, meanTimeBest, meanGap);
-    cout << buffer << endl;
-
-    ofstream fout("instances/testSet/0results.txt", ios::app);
-    fout << buffer << endl;
-    fout.close();
+    scenesOut.close();
+    resultsOut.close();
 }
 
 void run(int which = -1) {
     vector<Params> paramsSet({
+                                     {13, 50, 0.4, 0.2, 2000},
+                                     {13, 100, 0.4, 0.2, 2000},
+                                     {15, 40, 0.4, 0.2, 2000},
+                                     {15, 60, 0.4, 0.2, 2000},
+                                     {20, 40, 0.4, 0.2, 2000},
+                                     {20, 80, 0.4, 0.2, 2000},
+                                     {25, 50, 0.4, 0.2, 2000},
                                      {25, 100, 0.4, 0.2, 2000},
-                                     {13, 50,  0.4, 0.2, 2000},
+                                     {38, 150, 0.4, 0.2, 2000},
                                      {50, 200, 0.4, 0.2, 2000},
-                                     {25, 50,  0.4, 0.2, 2000},
                              });
     map<string, unsigned int> optimal = readOptimalFile();
     vector<string> instances;
@@ -208,11 +226,9 @@ void run(int which = -1) {
     for (auto const &x: optimal) instances.push_back(x.first);
 
     if (which == -1) {
-        for (const auto &params: paramsSet) {
-            testParams(params, instances, optimal);
-        }
+        testParams(paramsSet, instances, optimal);
     } else {
-        testParams(paramsSet[which], instances, optimal);
+        testParams(vector({paramsSet[which]}), instances, optimal);
     }
 }
 
