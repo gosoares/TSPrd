@@ -156,7 +156,8 @@ map<string, unsigned int> readOptimalFile() {
     return optimal;
 }
 
-void testParams(const vector<Params> &paramsSet, const vector<string> &instances, const map<string, unsigned int> &optimals) {
+void testParams(const vector<Params> &paramsSet, const vector<string> &instances,
+                const map<string, unsigned int> &optimals) {
     const unsigned int NUMBER_EXECUTIONS = 10;
     const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size(); // per scenario
     char buffer[200];
@@ -165,10 +166,10 @@ void testParams(const vector<Params> &paramsSet, const vector<string> &instances
     scenesOut << "id,mi,lambda,el,nc,itni,te,ti,gap" << endl;
 
     ofstream resultsOut("output/results_mi_lambda.csv", ios::app);
-    resultsOut << "scenario,instance,run,te,ti,gap" << endl;
+    resultsOut << "scenario,instance,run,te,ti,obj,gap" << endl;
 
     for (int paramsId = 0; paramsId < paramsSet.size(); paramsId++) {
-        auto& params = paramsSet[paramsId];
+        auto &params = paramsSet[paramsId];
         params.print();
 
         double totalGap = 0;
@@ -190,7 +191,8 @@ void testParams(const vector<Params> &paramsSet, const vector<string> &instances
                 totalTimeExec += result.timeStop;
                 totalTimeBest += result.timeBest;
 
-                sprintf(buffer, "%d,%s,%d,%d,%d,%.2f", paramsId + 1, instanceName.c_str(), i + 1, result.timeStop, result.timeBest, gap);
+                sprintf(buffer, "%d,%s,%d,%d,%d,%d,%.2f", paramsId + 1, instanceName.c_str(), i + 1, result.timeStop,
+                        result.timeBest, result.obj, gap);
                 resultsOut << buffer << endl;
             }
         }
@@ -199,7 +201,8 @@ void testParams(const vector<Params> &paramsSet, const vector<string> &instances
         unsigned int meanTimeExec = totalTimeExec / TOTAL_EXECUTIONS;
         unsigned int meanTimeBest = totalTimeBest / TOTAL_EXECUTIONS;
 
-        sprintf(buffer, "%d,%d,%d,%.2f,%.2f,%d,%d,%d,%.2f", paramsId + 1, params.mi, params.lambda, params.el, params.nc, params.itNi, meanTimeExec, meanTimeBest, meanGap);
+        sprintf(buffer, "%d,%d,%d,%.2f,%.2f,%d,%d,%d,%.2f", paramsId + 1, params.mi, params.lambda, params.el,
+                params.nc, params.itNi, meanTimeExec, meanTimeBest, meanGap);
         scenesOut << buffer << endl;
     }
 
@@ -209,13 +212,13 @@ void testParams(const vector<Params> &paramsSet, const vector<string> &instances
 
 void run(int which = -1) {
     vector<Params> paramsSet({
-                                     {13, 50, 0.4, 0.2, 2000},
+                                     {13, 50,  0.4, 0.2, 2000},
                                      {13, 100, 0.4, 0.2, 2000},
-                                     {15, 40, 0.4, 0.2, 2000},
-                                     {15, 60, 0.4, 0.2, 2000},
-                                     {20, 40, 0.4, 0.2, 2000},
-                                     {20, 80, 0.4, 0.2, 2000},
-                                     {25, 50, 0.4, 0.2, 2000},
+                                     {15, 40,  0.4, 0.2, 2000},
+                                     {15, 60,  0.4, 0.2, 2000},
+                                     {20, 40,  0.4, 0.2, 2000},
+                                     {20, 80,  0.4, 0.2, 2000},
+                                     {25, 50,  0.4, 0.2, 2000},
                                      {25, 100, 0.4, 0.2, 2000},
                                      {38, 150, 0.4, 0.2, 2000},
                                      {50, 200, 0.4, 0.2, 2000},
