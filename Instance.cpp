@@ -39,15 +39,15 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
     RD.resize(V);
 
     readUntil(in, "EDGE_WEIGHT_SECTION");
-    for (int i = 0; i < V; i++) {
-        for (int j = 0; j < V; j++) {
+    for (unsigned int i = 0; i < V; i++) {
+        for (unsigned int j = 0; j < V; j++) {
             in >> W[i][j];
         }
     }
 
     biggerRD = 0;
     readUntil(in, "RELEASE_DATES");
-    for (int i = 0; i < V; i++) {
+    for (unsigned int i = 0; i < V; i++) {
         in >> RD[i];
         if (RD[i] > biggerRD)
             biggerRD = RD[i];
@@ -55,9 +55,9 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
 
     // verify matrix symmetry
     symmetric = true;
-    for (int i = 0; i < V && symmetric; i++) {
-        for (int j = i + 1; j < V && symmetric; j++) {
-            symmetric = symmetric && (W[i][j] == W[j][i]);
+    for (unsigned int i = 0; i < V && symmetric; i++) {
+        for (unsigned int j = i + 1; j < V && symmetric; j++) {
+            symmetric = W[i][j] == W[j][i];
         }
     }
 }
