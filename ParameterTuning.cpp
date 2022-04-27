@@ -4,11 +4,9 @@
 #include <map>
 #include <iostream>
 #include "GeneticAlgorithm.h"
-#include <experimental/filesystem>
+#include <filesystem>
 #include <regex>
 #include <fstream>
-
-namespace filesystem = experimental::filesystem;
 
 struct Result {
     unsigned int obj;
