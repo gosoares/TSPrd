@@ -14,7 +14,7 @@ cmake -DCMAKE_BUILD_TYPE="Release" -Bcmake-build .
 make -C cmake-build TSPrd
 ```
 
-## Running a instance
+## Running an instance
 ```
 ./TSPrd Solomon/10/C101_0.5
 ```
