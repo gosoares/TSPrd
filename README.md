@@ -44,9 +44,11 @@ ROUTES
 12 9 7 
 42 41 40 44 45 48 32 37 38 39 36 34 30 27 25 21
 ```
-
+`EXEC_TIME` is the total execution time of the algorithm;
+`SOL_TIME` is the time at which the best solution was found;
 `OBJ` is the value of the solution;
-`N_ROUTES` is the total number of routes in the solution; `N_CLIENTS` is the number of clients in each route.
+`N_ROUTES` is the total number of routes in the solution;
+`N_CLIENTS` is the number of clients in each route;
 After `ROUTES` each line describe a route without the depot.
 
 # Changing the algorithm parameters
