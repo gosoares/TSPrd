@@ -48,3 +48,6 @@ ROUTES
 `OBJ` is the value of the solution;
 `N_ROUTES` is the total number of routes in the solution; `N_CLIENTS` is the number of clients in each route.
 After `ROUTES` each line describe a route without the depot.
+
+# Changing the algorithm parameters
+The parameters are coded at the beggining of the `main.cpp` file, if you wish to change them, you can change it there and build the code again with `make -C cmake-build TSPrd `.
