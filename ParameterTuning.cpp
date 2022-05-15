@@ -157,18 +157,21 @@ map<string, unsigned int> readOptimalFile() {
 }
 
 void testParams(const vector<Params> &paramsSet, const vector<string> &instances,
-                const map<string, unsigned int> &optimals) {
+                const map<string, unsigned int> &optimals, int which) {
     const unsigned int NUMBER_EXECUTIONS = 10;
     const unsigned int TOTAL_EXECUTIONS = NUMBER_EXECUTIONS * instances.size(); // per scenario
     char buffer[200];
 
-    ofstream scenesOut("output/scenarios_mi_lambda.csv", ios::app);
+    string fname = "output/scenarios_mi_lambda_" + to_string(which) + ".csv"; 
+    ofstream scenesOut(fname, ios::app);
     scenesOut << "id,mi,lambda,el,nc,itni,te,ti,gap" << endl;
 
-    ofstream resultsOut("output/results_mi_lambda.csv", ios::app);
+
+    fname = "output/results_mi_lambda_" + to_string(which) + ".csv";
+    ofstream resultsOut(fname, ios::app);
     resultsOut << "scenario,instance,run,te,ti,obj,gap" << endl;
 
-    for (int paramsId = 0; paramsId < paramsSet.size(); paramsId++) {
+    for (int paramsId = which - 1; paramsId <= which; paramsId++) {
         auto &params = paramsSet[paramsId];
         params.print();
 
@@ -228,11 +231,13 @@ void run(int which = -1) {
     instances.reserve(optimal.size());
     for (auto const &x: optimal) instances.push_back(x.first);
 
-    if (which == -1) {
+    testParams(paramsSet, instances, optimal, which);
+
+    /*if (which == -1) {
         testParams(paramsSet, instances, optimal);
     } else {
         testParams(vector({paramsSet[which]}), instances, optimal);
-    }
+    }*/
 }
 
 int main(int argc, char **argv) {
