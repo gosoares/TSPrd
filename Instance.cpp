@@ -11,6 +11,17 @@ void readUntil(ifstream &in, const string &s) {
     }
 }
 
+void floydWarshall(vector<vector<unsigned int> > &W) {
+    // apply floyd warshall algorithm to ensure triangular inequality
+    for (unsigned int k = 0; k < W.size(); k++) {
+        for (unsigned int i = 0; i < W.size(); i++) {
+            for (unsigned int j = 0; j < W.size(); j++) {
+                W[i][j] = min(W[i][j], W[i][k] + W[k][j]);
+            }
+        }
+    }
+}
+
 Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
 
     ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
@@ -42,7 +53,11 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
     for (unsigned int i = 0; i < V; i++) {
         for (unsigned int j = 0; j < V; j++) {
             in >> W[i][j];
+            if (i != j && W[i][j] == 0) {
+                W[i][j] = numeric_limits<unsigned int>::max() / (V+2);
+            }
         }
+        W[i][i] = 0;
     }
 
     biggerRD = 0;
@@ -60,6 +75,8 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
             symmetric = W[i][j] == W[j][i];
         }
     }
+
+    floydWarshall(W);
 }
 
 void Instance::readCoordinatesListInstance(ifstream &in) {
@@ -105,14 +122,7 @@ void Instance::readCoordinatesListInstance(ifstream &in) {
         }
     }
 
-    // apply floyd marshall algorithm to ensure triangular inequality
-    for (unsigned int k = 0; k < V; k++) {
-        for (unsigned int i = 0; i < V; i++) {
-            for (unsigned int j = 0; j < V; j++) {
-                W[i][j] = min(W[i][j], W[i][k] + W[k][j]);
-            }
-        }
-    }
+    floydWarshall(W);
 }
 
 unsigned int Instance::nVertex() const {
