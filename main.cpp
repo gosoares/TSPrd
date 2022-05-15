@@ -3,7 +3,6 @@
 #include <fstream>
 #include "Solution.h"
 #include "GeneticAlgorithm.h"
-#include "Grasp.h"
 
 using namespace std;
 
@@ -17,21 +16,14 @@ int main(int argc, char **argv) {
     unsigned int itNi = 10000; // max iterations without improvement to stop the algorithm
     auto itDiv = (unsigned int) (0.4 * itNi); // iterations without improvement to diversify
 
-    // grasp parameters
-    unsigned int itNiGrasp = 1000;
-    double alpha = 0.2;
-
     auto timeLimit = (unsigned int) (10 * 60 * (1976.0 / 1201.0)); // in seconds
 
     string instanceFile = argv[1];
     Instance instance(instanceFile);
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit);
-//    auto alg = Grasp(instance, itNiGrasp, alpha, timeLimit);
     Solution s = alg.getSolution();
     s.validate();
-
-    // chamar modelo aqui
 
     cout << "RESULT " << s.time << endl;
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
