@@ -6,6 +6,7 @@
 #include "Instance.h"
 #include <memory>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 using Sequence = vector<unsigned int>;
