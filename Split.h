@@ -15,55 +15,53 @@ public:
         const unsigned int V = RD.size(), // total number of vertex, including the depot
         N = V - 1; // total number of clients (excluding the depot)
 
-        /*
-         * Calculate the bigger release dates between the i-th and j-th clients
-         * This value is the release date of the route that visits those clients
-         *
-         * Also calculate the time to perform a route that visits those clients in that order
-         * including the times from the depot to the i-th client, and from the j-th client to the depot
-         */
-        vector<vector<unsigned int> > routesRD(N, vector<unsigned int>(N));
-        vector<vector<unsigned int> > routesTime(N, vector<unsigned int>(N));
-        for (unsigned int i = 0; i < N; i++) {
-            unsigned int bigger = RD[S[i]];
-            unsigned int sumTimes = W[0][S[i]];
 
-            routesRD[i][i] = bigger;
-            routesTime[i][i] = sumTimes + W[S[i]][0];
+        // stores for each position in the sequence, which vertex before it can be the one that determines the release date
+        // of the route containing the vertex on that position
+        vector<unsigned int> rdPos(N);
+        rdPos[0] = 0;
 
-            for (unsigned int j = i + 1; j < S.size(); j++) {
-                unsigned int rdj = RD[S[j]];
-                if (rdj > bigger) {
-                    bigger = rdj;
-                }
-                routesRD[i][j] = bigger;
+        vector<unsigned int> cumulative(S.size());
+        cumulative[0] = 0; // cumulative of the arcs times till vertex in position i
 
-                sumTimes += W[S[j - 1]][S[j]];
-                routesTime[i][j] = sumTimes + W[S[j]][0];
+        // calculate the position of the vertices with increasing release dates
+        for (unsigned int i = 1; i < S.size(); i++) {
+            if (RD[S[i]] > RD[S[rdPos[i - 1]]]) {
+                rdPos[i] = i;
+            } else {
+                rdPos[i] = rdPos[i - 1];
             }
+            cumulative[i] = cumulative[i - 1] + W[S[i - 1]][S[i]];
         }
 
-        vector<unsigned int> bestIn(N + 1); // store the origin of the best arc arriving at i
-        vector<unsigned int> delta(N + 1, numeric_limits<unsigned int>::max()); // value of the best arc arriving at i
-        delta[0] = 0;
+        vector<unsigned int> bestIn(N); // store the origin of the best arc arriving at i
+        vector<unsigned int> phi(N, numeric_limits<unsigned int>::max()); // value of the best arc arriving at i
 
-        for (unsigned int i = 0; i < N; i++) {
-            for (unsigned int j = i + 1; j <= N; j++) {
-                unsigned int deltaJ = max(routesRD[i][j - 1], delta[i]) + routesTime[i][j - 1];
-                if (deltaJ < delta[j]) {
-                    delta[j] = deltaJ;
+        for (unsigned int j = 0; j < N; j++) {
+            unsigned int rdPosJ = rdPos[j];
+            unsigned int rdj = RD[S[rdPosJ]];
+            unsigned int jToDepot = W[S[j]][0];
+            unsigned int cumulativeJ = cumulative[j];
+
+            for (unsigned int i = 0; i <= rdPosJ; i++) {
+                unsigned int sigma = rdj;
+                if (i > 0) sigma = max(sigma, phi[i - 1]);
+
+                unsigned int deltaJ = sigma + W[0][S[i]] + (cumulativeJ - cumulative[i]) + jToDepot;
+                if (deltaJ < phi[j]) {
+                    phi[j] = deltaJ;
                     bestIn[j] = i;
                 }
             }
         }
 
-        unsigned int x = bestIn[N];
-        while (x > 0) {
-            visits.insert(S[x - 1]);
-            x = bestIn[x];
+        unsigned int x = N - 1;
+        while (bestIn[x] > 0) {
+            x = bestIn[x] - 1;
+            visits.insert(S[x]);
         }
 
-        return delta.back();
+        return phi.back();
     }
 };
 
