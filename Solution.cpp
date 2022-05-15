@@ -1,5 +1,3 @@
-#include <limits>
-#include <algorithm>
 #include <iostream>
 #include "Solution.h"
 #include "Split.h"
@@ -81,8 +79,8 @@ unsigned int Solution::updateStartingTimes(unsigned int from) {
     return time;
 }
 
-// verify if r is a empty route, and if so, delete it from routes
-// return whether had a empty route
+// verify if r is an empty route, and if so, delete it from routes
+// return whether had an empty route
 bool Solution::removeEmptyRoutes() {
     bool hasEmpty = false;
     for (int r = (int) routes.size() - 1; r >= 0; r--) {

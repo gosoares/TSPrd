@@ -2,7 +2,6 @@
 #include "Split.h"
 #include <cassert>
 #include <chrono>
-#include <algorithm>
 #include <limits>
 #include <iostream>
 
@@ -280,8 +279,8 @@ unsigned int NeighborSearch::twoOptSearchIt(vector<unsigned int> *route) {
                     + (int) W[route->at(i)][route->at(i + 1)];
         int plus = 0;
         for (unsigned int j = i + 1; j <= L(route); j++) {
-            minus += W[route->at(j)][route->at(j + 1)];
-            plus += W[route->at(j)][route->at(j - 1)];
+            minus += (int) W[route->at(j)][route->at(j + 1)];
+            plus += (int) W[route->at(j)][route->at(j - 1)];
 
             int gain = minus - (
                     plus + (int) W[route->at(i - 1)][route->at(j)] + (int) W[route->at(i)][route->at(j + 1)]);
@@ -558,8 +557,8 @@ unsigned int NeighborSearch::insertDepotAndReorder(Solution *solution) {
 bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
     for (unsigned int r = 1; r < s->routes.size(); r++) {
         // if the ending time of the previous route is higher than the current route release date
-        // its not possible to improve the ending time of the current route by adding a depot
-        // because the starting time of the newly generated route cant be less than the current route start time
+        // it's not possible to improve the ending time of the current route by adding a depot
+        // because the starting time of the newly generated route can't be less than the current route start time
         if ((s->routeStart[r - 1] + s->routeTime[r - 1]) > s->routeRD[r]) continue;
         vector<unsigned int> *route = s->routes[r];
 
@@ -603,7 +602,7 @@ bool NeighborSearch::insertDepotAndReorderIt(Solution *s) {
             time += time1; // ending time of the second route
 
             if (time < s->routeStart[r] + s->routeTime[r]) {
-                // if the new route end time is better then the previous route end time
+                // if the new route end time is better than the previous route end time
                 // update routes data as needed
                 s->routeRD.insert(s->routeRD.begin() + r, rd2);
                 s->routeTime[r] = time1;

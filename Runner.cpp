@@ -16,7 +16,7 @@ struct Instance {
     string name; // instance name
     string file; // file name with dir
     string beta; // beta used to generate instance
-    unsigned int optimal; // optimal value of solution
+    unsigned int optimal{}; // optimal value of solution
 };
 
 string execute(const char *cmd) {
@@ -56,7 +56,7 @@ map<string, unsigned int> readOptimalFile(const string &location) {
 }
 
 bool pathExists(const string &s) {
-    struct stat buffer;
+    struct stat buffer{};
     return (stat(s.c_str(), &buffer) == 0);
 }
 
@@ -74,7 +74,7 @@ string devToFormattedString(double dev) {
         }
     }
 
-    return string(buffer);
+    return {buffer};
 }
 
 void runInstances(const vector<Instance> &instances, const string &executionId, const string &outputFolder) {
@@ -246,9 +246,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
-struct RouteDate {
-    vector<vector<unsigned int> > route;
-    unsigned int releaseTime;
-    unsigned int duration;
-};

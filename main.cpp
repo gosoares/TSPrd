@@ -1,5 +1,4 @@
 #include <iostream>
-#include <algorithm>
 #include <fstream>
 #include "Solution.h"
 #include "GeneticAlgorithm.h"

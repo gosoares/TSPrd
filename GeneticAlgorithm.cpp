@@ -1,7 +1,6 @@
 #include <chrono>
 #include <random>
 #include <queue>
-#include <algorithm>
 #include "GeneticAlgorithm.h"
 
 void freePopulation(vector<Sequence *> *population) {
@@ -26,12 +25,12 @@ GeneticAlgorithm::GeneticAlgorithm(
     // the population is simple the big tours (tours sequence) ignoring visits to the depot
     vector<Solution *> *solutions = Solution::solutionsFromSequences(instance, population);
     // represents the solution itself, with a set of routes
-    // during the genetic algorithm execution, we frequently transforms the population in solutions
+    // during the genetic algorithm execution, we frequently transform the population in solutions
     // applying the split algorithm which find the optimal depot visits for each sequence;
     // and we transform the solutions in a population, removing the depot visits from the solutions
     // and constructing a vector with only the clients visit sequence
 
-    // get best solution in inicial population
+    // get the best solution in the initial population
     bestSolution = nullptr;
     for (auto s: *solutions) {
         if (bestSolution == nullptr || s->time < bestSolution->time) {
@@ -90,7 +89,7 @@ GeneticAlgorithm::GeneticAlgorithm(
 }
 
 vector<Sequence *> *GeneticAlgorithm::initializePopulation() {
-    // initial population will be of size 2*mi generated randomly
+    // initial population will be of size 2*mu generated randomly
     vector<unsigned int> clients(instance.nClients()); // represents the sequence of clients visiting (big tour)
     // will be shuffled for each element of the population
     iota(clients.begin(), clients.end(), 1);
@@ -227,7 +226,7 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution *> *solutions)
         rankFitness[sortedIndex[i]] = i + 1;
     }
 
-    // calculate the biased fitness with the equation 4 of the vidal article
+    // calculate the biased fitness with the equation 4 in vidal article's
     // best solutions have smaller biased fitness
     biasedFitness.resize(solutions->size());
     for (unsigned int i = 0; i < biasedFitness.size(); i++) {
@@ -264,7 +263,7 @@ Sequence *GeneticAlgorithm::orderCrossover(const Sequence &parent1, const Sequen
     unsigned int N = parent1.size();
     uniform_int_distribution<int> dist(0, (int) N - 1);
 
-    // choose radomly a sub sequence of the first parent that goes to the offspring
+    // choose randomly a sub-sequence of the first parent that goes to the offspring
     // a and b represents the start and end index of the sequence, respectively
     unsigned int a, b;
     do {
@@ -323,7 +322,7 @@ void GeneticAlgorithm::survivalSelection(vector<Solution *> *solutions, unsigned
         }
     }
 
-    // sort the solutions based on the biased fitness and keep only the best 'mi' solutions
+    // sort the solutions based on the biased fitness and keep only the best 'mu' solutions
     sort(solutions->begin(), solutions->end(), [&biasedFitness](Solution *s1, Solution *s2) {
         return biasedFitness[s1->id] < biasedFitness[s2->id];
     });

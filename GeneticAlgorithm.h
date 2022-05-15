@@ -13,10 +13,10 @@ class GeneticAlgorithm {
 private:
     const Instance &instance;
     const unsigned int mi; // minimum size of the population
-    const unsigned int lambda; // how much individuals will be generated from the mi individuals
+    const unsigned int lambda; // how many individuals will be generated from the mi individuals
     // max population size = mi + lambda
     const unsigned nbElite; // number of elite individuals (in terms of time) to survive the next generation
-    const unsigned int nClose; // number of closest solutions to consider when calculating the nCloseMean
+    const unsigned int nClose; // how many closest solutions to consider when calculating the nCloseMean
     const unsigned int itNi; // max number of iterations without improvement to stop the algorithm
     const unsigned int itDiv; // max number of iterations without improvement to diversify the current population
     const unsigned int timeLimit; // time limit of the execution of the algorithm in seconds
