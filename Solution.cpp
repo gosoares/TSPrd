@@ -174,15 +174,22 @@ void Solution::validate() {
         }
     }
 
-    // check if all clients are visited once
+    // check that clients are visited at most one time
     vector<bool> visited(instance->nVertex(), false);
-    visited[0] = true;
     for (auto &route: routes) {
         for (unsigned int i = 1; i < route->size() - 1; i++) {
             if (visited[route->at(i)])
                 printError("client_visited_more_than_once");
             visited[route->at(i)] = true;
         }
+    }
+
+    // check there's no depot in the middle of routes
+    if (visited[0]) printError("depot_in_midle_of_route");
+
+    // check that clients are visited once
+    for (unsigned int v = 1; v < visited.size() - 1; v++) {
+        if (!visited[v]) printError("client_not_visited");
     }
 
     // check all routes release date
