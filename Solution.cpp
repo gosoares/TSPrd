@@ -183,7 +183,7 @@ void Solution::validate() {
     }
 
     // check there's no depot in the middle of routes
-    if (visited[0]) printError("depot_in_midle_of_route");
+    if (visited[0]) printError("depot_in_middle_of_route");
 
     // check that clients are visited once
     for (unsigned int v = 1; v < visited.size() - 1; v++) {
