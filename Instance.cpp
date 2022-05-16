@@ -53,9 +53,6 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
     for (unsigned int i = 0; i < V; i++) {
         for (unsigned int j = 0; j < V; j++) {
             in >> W[i][j];
-            if (i != j && W[i][j] == 0) {
-                W[i][j] = numeric_limits<unsigned int>::max() / (V+2);
-            }
         }
         W[i][i] = 0;
     }
@@ -106,7 +103,6 @@ void Instance::readCoordinatesListInstance(ifstream &in) {
         if (RD[i] > biggerRD)
             biggerRD = RD[i];
     }
-
 
     // calculate rounded euclidian distances between each pair of vertex
     for (unsigned int i = 0; i < V; i++) {
