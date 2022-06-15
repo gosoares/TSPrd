@@ -232,10 +232,13 @@ int main(int argc, char **argv) {
         throw invalid_argument("missing argument");
     }
 
-    if(pathExists("output/" + outputFolder)) {
-        if(!allowExistentFolder) throw invalid_argument("output dir already exists!");
-    } else {
-        system(("mkdir -p output/" + outputFolder).c_str());
+    for (const auto &s: vector<string>{"", "_0.5", "_1", "_1.5", "_2", "_2.5", "_3"}) {
+	string outputf = "output/" + outputFolder + s;
+        if(pathExists(outputf)){
+            if(!allowExistentFolder) throw invalid_argument("output dir already exists!");
+        } else {
+            system(("mkdir -p " + outputf).c_str());
+        }
     }
 
     if(which == 0) {
@@ -246,3 +249,4 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+
