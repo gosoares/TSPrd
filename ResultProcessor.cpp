@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <sstream>
 #include <vector>
 #include <regex>
 #include <iomanip>
@@ -29,62 +28,67 @@ void convertToCsv() {
     string beta, instance, te, ti, opt, bestObj, bestDev, meanObj, meanDev;
 
     auto archRef = readOptimalFile("Solomon/0arch.txt");
-    ifstream fin("output/0Result/Results/Solomon20.txt", ios::in);
-    ofstream fout("output/0Result/Solomon20.csv", ios::out);
-    while(fin.good()) {
-        fin >> beta >> instance >> te >> ti >> opt >> bestObj >> bestDev >> meanObj >> meanDev;
-        if(beta == "Better:") break;
+    for (const string& n : vector<string>{"10", "15", "20"}) {
+        ifstream fin("output10/Results/Solomon" + n + ".txt", ios::in);
+        ofstream fout("outputcsv/Solomon" + n + ".csv", ios::out);
+        fout << fixed << setprecision(2);
+        while(fin.good()) {
+            fin >> beta >> instance >> te >> ti >> opt >> bestObj >> bestDev >> meanObj >> meanDev;
+            if(beta == "Better:") break;
 
-        string archObj = "archObj", archGap = "archGap";
-        if(beta != "beta") {
-            te = to_string((int) (stoi(te) / (1976.0 / 1201.0)) / 1000);
-            ti = to_string((int) (stoi(ti) / (1976.0 / 1201.0)) / 1000);
-            bestDev = bestDev.substr(0, bestDev.size() - 1);
-            meanDev = meanDev.substr(0, meanDev.size() - 1);
+            string archObj = "archObj", archGap = "archGap";
+            if(beta != "beta") {
+                te = to_string((int) ((stoi(te) / (1976.0 / 1201.0)) / 1000));
+                ti = to_string((int) ((stoi(ti) / (1976.0 / 1201.0)) / 1000));
+                bestDev = bestDev.substr(0, bestDev.size() - 1);
+                meanDev = meanDev.substr(0, meanDev.size() - 1);
 
-            string key = "20/" + instance + "_" + beta; // NOLINT(performance-inefficient-string-concatenation)
-            cout << key << endl;
-            unsigned int aObj = archRef[key];
-            double aGap = (((double) aObj / stoi(opt)) - 1) * 100;
-            archObj = to_string(aObj);
+                string key = n + "/" + instance + "_" + beta; // NOLINT(performance-inefficient-string-concatenation)
+                cout << key << endl;
+                unsigned int aObj = archRef[key];
+                double aGap = (((double) aObj / stoi(opt)) - 1) * 100;
+                archObj = to_string(aObj);
 
-            stringstream stream;
-            stream << fixed << setprecision(2) << aGap;
-            archGap = stream.str();
+                stringstream stream;
+                stream << fixed << setprecision(2) << aGap;
+                archGap = stream.str();
+            }
+
+            fout << beta << "," << instance << "," << opt << ",,";
+            fout << archObj << "," << archGap << ",,";
+            fout << bestObj << "," << bestDev << "," << meanObj << "," << meanDev << ",";
+            fout << te << "," << ti << endl;
         }
-
-        fout << beta << ";" << instance << ";" << opt << ";;";
-        fout << archObj << ";" << archGap << ";;";
-        fout << bestObj << ";" << bestDev << ";" << meanObj << ";" << meanDev << ";";
-        fout << te << ";" << ti << endl;
+        fout.close();
+        fin.close();
     }
-    fout.close();
-    fin.close();
 }
 
 void convertToCsv2() {
     string beta, instance, te, ti, archObj, bestObj, bestDev, meanObj, meanDev;
 
-    ifstream fin("output/0Result/Results/Solomon25.txt", ios::in);
-    ofstream fout("output/0Result/Solomon25.csv", ios::out);
-    while(fin.good()) {
-        fin >> beta >> instance >> te >> ti >> archObj >> bestObj >> bestDev >> meanObj >> meanDev;
-        if(beta == "Better:") break;
+    for (const string& n : vector<string>{"50", "100"}) {
+        ifstream fin("output10/Results/Solomon" + n + ".txt", ios::in);
+        ofstream fout("outputcsv/Solomon" + n + ".csv", ios::out);
+        while (fin.good()) {
+            fin >> beta >> instance >> te >> ti >> archObj >> bestObj >> bestDev >> meanObj >> meanDev;
+            if (beta == "Better:") break;
 
-        if(beta != "beta") {
-            te = to_string((int) (stoi(te) / (1976.0 / 1201.0)) / 1000);
-            ti = to_string((int) (stoi(ti) / (1976.0 / 1201.0)) / 1000);
-            bestDev = bestDev.substr(0, bestDev.size() - 1);
-            meanDev = meanDev.substr(0, meanDev.size() - 1);
+            if (beta != "beta") {
+                te = to_string((int) (stoi(te) / (1976.0 / 1201.0)) / 1000);
+                ti = to_string((int) (stoi(ti) / (1976.0 / 1201.0)) / 1000);
+                bestDev = bestDev.substr(0, bestDev.size() - 1);
+                meanDev = meanDev.substr(0, meanDev.size() - 1);
+            }
+
+            fout << beta << "," << instance << ",,";
+            fout << archObj << ",,,";
+            fout << bestObj << "," << bestDev << "," << meanObj << "," << meanDev << ",";
+            fout << te << "," << ti << endl;
         }
-
-        fout << beta << ";" << instance << ";;";
-        fout << archObj << ";;;";
-        fout << bestObj << ";" << bestDev << ";" << meanObj << ";" << meanDev << ";";
-        fout << te << ";" << ti << endl;
+        fout.close();
+        fin.close();
     }
-    fout.close();
-    fin.close();
 }
 
 #pragma clang diagnostic push
@@ -103,14 +107,14 @@ void convertToCsvTSPLIB() {
     map<string, unsigned int> archObjs = readOptimalFile("TSPLIB/0ptimal.txt");
 
     for(auto &beta: betas) {
-        ofstream fout("output/0Result/TSPLIB_" + beta + ".csv", ios::out);
+        ofstream fout("outputcsv/TSPLIB_" + beta + ".csv", ios::out);
         fout << fixed << setprecision(2);
         for(auto &name: names) {
             string instance = name + "_" + beta;
             unsigned int bestObj = numeric_limits<unsigned int>::max();
             unsigned int sumObj = 0, sumTI = 0, sumTE = 0;
             for(unsigned int i = 1; i <= 10; i++) {
-                string path = "output/0Result/Results/TSPLIB/" + instance + "_" + to_string(i) + ".txt";
+                string path = "output10/Results_" + beta + "/TSPLIB/" + instance + "_" + to_string(i) + ".txt";
                 ifstream fin(path, ios::in);
 
                 fin >> aux >> obj;
@@ -155,8 +159,8 @@ void convertToCsvATSPLIB() {
     for(const auto &b: betas)
         datas[b] = vector<Data>();
 
-    ifstream fin("output/0Result/Results/aTSPLIB.txt", ios::in);
-    ofstream fout("output/0Result/aTSPLIB.csv", ios::out);
+    ifstream fin("output10/Results/aTSPLIB.txt", ios::in);
+    ofstream fout("outputcsv/aTSPLIB.csv", ios::out);
     while(fin.good()) {
         fin >> beta >> instance >> te >> ti >> archObj >> bestObj >> bestDev >> meanObj >> meanDev;
         if(beta == "Better:") break;
@@ -170,20 +174,20 @@ void convertToCsvATSPLIB() {
             Data data = {beta, instance, te, ti, archObj, bestObj, bestDev, meanObj, meanDev};
             datas[beta].push_back(data);
         } else {
-            fout << beta << ";" << instance << ";;";
-            fout << archObj << ";;;";
-            fout << bestObj << ";" << bestDev << ";" << meanObj << ";" << meanDev << ";";
-            fout << te << ";" << ti << endl;
+            fout << beta << "," << instance << ",,";
+            fout << archObj << ",,,";
+            fout << bestObj << "," << bestDev << "," << meanObj << "," << meanDev << ",";
+            fout << te << "," << ti << endl;
         }
     }
     fin.close();
 
     for(auto const &b: betas) {
         for(const auto &d: datas[b]) {
-            fout << d.beta << ";" << d.instance << ";;";
-            fout << d.archObj << ";;;";
-            fout << d.bestObj << ";" << d.bestDev << ";" << d.meanObj << ";" << d.meanDev << ";";
-            fout << d.te << ";" << d.ti << endl;
+            fout << d.beta << "," << d.instance << ",,";
+            fout << d.archObj << ",,,";
+            fout << d.bestObj << "," << d.bestDev << "," << d.meanObj << "," << d.meanDev << ",";
+            fout << d.te << "," << d.ti << endl;
         }
     }
     fout.close();
@@ -261,7 +265,7 @@ void tsplibStats() {
 int main(int argc, char **argv) {
     cout << fixed << setprecision(2);
 
-    tsplibStats();
+    convertToCsvATSPLIB();
     return 0;
 }
 #pragma clang diagnostic pop
