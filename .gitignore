@@ -2,4 +2,5 @@
 bin/
 cmake-*/
 output*/
+scripts/output*/
 instances/testSet

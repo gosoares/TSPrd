@@ -6,21 +6,21 @@ import pandas as pd
 
 
 def main():
-    output_folder = "outputfinal"
+    output_folder = "../outputfinal"
 
     df = read_execution_data(output_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
 
-    gen_tables(df_agg, output_folder)
+    gen_tables(df_agg)
 
 
-def gen_tables(df_agg: pd.DataFrame, output_folder: str):
+def gen_tables(df_agg: pd.DataFrame):
     dfs = {idx: group.droplevel(level=0) for idx, group in df_agg.groupby(level=0)}  # separate by instance set and remove set from index
     solomon = dfs["Solomon"]
-    gen_solomon_tables(solomon, f"{output_folder}/tables")
+    gen_solomon_tables(solomon)
 
 
-def gen_solomon_tables(solomon: pd.DataFrame, output_folder: str):
+def gen_solomon_tables(solomon: pd.DataFrame):
     # insert blank columns for formatting
     solomon.insert(1, "blank", "")
     solomon.insert(solomon.columns.get_loc("best_obj"), 'blank2', "")
@@ -38,17 +38,17 @@ def gen_solomon_tables(solomon: pd.DataFrame, output_folder: str):
     for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
         if df["ref_time"].isnull().all():
             df.drop(columns="ref_time", inplace=True)
-        save_table(output_folder, f"solomon{n}", df.droplevel(0), gen_avg_footer(df))
+        save_table(f"solomon{n}", df.droplevel(0), gen_avg_footer(df))
 
 
-def save_table(output_folder: str, file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
+def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
     df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
     tex = get_table_tex(df)
     if footer is not None:
         tex += get_table_tex(footer)
     tex += "\\bottomrule"
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
-    print(tex, file=open(f"{output_folder}/{file}.tex", "w"))
+    Path("output").mkdir(parents=True, exist_ok=True)
+    print(tex, file=open(f"output/{file}.tex", "w"))
 
 
 def get_table_tex(df: pd.DataFrame):
