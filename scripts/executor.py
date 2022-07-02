@@ -20,14 +20,14 @@ def main(n_threads, output_folder):
 
 
 def build_project():
-    subprocess.run(["mkdir", "-p", "../cmake-build-release"], stdout=subprocess.DEVNULL)
-    subprocess.run(["cmake", '-DCMAKE_BUILD_TYPE="Release"', "-B../cmake-build-release", ".."], stdout=subprocess.DEVNULL)
-    subprocess.run(["make", "-C../cmake-build-release", "TSPrd"], stdout=subprocess.DEVNULL)
+    subprocess.run(["mkdir -p ../cmake-build-release"], stdout=subprocess.DEVNULL, shell=True)
+    subprocess.run(["cmake -DCMAKE_BUILD_TYPE=\"Release\" -B../cmake-build-release .."], stdout=subprocess.DEVNULL, shell=True)
+    subprocess.run(["make -C../cmake-build-release TSPrd"], stdout=subprocess.DEVNULL, shell=True)
 
 
 def execute_instance(iset, name, beta, exec_id, output_folder):  # (set, name, beta, exec_id)
     file = "{}/{}_{}".format(iset, name, beta)
-    process = subprocess.run(["../bin/TSPrd", file, "{}/{}_{}.txt".format(output_folder, file, exec_id)], stdout=subprocess.DEVNULL)
+    process = subprocess.run(["../bin/TSPrd {} {}/{}_{}.txt".format(file, output_folder, file, exec_id)], stdout=subprocess.DEVNULL, shell=True)
     if process.returncode != 0:
         print(file, file=open("{}/errors.txt".format(output_folder), 'a'))
         print("error while running {}.".format(file))
