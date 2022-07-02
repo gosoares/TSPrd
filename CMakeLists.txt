@@ -20,6 +20,5 @@ add_executable(TSPrd main.cpp ${mainFiles})
 add_executable(Runner Runner.cpp)
 add_dependencies(Runner TSPrd)
 add_executable(Param ParameterTuning.cpp ${mainFiles})
-add_executable(rp ResultProcessor.cpp)
 
 # target_link_libraries(TSPrd ilocplex concert cplex m pthread dl)
