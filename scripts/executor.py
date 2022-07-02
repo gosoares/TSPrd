@@ -29,7 +29,7 @@ def execute_instance(iset, name, beta, exec_id, output_folder):  # (set, name, b
     file = "{}/{}_{}".format(iset, name, beta)
     process = subprocess.run(["../bin/TSPrd", file, "{}/{}_{}.txt".format(output_folder, file, exec_id)], stdout=subprocess.DEVNULL)
     if process.returncode != 0:
-        print(file, file=open("{output_folder}/errors.txt", 'a'))
+        print(file, file=open("{}/errors.txt".format(output_folder), 'a'))
         print("error while running {}.".format(file))
     return "{} {}".format(file, exec_id)
 
