@@ -18,15 +18,12 @@ def gen_tables(df_agg: pd.DataFrame):
     dfs = {idx: group.droplevel(level=0) for idx, group in df_agg.groupby(level=0)}  # separate by instance set and remove set from index
     solomon = dfs["Solomon"]
     gen_solomon_tables(solomon)
+    atsplib = dfs["aTSPLIB"]
+    gen_atsplib_tables(atsplib)
 
 
 def gen_solomon_tables(solomon: pd.DataFrame):
-    # insert blank columns for formatting
-    solomon.insert(1, "blank", "")
-    solomon.insert(solomon.columns.get_loc("best_obj"), 'blank2', "")
-    solomon.insert(solomon.columns.get_loc("avg_obj"), 'blank3', "")
-    solomon.insert(solomon.columns.get_loc("exec_time"), 'blank4', "")
-
+    insert_blank_columns(solomon)
     solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20]
     solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
 
@@ -38,7 +35,22 @@ def gen_solomon_tables(solomon: pd.DataFrame):
     for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
         if df["ref_time"].isnull().all():
             df.drop(columns="ref_time", inplace=True)
-        save_table(f"solomon{n}", df.droplevel(0), gen_avg_footer(df))
+        df = df.droplevel(0)
+        save_table(f"solomon{n}", df, gen_avg_footer(df))
+
+
+def gen_atsplib_tables(atsplib: pd.DataFrame):
+    atsplib = atsplib.reset_index().sort_values(["beta", "n"]).set_index(["beta", "name"])
+    insert_blank_columns(atsplib).drop(columns=["n", "opt", "ref_time"], inplace=True)
+    save_table(f"atsplib", atsplib, gen_avg_footer(atsplib))
+
+
+def insert_blank_columns(df: pd.DataFrame):
+    df.insert(1, "blank1", "")
+    df.insert(df.columns.get_loc("best_obj"), "blank2", "")
+    df.insert(df.columns.get_loc("avg_obj"), "blank3", "")
+    df.insert(df.columns.get_loc("exec_time"), "blank4", "")
+    return df
 
 
 def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
@@ -61,7 +73,7 @@ def get_table_tex(df: pd.DataFrame):
 
 def gen_avg_footer(df: pd.DataFrame):
     footer = df[["gap_best", "gap_avg", "exec_time", "sol_time"]].mean().rename(f"Avg.")
-    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 2)]  # add columns to compensate if df has multiindex
+    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
 
     if "ref_gap_opt" in footer:
