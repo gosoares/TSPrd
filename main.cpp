@@ -5,8 +5,11 @@
 
 using namespace std;
 
-int main(int argc, char **argv) {
+unsigned int normalizeTime(unsigned int time) {
+    return (unsigned int) (time * (1201.0 / 1976.0));
+}
 
+int main(int argc, char **argv) {
     // genetic algorithm parameters
     unsigned int mi = 20;
     unsigned int lambda = 40;
@@ -17,8 +20,8 @@ int main(int argc, char **argv) {
 
     auto timeLimit = (unsigned int) (10 * 60 * (1976.0 / 1201.0)); // in seconds
 
-    string instanceFile = argv[1];
-    Instance instance(instanceFile);
+    string instanceName = argv[1];
+    Instance instance(instanceName);
 
     auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit);
     Solution s = alg.getSolution();
@@ -28,22 +31,16 @@ int main(int argc, char **argv) {
     cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
     cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
 
+    if (argc < 3) return 0;
+
     // output to file
-    unsigned long long timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-    string outFile = to_string(timeStamp) + "/" + instanceFile;
-    if (argc > 2)
-        outFile = string(argv[2]) + "/" + instanceFile;
-    string id = "1";
-    if (argc > 3)
-        id = string(argv[3]);
-    outFile = "output/" + outFile + "_" + id + ".txt";
+    string outFile = string(argv[2]);
     string dir = outFile.substr(0, outFile.find_last_of('/'));
-    system(("mkdir -p " + dir).c_str());
+    if (dir != outFile) system(("mkdir -p " + dir).c_str()); // make sure the path exists
 
     ofstream fout(outFile, ios::out);
-    fout << "EXEC_TIME " << alg.getExecutionTime() << endl;
-    fout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+    fout << "EXEC_TIME " << normalizeTime(alg.getExecutionTime()) << endl;
+    fout << "SOL_TIME " << normalizeTime(alg.getBestSolutionTime()) << endl;
     fout << "OBJ " << s.time << endl;
     fout << "N_ROUTES " << s.routes.size() << endl;
     fout << "N_CLIENTS";
@@ -59,10 +56,12 @@ int main(int argc, char **argv) {
     fout.close();
 
     // output search progress
-    string spFile = outFile.substr(0, outFile.find_last_of('.')) + "_SP.txt";
+    auto dotPos = outFile.find_last_of('.');
+    string spFile = outFile.substr(0, dotPos) + "_SP" + outFile.substr(dotPos);
     ofstream spout(spFile, ios::out);
+    spout << "time,obj" << endl;
     for (auto x: alg.getSearchProgress()) {
-        spout << x.first << "\t" << x.second << endl;
+        spout << normalizeTime(x.first) << "," << x.second << endl;
     }
     spout.close();
     return 0;
