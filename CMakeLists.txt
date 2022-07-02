@@ -17,8 +17,5 @@ set(mainFiles src/Instance.cpp src/Instance.h src/Solution.cpp src/Solution.h sr
         src/GeneticAlgorithm.cpp src/GeneticAlgorithm.h src/Split.h src/Timer.h)
 set(modelFiles src/MathModel.cpp src/MathModel.h)
 add_executable(TSPrd src/main.cpp ${mainFiles})
-add_executable(Runner src/Runner.cpp)
-add_dependencies(Runner TSPrd)
-add_executable(Param src/ParameterTuning.cpp ${mainFiles})
 
 # target_link_libraries(TSPrd ilocplex concert cplex m pthread dl)
