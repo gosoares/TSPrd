@@ -24,7 +24,7 @@ void floydWarshall(vector<vector<unsigned int> > &W) {
 
 Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
 
-    ifstream in(("instances/" + instance + ".dat").c_str(), ios::in);
+    ifstream in(("../instances/" + instance + ".dat").c_str(), ios::in);
     if (!in) {
         cout << "ERROR failed_open_file" << endl;
         exit(1);

@@ -1,8 +1,5 @@
-cmake-*/
 .idea/
-TSPrd
-Runner
-Param
-rp
+bin/
+cmake-*/
 output*/
 instances/testSet

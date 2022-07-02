@@ -115,7 +115,7 @@ def read_execution_data(output_folder: str):
     df = gen_instances_df()  # each row of this dataframe represents one of ten execution of each instance n_instance_beta
 
     # read ref obj (obj from archetti paper)
-    ref_data = pd.read_csv("instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_time": "Int64"})
+    ref_data = pd.read_csv("../instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_time": "Int64"})
     df = df.merge(ref_data, how="left", on=["set", "name", "beta"], copy=False)
 
     # read obj, exec_time, sol_time for each execution row
