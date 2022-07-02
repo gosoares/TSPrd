@@ -4,6 +4,8 @@
 #include <random>
 #include "Instance.h"
 #include "Solution.h"
+#include "IntraSearch.h"
+#include "InterSearch.h"
 
 class NeighborSearch {
 private:
@@ -11,38 +13,14 @@ private:
     const vector<vector<unsigned int> > &W;
     const vector<unsigned int> &RD;
 
-    const bool applySplit;
+    InterSearch interSearch;
+    IntraSearch intraSearch;
 
     mt19937 generator;
 
-    unsigned int callIntraSearch(vector<unsigned int> *route, unsigned int which);
-    unsigned int swapSearch(vector<unsigned int> *route, unsigned int n1 = 1, unsigned int n2 = 1);
-    unsigned int swapSearchIt(vector<unsigned int> *route, unsigned int n1, unsigned int n2);
-    int verifySwap(vector<unsigned int> *route, unsigned int i1, unsigned int i2,
-                            unsigned int n1, unsigned int n2);
-    unsigned int reinsertionSearch(vector<unsigned int> *route, unsigned int n = 1);
-    unsigned int reinsertionSearchIt(vector<unsigned int> *route, unsigned int n);
-    unsigned int twoOptSearch(vector<unsigned int> *route);
-    unsigned int twoOptSearchIt(vector<unsigned int> *route);
-
-    unsigned int callInterSearch(Solution *solution, unsigned int which);
-    static unsigned int calculateEndingTime(Solution *solution, unsigned int r1, unsigned int r2);
-    unsigned int routeReleaseDateRemoving(Solution *s, unsigned int r, unsigned int vertex);
-    static unsigned int verifySolutionChangingRoutes(
-            Solution *solution, unsigned int r1, unsigned int r2,
-            unsigned int r1RD, unsigned int r1Time, unsigned int r2RD, unsigned int r2Time
-    );
-    unsigned int vertexRelocation(Solution *solution);
-    unsigned int vertexRelocationIt(Solution *solution, unsigned int r1, unsigned int r2);
-    unsigned int interSwap(Solution *solution);
-    unsigned int interSwapIt(Solution *solution, unsigned int r1, unsigned int r2);
-    unsigned int insertDepotAndReorder(Solution *solution);
-    bool insertDepotAndReorderIt(Solution *s);
     unsigned int splitNs(Solution *solution);
 public:
-    explicit NeighborSearch(const Instance& instance, bool applySplit = true);
-    unsigned int intraSearch(Solution *solution, bool all = false);
-    unsigned int interSearch(Solution *solution);
+    explicit NeighborSearch(const Instance& instance);
     unsigned int educate(Solution *solution);
 };
 

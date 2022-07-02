@@ -13,7 +13,7 @@ set(CPLEX_ARCH "x86-64_osx")
 include_directories("${CPLEX_DIR}/cplex/include" "${CPLEX_DIR}/concert/include")
 link_directories("${CPLEX_DIR}/cplex/lib/${CPLEX_ARCH}/static_pic" "${CPLEX_DIR}/concert/lib/${CPLEX_ARCH}/static_pic")
 
-set(mainFiles Instance.cpp Instance.h Solution.cpp Solution.h NeighborSearch.cpp NeighborSearch.h
+set(mainFiles Instance.cpp Instance.h Solution.cpp Solution.h IntraSearch.cpp IntraSearch.h InterSearch.cpp InterSearch.h NeighborSearch.cpp NeighborSearch.h
         GeneticAlgorithm.cpp GeneticAlgorithm.h Split.h Timer.h)
 set(modelFiles MathModel.cpp MathModel.h)
 add_executable(TSPrd main.cpp ${mainFiles})
