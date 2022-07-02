@@ -1,5 +1,6 @@
-import itertools
 import re
+from itertools import chain
+from pathlib import Path
 
 import pandas as pd
 
@@ -10,38 +11,44 @@ def main():
     df = read_execution_data(output_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
 
-    gen_tables(df_agg)
+    gen_tables(df_agg, output_folder)
 
 
-def gen_tables(df_agg: pd.DataFrame):
+def gen_tables(df_agg: pd.DataFrame, output_folder: str):
     dfs = {idx: group.droplevel(level=0) for idx, group in df_agg.groupby(level=0)}  # separate by instance set and remove set from index
-
     solomon = dfs["Solomon"]
+    gen_solomon_tables(solomon, f"{output_folder}/tables")
+
+
+def gen_solomon_tables(solomon: pd.DataFrame, output_folder: str):
+    # insert blank columns for formatting
+    solomon.insert(1, "blank", "")
+    solomon.insert(solomon.columns.get_loc("best_obj"), 'blank2', "")
+    solomon.insert(solomon.columns.get_loc("avg_obj"), 'blank3', "")
+    solomon.insert(solomon.columns.get_loc("exec_time"), 'blank4', "")
+
     solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20]
     solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
-    gen_solomon_nopt_tables(solomon_nopt)
+
+    # calculate gaps in relation to the optimal result
+    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap_opt", (100 * solomon_opt["ref_obj"] / solomon_opt["opt"]) - 100)
+    solomon_opt.loc[:, "gap_best"] = ((100 * solomon_opt["best_obj"] / solomon_opt["opt"]) - 100)
+    solomon_opt.loc[:, "gap_avg"] = ((100 * solomon_opt["avg_obj"] / solomon_opt["opt"]) - 100)
+
+    for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
+        if df["ref_time"].isnull().all():
+            df.drop(columns="ref_time", inplace=True)
+        save_table(output_folder, f"solomon{n}", df.droplevel(0), gen_avg_footer(df))
 
 
-def gen_solomon_nopt_tables(solomon_nopt: pd.DataFrame):
-    solomon_nopt.index.names = [None for _ in range(len(solomon_nopt.index.names))]  # clear index names
-
-    # insert blank columns for formatting
-    solomon_nopt.insert(0, 'blank', "")
-    solomon_nopt.insert(solomon_nopt.columns.get_loc("best_obj"), 'blank2', "")
-    solomon_nopt.insert(solomon_nopt.columns.get_loc("avg_obj"), 'blank3', "")
-    solomon_nopt.insert(solomon_nopt.columns.get_loc("exec_time"), 'blank4', "")
-
-    for n, data in solomon_nopt.groupby(level=0):  # iterate a dataframe for each `n`
-        save_table(f"solomon{n}_data", data.droplevel(0), gen_avg_footer(data))
-
-
-def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
+def save_table(output_folder: str, file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
+    df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
     tex = get_table_tex(df)
     if footer is not None:
         tex += get_table_tex(footer)
     tex += "\\bottomrule"
-    # tex = ''.join(tex.rsplit("\\\\", 1))  # remove last `\\` from tex
-    print(tex, file=open(f"output/{file}.tex", "w"))
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    print(tex, file=open(f"{output_folder}/{file}.tex", "w"))
 
 
 def get_table_tex(df: pd.DataFrame):
@@ -53,10 +60,14 @@ def get_table_tex(df: pd.DataFrame):
 
 
 def gen_avg_footer(df: pd.DataFrame):
-    footer = df[["ref_time", "gap_best", "gap_avg", "exec_time", "sol_time"]].mean().rename(f"Avg.")
+    footer = df[["gap_best", "gap_avg", "exec_time", "sol_time"]].mean().rename(f"Avg.")
     fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 2)]  # add columns to compensate if df has multiindex
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
-    footer["ref_time"] = footer["ref_time"].astype(int)
+
+    if "ref_gap_opt" in footer:
+        footer["ref_gap_opt"] = df["ref_gap_opt"].mean()
+    if "ref_time" in footer:
+        footer["ref_time"] = df["ref_time"].mean().astype(int)
     return footer
 
 
@@ -155,7 +166,7 @@ def gen_instances_df():
     tsplib_instances = [["TSPLIB", int(re.search(r'(\d+)p?$', name).groups()[0]), name] for name in tsplib_names]
     atsplib_instances = [["aTSPLIB", int(re.search(r'(\d+)p?$', name).groups()[0]), name] for name in ["ftv33", "ft53", "ftv70", "kro124p", "rbg403"]]
 
-    all_instances = itertools.chain(solomon_instances, tsplib_instances, atsplib_instances)
+    all_instances = chain(solomon_instances, tsplib_instances, atsplib_instances)
     all_instances = [[*x, beta, exec_id] for x in all_instances for beta in ["0.5", "1", "1.5", "2", "2.5", "3"] for exec_id in
                      range(1, 11)]  # add (beta, exec_id)
 
