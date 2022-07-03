@@ -1,9 +1,8 @@
 import argparse
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 from tables_saving import *
 from tsprd_data import *
-import numpy as np
 
 
 def main():
@@ -54,7 +53,7 @@ def gen_tsplib_tables(tsplib: pd.DataFrame):
 
     tsplib_betas, tsplib_dfs = zip(*tuple(tsplib.groupby(level="beta")))
     for i in range(0, 6, 2):
-        tsplib_two = pd.concat([tsplib_dfs[i].droplevel("beta"), tsplib_dfs[i+1].droplevel("beta")],
+        tsplib_two = pd.concat([tsplib_dfs[i].droplevel("beta"), tsplib_dfs[i + 1].droplevel("beta")],
                                axis="columns", keys=[tsplib_betas[i], tsplib_betas[i + 1]])
         save_table(f"tsplib_{tsplib_betas[i]}_{tsplib_betas[i + 1]}", tsplib_two, gen_avg_footer(tsplib_two))
 
@@ -85,8 +84,9 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
     tsplib_agg = gen_tsplib_summary(tsplib)
+    sol_agg = gen_solomon_nopt_summary(solomon_nopt)
 
-    summary_nopt = pd.concat([tsplib_agg], keys=["TSPLIB"])
+    summary_nopt = pd.concat([sol_agg, tsplib_agg], keys=["Solomon", "TSPLIB"])
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
@@ -94,8 +94,20 @@ def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, ats
 
 
 def gen_solomon_nopt_summary(solomon_nopt: pd.DataFrame):
-    sol_agg = solomon_nopt.groupby("n").agg()
-    pass
+    grouping = ["n", "beta"]
+    sol_agg = solomon_nopt.groupby(grouping).agg(n_inst=("ref_obj", "count"), ref_time=("ref_time", "mean"), gap_best=("gap_best", "mean"),
+                                                 gap_avg=("gap_avg", "mean"), exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
+    sol_agg["ref_time"] = sol_agg["ref_time"].astype(int)
+    nopt_summary_add_counts(sol_agg, solomon_nopt, lambda _: grouping)
+    return sol_agg
+
+
+def nopt_summary_add_counts(df_agg: pd.DataFrame, df: pd.DataFrame, grouping: Callable):
+    ref_pos = df_agg.columns.get_loc("n_inst") + 1  # position to insert next few columns
+    df_agg.insert(ref_pos, "n_ref_sb_best", gen_count_column(df, "ref_obj < best_obj", grouping))
+    df_agg.insert(ref_pos + 1, "n_ref_sb_avg", gen_count_column(df, "ref_obj < avg_obj", grouping))
+    df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best", gen_count_column(df, "best_obj < ref_obj", grouping))
+    df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg", gen_count_column(df, "avg_obj < ref_obj", grouping))
 
 
 def gen_tsplib_summary(tsplib: pd.DataFrame):
@@ -104,12 +116,7 @@ def gen_tsplib_summary(tsplib: pd.DataFrame):
 
     tsplib_agg = tsplib.groupby(tsplib_grouping(tsplib)).agg(n_inst=("ref_obj", "count"), gap_best=("gap_best", "mean"), gap_avg=("gap_avg", "mean"),
                                                              exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
-
-    ref_pos = tsplib_agg.columns.get_loc("gap_best")  # position to insert next few columns
-    tsplib_agg.insert(ref_pos, "n_ref_sb_best", gen_count_column(tsplib, "ref_obj < best_obj", tsplib_grouping))
-    tsplib_agg.insert(ref_pos + 1, "n_ref_sb_avg", gen_count_column(tsplib, "ref_obj < avg_obj", tsplib_grouping))
-    tsplib_agg.insert(ref_pos + 2, "n_sb_best", gen_count_column(tsplib, "best_obj < ref_obj", tsplib_grouping))
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("gap_avg"), "n_sb_avg", gen_count_column(tsplib, "avg_obj < ref_obj", tsplib_grouping))
+    nopt_summary_add_counts(tsplib_agg, tsplib, tsplib_grouping)
     tsplib_agg.insert(tsplib_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", "-")
     return tsplib_agg
 
