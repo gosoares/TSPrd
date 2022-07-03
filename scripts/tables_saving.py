@@ -21,6 +21,7 @@ def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame | Iterable[pd.D
 def get_table_tex(df: pd.DataFrame):
     df = format_time_columns(df)  # format times
     tex: str = df.style.format(precision=2).hide(axis="columns") \
+        .format_index(lambda x: f"\\shortstack{{{x.left + 1}\\\\\\~{{}}\\\\{x.right}}}" if isinstance(x, pd.Interval) else x) \
         .to_latex(clines="skip-last;data").replace("\\cline", "\\cmidrule")
     tex = tex.split('\n', 1)[1].replace("\\end{tabular}\n", "")  # remove \tabular from first and last lines
     return tex
