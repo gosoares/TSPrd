@@ -1,4 +1,5 @@
 import argparse
+from collections.abc import Iterable
 
 from tables_saving import *
 from tsprd_data import *
@@ -36,8 +37,8 @@ def gen_tables(results_folder: str):
 
 
 def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
-    solomon_opt = insert_blank_columns(solomon_opt.copy(), 1)
-    solomon_nopt = insert_blank_columns(solomon_nopt.copy())
+    solomon_opt = insert_blank_columns(solomon_opt.copy(), pos=1, before=("best_obj", "avg_obj", "exec_time"))
+    solomon_nopt = insert_blank_columns(solomon_nopt.copy(), pos=0, before=("best_obj", "avg_obj", "exec_time"))
 
     for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
         if df["ref_time"].isnull().all():
@@ -48,7 +49,7 @@ def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
 
 def gen_tsplib_tables(tsplib: pd.DataFrame):
     tsplib = tsplib.sort_index(level=["beta", "n"]).droplevel("n")
-    tsplib.insert(tsplib.columns.get_loc("ref_obj"), "blank", "")
+    insert_blank_columns(tsplib, before=["ref_obj"])
     tsplib = tsplib.stack(level=0).unstack(level=1).transpose()
     int_columns = tsplib.columns.get_level_values(-1).isin(["ref_obj", "best_obj"])
     tsplib.iloc[:, int_columns] = tsplib.iloc[:, int_columns].astype(int)
@@ -61,7 +62,7 @@ def gen_tsplib_tables(tsplib: pd.DataFrame):
 
 def gen_atsplib_tables(atsplib: pd.DataFrame):
     atsplib = atsplib.sort_index(level=["beta", "n"]).droplevel("n")
-    insert_blank_columns(atsplib)
+    insert_blank_columns(atsplib, pos=1, before=("best_obj", "avg_obj", "exec_time"))
     save_table(f"atsplib", atsplib, gen_avg_footer(atsplib))
 
 
@@ -76,11 +77,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
     sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "best_n_opt", solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "avg_n_opt", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
-    sol_opt.insert(sol_opt.columns.get_loc("ref_n_opt"), "blank1", "")
-    sol_opt.insert(sol_opt.columns.get_loc("best_n_opt"), "blank2", "")
-    sol_opt.insert(sol_opt.columns.get_loc("avg_n_opt"), "blank3", "")
-    sol_opt.insert(sol_opt.columns.get_loc("exec_time"), "blank4", "")
-
+    insert_blank_columns(sol_opt, before=("ref_n_opt", "best_n_opt", "avg_n_opt", "exec_time"))
     avg_footer = gen_avg_footer(sol_opt)
     sum_footer = gen_sum_footer(sol_opt)
     footer = pd.concat([avg_footer, sum_footer])
@@ -89,7 +86,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
     tsplib_agg = gen_tsplib_summary(tsplib)
-    summary_nopt = pd.concat([tsplib_agg], keys=["Solomon"])
+    summary_nopt = pd.concat([tsplib_agg], keys=["TSPLIB"])
     summary_nopt.insert(summary_nopt.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", "-")
     save_table("summary_nopt", summary_nopt)
 
@@ -110,11 +107,7 @@ def gen_tsplib_summary(tsplib: pd.DataFrame):
     tsplib_agg[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = tsplib_agg[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] \
         .fillna(0).astype(int)
 
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("n_ref_sb_best"), "blank1", "")
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("n_sb_best"), "blank2", "")
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("n_sb_avg"), "blank3", "")
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("exec_time"), "blank4", "")
-
+    insert_blank_columns(tsplib_agg, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
     return tsplib_agg
 
 
@@ -126,11 +119,11 @@ def gen_count_column(df: pd.DataFrame, condition: str, grouping) -> pd.Series:
     return sb.groupby(grouping).size()
 
 
-def insert_blank_columns(df: pd.DataFrame, first: int = 0):
-    df.insert(first, "blank1", "")
-    df.insert(df.columns.get_loc("best_obj"), "blank2", "")
-    df.insert(df.columns.get_loc("avg_obj"), "blank3", "")
-    df.insert(df.columns.get_loc("exec_time"), "blank4", "")
+def insert_blank_columns(df: pd.DataFrame, pos: int | Iterable[int] = (), before: Iterable[str] = (), after: Iterable[str] = ()):
+    pos = pos if isinstance(pos, Iterable) else (pos,)
+    pos = chain(pos, (df.columns.get_loc(c) for c in before), (df.columns.get_loc(c) + 1 for c in after))
+    for i, p in enumerate(sorted(pos, reverse=True)):
+        df.insert(p, f"blank{i}", "")
     return df
 
 
