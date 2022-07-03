@@ -1,3 +1,4 @@
+import argparse
 import re
 from itertools import chain
 from pathlib import Path
@@ -5,12 +6,9 @@ from pathlib import Path
 import pandas as pd
 
 
-def main():
-    output_folder = "../outputfinal"
-
-    df = read_execution_data(output_folder)  # read the results of the executions
+def main(results_folder):
+    df = read_execution_data(results_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
-
     gen_tables(df_agg)
 
 
@@ -123,7 +121,7 @@ def aggregate_data(df: pd.DataFrame):
     return df_agg
 
 
-def read_execution_data(output_folder: str):
+def read_execution_data(results_folder: str):
     df = gen_instances_df()  # each row of this dataframe represents one of ten execution of each instance n_instance_beta
 
     # read ref obj (obj from archetti paper)
@@ -132,7 +130,7 @@ def read_execution_data(output_folder: str):
 
     # read obj, exec_time, sol_time for each execution row
     df[["obj", "exec_time", "sol_time"]] = df.apply(
-        lambda row: read_instance_result(output_folder, row["set"], row["name"], row["beta"], row["exec_id"]),
+        lambda row: read_instance_result(results_folder, row["set"], row["name"], row["beta"], row["exec_id"]),
         axis='columns', result_type='expand')
     df["obj"] = df["obj"].astype(int)
     df.insert(df.columns.get_loc("obj") + 1, "obj_gap_ref", (100 * df["obj"] / df["ref_obj"]) - 100)
@@ -186,4 +184,8 @@ def gen_instances_df():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Generate table from the executor instance execution results folder.")
+    parser.add_argument("results_folder_", action="store", type=str, help="Folder with the TSPrd instance execution results.")
+    args = parser.parse_args()
+
+    main(args.results_folder_)
