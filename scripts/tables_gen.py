@@ -1,9 +1,10 @@
 import argparse
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
+
+from pandas.core.groupby import DataFrameGroupBy
 
 from tables_saving import *
 from tsprd_data import *
-from pandas.core.groupby import DataFrameGroupBy
 
 
 def main():
@@ -84,10 +85,11 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
 
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
-    tsplib_agg = gen_tsplib_summary(tsplib)
     sol_agg = gen_solomon_nopt_summary(solomon_nopt)
+    tsplib_agg = gen_tsplib_summary(tsplib)
+    atsplib_agg = gen_atsplib_summary(atsplib)
 
-    summary_nopt = pd.concat([sol_agg, tsplib_agg], keys=["Solomon", "TSPLIB"])
+    summary_nopt = pd.concat([sol_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
@@ -104,6 +106,12 @@ def gen_tsplib_summary(tsplib: pd.DataFrame):
     tsplib_grouped = tsplib.groupby([pd.cut(tsplib.index.get_level_values("n"), bins=[49, 100, 150, 250, 500]), "beta"])
     tsplib_agg = nopt_summary_agg(tsplib_grouped)
     return tsplib_agg
+
+
+def gen_atsplib_summary(atsplib:pd.DataFrame):
+    atsplib_grouped = atsplib.groupby([pd.cut(atsplib.index.get_level_values("n"), bins=[32, 403]), "beta"])
+    atsplib_agg = nopt_summary_agg(atsplib_grouped)
+    return atsplib_agg
 
 
 def nopt_summary_agg(df_grouped: DataFrameGroupBy):
