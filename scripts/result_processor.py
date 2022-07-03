@@ -21,19 +21,23 @@ def gen_tables(df_agg: pd.DataFrame):
 
 def gen_solomon_tables(solomon: pd.DataFrame):
     insert_blank_columns(solomon)
-    solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20]
+    solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
     solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
 
     # calculate gaps in relation to the optimal result
-    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap_opt", (100 * solomon_opt["ref_obj"] / solomon_opt["opt"]) - 100)
-    solomon_opt.loc[:, "gap_best"] = ((100 * solomon_opt["best_obj"] / solomon_opt["opt"]) - 100)
-    solomon_opt.loc[:, "gap_avg"] = ((100 * solomon_opt["avg_obj"] / solomon_opt["opt"]) - 100)
+    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap_opt", calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
+    solomon_opt["gap_best"] = calculate_gap(solomon_opt["best_obj"], solomon_opt["opt"])
+    solomon_opt["gap_avg"] = calculate_gap(solomon_opt["avg_obj"], solomon_opt["opt"])
 
     for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
         if df["ref_time"].isnull().all():
             df.drop(columns="ref_time", inplace=True)
         df = df.droplevel(0)
         save_table(f"solomon{n}", df, gen_avg_footer(df))
+
+
+def calculate_gap(value: pd.Series, ref: pd.Series) -> float:
+    return (100 * value / ref) - 100
 
 
 def gen_tsplib_tables(tsplib: pd.DataFrame):
@@ -150,7 +154,7 @@ def read_execution_data(results_folder: str):
         lambda row: read_instance_result(results_folder, row["set"], row["name"], row["beta"], row["exec_id"]),
         axis='columns', result_type='expand')
     df["obj"] = df["obj"].astype(int)
-    df.insert(df.columns.get_loc("obj") + 1, "obj_gap_ref", (100 * df["obj"] / df["ref_obj"]) - 100)
+    df.insert(df.columns.get_loc("obj") + 1, "obj_gap_ref", calculate_gap(df["obj"], df["ref_obj"]))
 
     # remove n/ from solomon instances names, as it is not needed anymore
     df["name"] = df["name"].apply(lambda x: x.split("/")[-1])
