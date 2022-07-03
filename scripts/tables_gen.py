@@ -3,6 +3,7 @@ from collections.abc import Iterable
 
 from tables_saving import *
 from tsprd_data import *
+import numpy as np
 
 
 def main():
@@ -50,14 +51,12 @@ def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
 def gen_tsplib_tables(tsplib: pd.DataFrame):
     tsplib = tsplib.sort_index(level=["beta", "n"]).droplevel("n")
     insert_blank_columns(tsplib, before=["ref_obj"])
-    tsplib = tsplib.stack(level=0).unstack(level=1).transpose()
-    int_columns = tsplib.columns.get_level_values(-1).isin(["ref_obj", "best_obj"])
-    tsplib.iloc[:, int_columns] = tsplib.iloc[:, int_columns].astype(int)
 
-    tsplib_beta = tuple(tsplib.groupby(level="beta", axis="columns"))
+    tsplib_betas, tsplib_dfs = zip(*tuple(tsplib.groupby(level="beta")))
     for i in range(0, 6, 2):
-        tsplib_two = pd.concat([tsplib_beta[i][1], tsplib_beta[i + 1][1]], axis="columns")
-        save_table(f"tsplib_{tsplib_beta[i][0]}_{tsplib_beta[i + 1][0]}", tsplib_two, gen_avg_footer(tsplib_two))
+        tsplib_two = pd.concat([tsplib_dfs[i].droplevel("beta"), tsplib_dfs[i+1].droplevel("beta")],
+                               axis="columns", keys=[tsplib_betas[i], tsplib_betas[i + 1]])
+        save_table(f"tsplib_{tsplib_betas[i]}_{tsplib_betas[i + 1]}", tsplib_two, gen_avg_footer(tsplib_two))
 
 
 def gen_atsplib_tables(atsplib: pd.DataFrame):
@@ -68,16 +67,16 @@ def gen_atsplib_tables(atsplib: pd.DataFrame):
 
 def gen_opt_summary_table(solomon_opt: pd.DataFrame):
     sol_opt = solomon_opt.groupby(["n", "beta"]) \
-        .agg(count=("exec_time", "count"), ref_gap=("ref_gap", "mean"), ref_time=("ref_time", "mean"), gap_best=("gap_best", "mean"),
+        .agg(n_inst=("exec_time", "count"), ref_gap=("ref_gap", "mean"), ref_time=("ref_time", "mean"), gap_best=("gap_best", "mean"),
              gap_avg=("gap_avg", "mean"), exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
     sol_opt["ref_time"] = sol_opt["ref_time"].apply(lambda x: "-" if pd.isna(x) else int(x))
 
     # count how many each equal the optimal result
-    sol_opt.insert(sol_opt.columns.get_loc("ref_gap"), "ref_n_opt", solomon_opt.query("ref_obj == opt").groupby(sol_opt.index.names).size())
-    sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "best_n_opt", solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
-    sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "avg_n_opt", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("ref_gap"), "n_ref_opt", solomon_opt.query("ref_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "n_opt_best", solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
-    insert_blank_columns(sol_opt, before=("ref_n_opt", "best_n_opt", "avg_n_opt", "exec_time"))
+    insert_blank_columns(sol_opt, before=("n_ref_opt", "n_opt_best", "n_opt_avg", "exec_time"))
     avg_footer = gen_avg_footer(sol_opt)
     sum_footer = gen_sum_footer(sol_opt)
     footer = pd.concat([avg_footer, sum_footer])
@@ -86,16 +85,24 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
     tsplib_agg = gen_tsplib_summary(tsplib)
+
     summary_nopt = pd.concat([tsplib_agg], keys=["TSPLIB"])
-    summary_nopt.insert(summary_nopt.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", "-")
+    summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
+        summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
+    insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
     save_table("summary_nopt", summary_nopt)
+
+
+def gen_solomon_nopt_summary(solomon_nopt: pd.DataFrame):
+    sol_agg = solomon_nopt.groupby("n").agg()
+    pass
 
 
 def gen_tsplib_summary(tsplib: pd.DataFrame):
     def tsplib_grouping(df: pd.DataFrame):
         return [pd.cut(df.index.get_level_values("n"), bins=[49, 100, 150, 250, 500]), "beta"]
 
-    tsplib_agg = tsplib.groupby(tsplib_grouping(tsplib)).agg(count=("ref_obj", "count"), gap_best=("gap_best", "mean"), gap_avg=("gap_avg", "mean"),
+    tsplib_agg = tsplib.groupby(tsplib_grouping(tsplib)).agg(n_inst=("ref_obj", "count"), gap_best=("gap_best", "mean"), gap_avg=("gap_avg", "mean"),
                                                              exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
 
     ref_pos = tsplib_agg.columns.get_loc("gap_best")  # position to insert next few columns
@@ -103,11 +110,7 @@ def gen_tsplib_summary(tsplib: pd.DataFrame):
     tsplib_agg.insert(ref_pos + 1, "n_ref_sb_avg", gen_count_column(tsplib, "ref_obj < avg_obj", tsplib_grouping))
     tsplib_agg.insert(ref_pos + 2, "n_sb_best", gen_count_column(tsplib, "best_obj < ref_obj", tsplib_grouping))
     tsplib_agg.insert(tsplib_agg.columns.get_loc("gap_avg"), "n_sb_avg", gen_count_column(tsplib, "avg_obj < ref_obj", tsplib_grouping))
-
-    tsplib_agg[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = tsplib_agg[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] \
-        .fillna(0).astype(int)
-
-    insert_blank_columns(tsplib_agg, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
+    tsplib_agg.insert(tsplib_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", "-")
     return tsplib_agg
 
 
@@ -128,7 +131,8 @@ def insert_blank_columns(df: pd.DataFrame, pos: int | Iterable[int] = (), before
 
 
 def gen_avg_footer(df: pd.DataFrame):
-    footer = df.iloc[:, df.columns.get_level_values(-1).isin(["gap_best", "gap_avg", "exec_time", "sol_time"])].mean().rename(f"Avg.")
+    columns = set(filter(lambda x: "gap" in x or x.endswith("_time"), df.columns.get_level_values(-1)))
+    footer = df.iloc[:, df.columns.get_level_values(-1).isin(columns)].mean(numeric_only=True).rename(f"Avg.")
     fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
     if type(df.columns) is pd.MultiIndex:
@@ -137,12 +141,13 @@ def gen_avg_footer(df: pd.DataFrame):
     if "ref_gap" in footer:
         footer["ref_gap"] = df["ref_gap"].mean()
     if "ref_time" in footer:
-        footer["ref_time"] = df["ref_time"].mean().astype(int) if pd.api.types.is_numeric_dtype(df["ref_time"]) else "-"
+        footer["ref_time"] = footer["ref_time"].astype(int) if pd.api.types.is_numeric_dtype(df["ref_time"]) else "-"
     return footer
 
 
 def gen_sum_footer(df: pd.DataFrame):
-    footer = df[["count", "ref_n_opt", "best_n_opt", "avg_n_opt"]].sum().astype("Int64").rename("Total")
+    columns = filter(lambda c: c.startswith("n_"), df.columns)
+    footer = df[columns].sum().astype("Int64").rename("Total")
     fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
     return footer
