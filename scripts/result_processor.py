@@ -13,10 +13,9 @@ def main(results_folder):
 
 
 def gen_tables(df_agg: pd.DataFrame):
-    dfs = {idx: group.droplevel(level=0) for idx, group in df_agg.groupby(level=0)}  # separate by instance set and remove set from index
-    solomon = dfs["Solomon"]
+    solomon, tsplib, atsplib = [group.droplevel(level=0) for _, group in df_agg.groupby(level=0)]
     gen_solomon_tables(solomon)
-    atsplib = dfs["aTSPLIB"]
+    gen_tsplib_tables(tsplib)
     gen_atsplib_tables(atsplib)
 
 
@@ -37,9 +36,22 @@ def gen_solomon_tables(solomon: pd.DataFrame):
         save_table(f"solomon{n}", df, gen_avg_footer(df))
 
 
+def gen_tsplib_tables(tsplib: pd.DataFrame):
+    tsplib.insert(tsplib.columns.get_loc("ref_obj"), "blank", "")
+    tsplib = tsplib.sort_index(level=["beta", "n"]).droplevel("n").drop(columns=["opt", "ref_time"])
+    tsplib = tsplib.stack(level=0).unstack(level=1).transpose()
+    int_columns = tsplib.columns.get_level_values(-1).isin(["ref_obj", "best_obj"])
+    tsplib.iloc[:, int_columns] = tsplib.iloc[:, int_columns].astype(int)
+
+    tsplib_beta = tuple(tsplib.groupby(level="beta", axis="columns"))
+    for i in range(0, 6, 2):
+        tsplib_two = pd.concat([tsplib_beta[i][1], tsplib_beta[i + 1][1]], axis="columns")
+        save_table(f"tsplib_{tsplib_beta[i][0]}_{tsplib_beta[i + 1][0]}", tsplib_two, gen_avg_footer(tsplib_two))
+
+
 def gen_atsplib_tables(atsplib: pd.DataFrame):
-    atsplib = atsplib.reset_index().sort_values(["beta", "n"]).set_index(["beta", "name"])
-    insert_blank_columns(atsplib).drop(columns=["n", "opt", "ref_time"], inplace=True)
+    atsplib = atsplib.sort_index(level=["beta", "n"]).droplevel("n")
+    insert_blank_columns(atsplib).drop(columns=["opt", "ref_time"], inplace=True)
     save_table(f"atsplib", atsplib, gen_avg_footer(atsplib))
 
 
@@ -55,7 +67,10 @@ def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
     df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
     tex = get_table_tex(df)
     if footer is not None:
-        tex += get_table_tex(footer)
+        if df.index.nlevels == 1:
+            tex += "\\midrule\n"
+        footer_tex = get_table_tex(footer)
+        tex += footer_tex
     tex += "\\bottomrule"
     Path("output").mkdir(parents=True, exist_ok=True)
     print(tex, file=open(f"output/{file}.tex", "w"))
@@ -70,9 +85,11 @@ def get_table_tex(df: pd.DataFrame):
 
 
 def gen_avg_footer(df: pd.DataFrame):
-    footer = df[["gap_best", "gap_avg", "exec_time", "sol_time"]].mean().rename(f"Avg.")
+    footer = df.iloc[:, df.columns.get_level_values(-1).isin(["gap_best", "gap_avg", "exec_time", "sol_time"])].mean().rename(f"Avg.")
     fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
+    if type(df.columns) is pd.MultiIndex:
+        footer.columns = pd.MultiIndex.from_tuples(footer.columns)
 
     if "ref_gap_opt" in footer:
         footer["ref_gap_opt"] = df["ref_gap_opt"].mean()
@@ -147,8 +164,8 @@ def get_formatted_times(dfi: pd.DataFrame):
 
 
 def format_time_columns(df: pd.DataFrame):
-    df["exec_time"] = df["exec_time"].apply(format_time)
-    df["sol_time"] = df["sol_time"].apply(format_time)
+    columns = df.columns.get_level_values(-1).isin(["exec_time", "sol_time"])
+    df.iloc[:, columns] = df.iloc[:, columns].apply(lambda x: x.apply(format_time), axis='columns', result_type='expand')
     return df
 
 
