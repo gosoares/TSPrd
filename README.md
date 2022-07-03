@@ -16,9 +16,9 @@ make -C cmake-build TSPrd
 
 ## Running an instance
 ```
-./TSPrd Solomon/50/C101_3
+./bin/TSPrd Solomon/50/C101_3 output.txt
 ```
-The argument must match a file in the 'instances' folder, without the extension.
+The first argument must match a file in the 'instances' folder, without the extension.
 
 ### Example output
 ```
@@ -28,7 +28,7 @@ SOL_TIME 21
 ```
 The times are in milliseconds.
 
-A more detailed result is saved in the 'output' folder. Example:
+A more detailed result is saved in the 'output.txt' file. Example:
 
 ```
 EXEC_TIME 3089
