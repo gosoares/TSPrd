@@ -1,13 +1,11 @@
+import argparse
 import concurrent.futures
-from itertools import chain
 import subprocess
+from itertools import chain
 from os.path import exists
 
-THREADS = 12
-OUTPUT_FOLDER = "output27"
 
-
-def main(n_threads, output_folder):
+def main(output_folder: str, n_threads: int):
     build_project()
     instances = get_instances_desc()
 
@@ -52,4 +50,9 @@ def get_instances_desc():
 
 
 if __name__ == "__main__":
-    main(THREADS, OUTPUT_FOLDER)
+    parser = argparse.ArgumentParser(description='Run all instances of TSPrd.')
+    parser.add_argument("output_folder_", action="store", type=str, help="Which folder to save the output files.")
+    parser.add_argument("n_threads_", action="store", type=int, nargs="?", default=10, help="Maximum number of threads to use concurrently.")
+    args = parser.parse_args()
+
+    main(args.output_folder_, args.n_threads_)
