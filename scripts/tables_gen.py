@@ -1,5 +1,4 @@
 import argparse
-from collections.abc import Iterable
 
 from pandas.core.groupby import DataFrameGroupBy
 
@@ -78,10 +77,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
     insert_blank_columns(sol_opt, before=("n_ref_opt", "n_opt_best", "n_opt_avg", "exec_time"))
-    avg_footer = gen_avg_footer(sol_opt)
-    sum_footer = gen_sum_footer(sol_opt)
-    footer = pd.concat([avg_footer, sum_footer])
-    save_table("summary_opt", sol_opt, footer)
+    save_table("summary_opt", sol_opt, [gen_avg_footer(sol_opt), gen_sum_footer(sol_opt)])
 
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
@@ -93,7 +89,8 @@ def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, ats
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
-    save_table("summary_nopt", summary_nopt)
+
+    save_table("summary_nopt", summary_nopt, [gen_avg_footer(summary_nopt), gen_sum_footer(summary_nopt)])
 
 
 def gen_solomon_nopt_summary(solomon_nopt: pd.DataFrame):
@@ -108,7 +105,7 @@ def gen_tsplib_summary(tsplib: pd.DataFrame):
     return tsplib_agg
 
 
-def gen_atsplib_summary(atsplib:pd.DataFrame):
+def gen_atsplib_summary(atsplib: pd.DataFrame):
     atsplib_grouped = atsplib.groupby([pd.cut(atsplib.index.get_level_values("n"), bins=[32, 403]), "beta"])
     atsplib_agg = nopt_summary_agg(atsplib_grouped)
     return atsplib_agg

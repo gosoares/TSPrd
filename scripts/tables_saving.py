@@ -1,14 +1,16 @@
+from collections.abc import Iterable
 from pathlib import Path
 
 import pandas as pd
 
 
-def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
+def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame | Iterable[pd.DataFrame] = None):
     df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
     tex = get_table_tex(df)
     if footer is not None:
         if df.index.nlevels == 1:
             tex += "\\midrule\n"
+        footer = footer if isinstance(footer, pd.DataFrame) else pd.concat(footer)
         footer_tex = get_table_tex(footer)
         tex += footer_tex
     tex += "\\bottomrule"
