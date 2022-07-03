@@ -37,7 +37,7 @@ def execute_instance(iset, name, beta, exec_id, output_folder):  # (set, name, b
 
 def get_instances_desc():
     # read (set, name, beta, exec_id) for all instances
-    solomon_instances = [["Solomon", "{}/{}".format(n, name)] for n in [10, 15, 20, 50, 100] for name in ["C101", "C201", "R101", "RC101"]]
+    solomon_instances = [["Solomon", "{}/{}".format(n, name)] for n in [10, 15, 20, 25, 30, 50, 100] for name in ["C101", "C201", "R101", "RC101"]]
     tsplib_names = ["eil51", "berlin52", "st70", "eil76", "pr76", "rat99", "kroA100", "kroB100", "kroC100", "kroD100", "kroE100", "rd100", "eil101",
                     "lin105", "pr107", "pr124", "bier127", "ch130", "pr136", "pr144", "ch150", "kroA150", "kroB150", "pr152", "u159", "rat195",
                     "d198", "kroA200", "kroB200", "ts225", "tsp225", "pr226", "gil262", "pr264", "a280", "pr299", "lin318", "rd400", "fl417", "pr439",
