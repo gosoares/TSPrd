@@ -1,6 +1,7 @@
 import concurrent.futures
 from itertools import chain
 import subprocess
+from os.path import exists
 
 THREADS = 12
 OUTPUT_FOLDER = "output27"
@@ -26,12 +27,14 @@ def build_project():
 
 
 def execute_instance(iset, name, beta, exec_id, output_folder):  # (set, name, beta, exec_id)
-    file = "{}/{}_{}".format(iset, name, beta)
-    process = subprocess.run(["../bin/TSPrd {} {}/{}_{}.txt".format(file, output_folder, file, exec_id)], stdout=subprocess.DEVNULL, shell=True)
-    if process.returncode != 0:
-        print(file, file=open("{}/errors.txt".format(output_folder), 'a'))
-        print("error while running {}.".format(file))
-    return "{} {}".format(file, exec_id)
+    instance = "{}/{}_{}".format(iset, name, beta)
+    output_file = "{}/{}_{}.txt".format(output_folder, instance, exec_id)
+    if not exists(output_file):
+        process = subprocess.run(["../bin/TSPrd {} {}".format(instance, output_file)], stdout=subprocess.DEVNULL, shell=True)
+        if process.returncode != 0:
+            print(instance, file=open("{}/errors.txt".format(output_folder), 'a'))
+            print("error while running {}.".format(instance))
+    return "{} {}".format(instance, exec_id)
 
 
 def get_instances_desc():
