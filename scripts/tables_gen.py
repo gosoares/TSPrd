@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable
 
 from tables_saving import *
 from tsprd_data import *
+from pandas.core.groupby import DataFrameGroupBy
 
 
 def main():
@@ -94,39 +95,29 @@ def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, ats
 
 
 def gen_solomon_nopt_summary(solomon_nopt: pd.DataFrame):
-    grouping = ["n", "beta"]
-    sol_agg = solomon_nopt.groupby(grouping).agg(n_inst=("ref_obj", "count"), ref_time=("ref_time", "mean"), gap_best=("gap_best", "mean"),
-                                                 gap_avg=("gap_avg", "mean"), exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
-    sol_agg["ref_time"] = sol_agg["ref_time"].astype(int)
-    nopt_summary_add_counts(sol_agg, solomon_nopt, lambda _: grouping)
+    sol_grouped = solomon_nopt.groupby(["n", "beta"])
+    sol_agg = nopt_summary_agg(sol_grouped)
     return sol_agg
 
 
-def nopt_summary_add_counts(df_agg: pd.DataFrame, df: pd.DataFrame, grouping: Callable):
-    ref_pos = df_agg.columns.get_loc("n_inst") + 1  # position to insert next few columns
-    df_agg.insert(ref_pos, "n_ref_sb_best", gen_count_column(df, "ref_obj < best_obj", grouping))
-    df_agg.insert(ref_pos + 1, "n_ref_sb_avg", gen_count_column(df, "ref_obj < avg_obj", grouping))
-    df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best", gen_count_column(df, "best_obj < ref_obj", grouping))
-    df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg", gen_count_column(df, "avg_obj < ref_obj", grouping))
-
-
 def gen_tsplib_summary(tsplib: pd.DataFrame):
-    def tsplib_grouping(df: pd.DataFrame):
-        return [pd.cut(df.index.get_level_values("n"), bins=[49, 100, 150, 250, 500]), "beta"]
-
-    tsplib_agg = tsplib.groupby(tsplib_grouping(tsplib)).agg(n_inst=("ref_obj", "count"), gap_best=("gap_best", "mean"), gap_avg=("gap_avg", "mean"),
-                                                             exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
-    nopt_summary_add_counts(tsplib_agg, tsplib, tsplib_grouping)
-    tsplib_agg.insert(tsplib_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", "-")
+    tsplib_grouped = tsplib.groupby([pd.cut(tsplib.index.get_level_values("n"), bins=[49, 100, 150, 250, 500]), "beta"])
+    tsplib_agg = nopt_summary_agg(tsplib_grouped)
     return tsplib_agg
 
 
-def gen_count_column(df: pd.DataFrame, condition: str, grouping) -> pd.Series:
-    # count how many rows in each `grouping` of `df` respect the `condition`
-    sb = df.query(condition)
-    if callable(grouping):
-        grouping = grouping(sb)
-    return sb.groupby(grouping).size()
+def nopt_summary_agg(df_grouped: DataFrameGroupBy):
+    df_agg = df_grouped.agg(n_inst=("ref_obj", "count"), gap_best=("gap_best", "mean"), gap_avg=("gap_avg", "mean"), exec_time=("exec_time", "mean"),
+                            sol_time=("sol_time", "mean"))
+
+    ref_pos = df_agg.columns.get_loc("n_inst") + 1  # position to insert next few columns
+    df_agg.insert(ref_pos, "n_ref_sb_best", df_grouped.apply(lambda d: d.query("ref_obj < best_obj").shape[0]))
+    df_agg.insert(ref_pos + 1, "n_ref_sb_avg", df_grouped.apply(lambda d: d.query("ref_obj < avg_obj").shape[0]))
+    df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best", df_grouped.apply(lambda d: d.query("best_obj < ref_obj").shape[0]))
+    df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg", df_grouped.apply(lambda d: d.query("avg_obj < ref_obj").shape[0]))
+    ref_time_column = df_grouped["ref_time"].mean().astype(int) if "ref_time" in df_agg else "-"
+    df_agg.insert(df_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", ref_time_column)
+    return df_agg
 
 
 def insert_blank_columns(df: pd.DataFrame, pos: int | Iterable[int] = (), before: Iterable[str] = (), after: Iterable[str] = ()):
