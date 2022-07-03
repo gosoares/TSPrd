@@ -1,16 +1,21 @@
 import argparse
-from pathlib import Path
 
+from tables_saving import *
 from tsprd_data import *
 
 
-def main(results_folder):
+def main():
+    parser = argparse.ArgumentParser(description="Generate table from the executor instance execution results folder.")
+    parser.add_argument("results_folder", action="store", type=str, help="Folder with the TSPrd instance execution results.")
+    args = parser.parse_args()
+
+    gen_tables(args.results_folder)
+
+
+def gen_tables(results_folder: str):
     df = read_execution_data(results_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
-    gen_tables(df_agg)
 
-
-def gen_tables(df_agg: pd.DataFrame):
     solomon, tsplib, atsplib = [group.droplevel(level=0) for _, group in df_agg.groupby(level=0)]
 
     solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
@@ -121,33 +126,12 @@ def gen_count_column(df: pd.DataFrame, condition: str, grouping) -> pd.Series:
     return sb.groupby(grouping).size()
 
 
-def save_table(file: str, df: pd.DataFrame, footer: pd.DataFrame = None):
-    df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
-    tex = get_table_tex(df)
-    if footer is not None:
-        if df.index.nlevels == 1:
-            tex += "\\midrule\n"
-        footer_tex = get_table_tex(footer)
-        tex += footer_tex
-    tex += "\\bottomrule"
-    Path("output").mkdir(parents=True, exist_ok=True)
-    print(tex, file=open(f"output/{file}.tex", "w"))
-
-
 def insert_blank_columns(df: pd.DataFrame, first: int = 0):
     df.insert(first, "blank1", "")
     df.insert(df.columns.get_loc("best_obj"), "blank2", "")
     df.insert(df.columns.get_loc("avg_obj"), "blank3", "")
     df.insert(df.columns.get_loc("exec_time"), "blank4", "")
     return df
-
-
-def get_table_tex(df: pd.DataFrame):
-    df = format_time_columns(df)  # format times
-    tex: str = df.style.format(precision=2).hide(axis="columns") \
-        .to_latex(clines="skip-last;data").replace("\\cline", "\\cmidrule")
-    tex = tex.split('\n', 1)[1].replace("\\end{tabular}\n", "")  # remove \tabular from first and last lines
-    return tex
 
 
 def gen_avg_footer(df: pd.DataFrame):
@@ -171,22 +155,5 @@ def gen_sum_footer(df: pd.DataFrame):
     return footer
 
 
-def format_time_columns(df: pd.DataFrame):
-    columns = df.columns.get_level_values(-1).isin(["exec_time", "sol_time"])
-    df.iloc[:, columns] = df.iloc[:, columns].apply(lambda x: x.apply(format_time), axis='columns', result_type='expand')
-    return df
-
-
-def format_time(time):
-    if not time:
-        return ''
-    time = time / 1000.0  # ms to s
-    return "{:.2f}".format(time) if time >= 0.01 else "<0.01"
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate table from the executor instance execution results folder.")
-    parser.add_argument("results_folder_", action="store", type=str, help="Folder with the TSPrd instance execution results.")
-    args = parser.parse_args()
-
-    main(args.results_folder_)
+    main()
