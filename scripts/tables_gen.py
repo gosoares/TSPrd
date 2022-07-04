@@ -22,8 +22,8 @@ def gen_tables(results_folder: str):
     gen_solomon_tables(solomon_opt, solomon_nopt)
     # gen_tsplib_tables(tsplib)
     gen_atsplib_table(atsplib)
-    # gen_opt_summary_table(solomon_opt)
-    # gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
+    gen_opt_summary_table(solomon_opt)
+    gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
 
 
 def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
@@ -66,7 +66,8 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
     insert_blank_columns(sol_opt, before=("n_ref_opt", "n_opt_best", "n_opt_avg", "exec_time"))
-    save_table("summary_opt", sol_opt, [gen_avg_footer(sol_opt), gen_sum_footer(sol_opt)])
+    save_table("summary_opt", "Comparison of aggregated results for instances with known optimal.", sol_opt,
+               [gen_avg_footer(sol_opt), gen_sum_footer(sol_opt)], add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
 def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
@@ -78,7 +79,9 @@ def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, ats
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
-    save_table("summary_nopt", summary_nopt, [gen_avg_footer(summary_nopt), gen_sum_footer(summary_nopt)])
+    save_table("summary_nopt", "Comparison of aggregated results bigger instances.", summary_nopt,
+               footer=[gen_avg_footer(summary_nopt), gen_sum_footer(summary_nopt)],
+               add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{2.5pt}")
 
 
 def gen_solomon_nopt_summary(solomon_nopt: pd.DataFrame):

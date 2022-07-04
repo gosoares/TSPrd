@@ -4,17 +4,28 @@ from pathlib import Path
 
 import pandas as pd
 
+
+def sb_s(s: str = ""):
+    s = f"\\\\{s}" if s else s
+    return f"\\shortstack{{strictly\\\\better{s}}}"
+
+
+GAP = "gap (\\%)"
+NOPT = "\\# opt"
+
 c_transl = {  # for each column put the name and the alignment
-    "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"), "ref_obj": ("obj", "r"), "ref_gap": ("gap", "c"), "ref_time": ("TB", "r"),
-    "best_obj": ("obj", "r"), "gap_best": ("gap", "c"), "avg_obj": ("obj", "r"), "gap_avg": ("gap", "c"), "exec_time": ("TT", "r"),
+    "n": ("n", "c"), "n_inst": ("\\# inst", "c"), "n_ref_opt": (NOPT, "c"), "n_opt_best": (NOPT, "c"), "n_opt_avg": (NOPT, "c"),
+    "n_ref_sb_best": (sb_s("(best run)"), "r"), "n_ref_sb_avg": (sb_s("(all runs)"), "r"), "n_sb_best": (sb_s(), "r"), "n_sb_avg": (sb_s(), "r"),
+    "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"), "ref_obj": ("obj", "r"), "ref_gap": (GAP, "c"), "ref_time": ("TB", "r"),
+    "best_obj": ("obj", "r"), "gap_best": (GAP, "c"), "avg_obj": ("obj", "r"), "gap_avg": (GAP, "c"), "exec_time": ("TT", "r"),
     "sol_time": ("TB", "r")
 }
 
 
-def save_table(name: str, caption: str, df: pd.DataFrame, footer: pd.DataFrame | Iterable[pd.DataFrame] = None):
+def save_table(name: str, caption: str, df: pd.DataFrame, footer: pd.DataFrame | Iterable[pd.DataFrame] = None, add_options: str = "\\tiny"):
     header = gen_table_headers(df)
     tex = get_table_tex(df, name, caption)
-    tex = tex.replace("\\toprule", "\\toprule\n" + header, 1).replace("\\begin{tabular}", "\\tiny\n\\begin{tabular}", 1)
+    tex = tex.replace("\\toprule", "\\toprule\n" + header, 1).replace("\\begin{tabular}", f"{add_options}\n\\begin{{tabular}}", 1)
 
     if footer is not None:
         footer = footer if isinstance(footer, pd.DataFrame) else pd.concat(footer)
@@ -60,11 +71,11 @@ def gen_table_headers(df: pd.DataFrame):
     n_columns = len(columns)
 
     # note: these indexes are 0-based, but when printing to the latex, it is 1-based
-    first_ref = index_first(columns, lambda x: x and x.startswith("ref_"))
-    last_ref = index_firsts_last(columns, lambda x: x.startswith("ref_"), first_ref)
-    first_hgs = index_first(columns, lambda x: x == "best_obj", last_ref)
+    first_ref = index_first(columns, lambda x: x and "ref_" in x)
+    last_ref = index_firsts_last(columns, lambda x: "ref_" in x, first_ref)
+    first_hgs = index_first(columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref)
     first_best = first_hgs
-    first_avg = index_first(columns, lambda x: x == "avg_obj")
+    first_avg = index_first(columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"))
     last_hgs = n_columns - 1
 
     tex = tex_header(n_columns, [("\\archils{}", first_ref, last_ref), ("\\myalg{}", first_hgs, last_hgs)])
