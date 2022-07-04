@@ -45,7 +45,7 @@ def read_execution_data(results_folder: str):
         lambda row: read_instance_result(results_folder, row["set"], row["name"], row["beta"], row["exec_id"]),
         axis='columns', result_type='expand')
     df["obj"] = df["obj"].astype(int)
-    df.insert(df.columns.get_loc("obj") + 1, "obj_gap_ref", calculate_gap(df["obj"], df["ref_obj"]))
+    df.insert(df.columns.get_loc("obj") + 1, "gap_obj_ref", calculate_gap(df["obj"], df["ref_obj"]))
 
     # remove n/ from solomon instances names, as it is not needed anymore
     df["name"] = df["name"].apply(lambda x: x.split("/")[-1])
@@ -56,12 +56,25 @@ def read_execution_data(results_folder: str):
 def aggregate_data(df: pd.DataFrame):
     # calculate avg and best of obj and avg of times
     grouped = df.groupby(["set", "n", "beta", "name"])
-    df_agg = grouped.agg(
-        {"opt": "first", "ref_obj": "first", "ref_time": "first", "obj": ["min", "mean"], "obj_gap_ref": ["min", "mean"], "exec_time": "mean",
-         "sol_time": "mean"})
-    df_agg.columns = ["opt", "ref_obj", "ref_time", "best_obj", "avg_obj", "gap_best", "gap_avg", "exec_time", "sol_time"]
-    df_agg.insert(df_agg.columns.get_loc("best_obj") + 1, "gap_best", df_agg.pop("gap_best"))  # change pos of gap_best column
+    df_agg = grouped.agg(opt=("opt", "first"), ref_obj=("ref_obj", "first"), ref_time=("ref_time", "first"), best_obj=("obj", "min"),
+                         gap_best=("gap_obj_ref", "min"), avg_obj=("obj", "mean"), gap_avg=("gap_obj_ref", "mean"), exec_time=("exec_time", "mean"),
+                         sol_time=("sol_time", "mean"))
     return df_agg
+
+
+def split_instance_sets(df_agg: pd.DataFrame):
+    solomon, tsplib, atsplib = [group.droplevel(level=0) for _, group in df_agg.groupby(level=0)]
+
+    solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
+    solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
+    # calculate gaps in relation to the optimal result
+    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap", calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
+    solomon_opt["gap_best"] = calculate_gap(solomon_opt["best_obj"], solomon_opt["opt"])
+    solomon_opt["gap_avg"] = calculate_gap(solomon_opt["avg_obj"], solomon_opt["opt"])
+
+    tsplib.drop(columns=["opt", "ref_time"], inplace=True)
+    atsplib.drop(columns=["opt", "ref_time"], inplace=True)
+    return solomon_opt, solomon_nopt, tsplib, atsplib
 
 
 def read_instance_result(output_path: str, instance_set: str, instance: str, beta: str, exec_id: int):

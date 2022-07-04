@@ -17,22 +17,11 @@ def main():
 def gen_tables(results_folder: str):
     df = read_execution_data(results_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
-
-    solomon, tsplib, atsplib = [group.droplevel(level=0) for _, group in df_agg.groupby(level=0)]
-
-    solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
-    solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
-    # calculate gaps in relation to the optimal result
-    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap", calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
-    solomon_opt["gap_best"] = calculate_gap(solomon_opt["best_obj"], solomon_opt["opt"])
-    solomon_opt["gap_avg"] = calculate_gap(solomon_opt["avg_obj"], solomon_opt["opt"])
-
-    tsplib.drop(columns=["opt", "ref_time"], inplace=True)
-    atsplib.drop(columns=["opt", "ref_time"], inplace=True)
+    solomon_opt, solomon_nopt, tsplib, atsplib = split_instance_sets(df_agg)
 
     gen_solomon_tables(solomon_opt, solomon_nopt)
     gen_tsplib_tables(tsplib)
-    gen_atsplib_tables(atsplib)
+    gen_atsplib_table(atsplib)
     gen_opt_summary_table(solomon_opt)
     gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
 
@@ -59,9 +48,9 @@ def gen_tsplib_tables(tsplib: pd.DataFrame):
         save_table(f"tsplib_{tsplib_betas[i]}_{tsplib_betas[i + 1]}", tsplib_two, gen_avg_footer(tsplib_two))
 
 
-def gen_atsplib_tables(atsplib: pd.DataFrame):
+def gen_atsplib_table(atsplib: pd.DataFrame):
     atsplib = atsplib.sort_index(level=["beta", "n"]).droplevel("n")
-    insert_blank_columns(atsplib, pos=1, before=("best_obj", "avg_obj", "exec_time"))
+    insert_blank_columns(atsplib, pos=0, before=("best_obj", "avg_obj", "exec_time"))
     save_table(f"atsplib", atsplib, gen_avg_footer(atsplib))
 
 
