@@ -20,10 +20,10 @@ def gen_tables(results_folder: str):
     solomon_opt, solomon_nopt, tsplib, atsplib = split_instance_sets(df_agg)
 
     gen_solomon_tables(solomon_opt, solomon_nopt)
-    gen_tsplib_tables(tsplib)
+    # gen_tsplib_tables(tsplib)
     gen_atsplib_table(atsplib)
-    gen_opt_summary_table(solomon_opt)
-    gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
+    # gen_opt_summary_table(solomon_opt)
+    # gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
 
 
 def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
@@ -34,7 +34,7 @@ def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
         if df["ref_time"].isnull().all():
             df.drop(columns="ref_time", inplace=True)
         df = df.droplevel(0)
-        save_table(f"solomon{n}", df, gen_avg_footer(df))
+        save_table(f"solomon{n}", f"Results for instances of Solomon n = {n}", df, gen_avg_footer(df))
 
 
 def gen_tsplib_tables(tsplib: pd.DataFrame):
@@ -51,7 +51,7 @@ def gen_tsplib_tables(tsplib: pd.DataFrame):
 def gen_atsplib_table(atsplib: pd.DataFrame):
     atsplib = atsplib.sort_index(level=["beta", "n"]).droplevel("n")
     insert_blank_columns(atsplib, pos=0, before=("best_obj", "avg_obj", "exec_time"))
-    save_table(f"atsplib", atsplib, gen_avg_footer(atsplib))
+    save_table(f"atsplib", "Results for aTSPLIB instances", atsplib, gen_avg_footer(atsplib))
 
 
 def gen_opt_summary_table(solomon_opt: pd.DataFrame):
