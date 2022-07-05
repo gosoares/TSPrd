@@ -1,17 +1,18 @@
 #include "Instance.h"
+
+#include <cmath>
 #include <fstream>
 #include <iostream>
-#include <cmath>
 
 // read the stream until 's' appear
-void readUntil(ifstream &in, const string &s) {
+void readUntil(ifstream& in, const string& s) {
     string x;
     while (x != s) {
         in >> x;
     }
 }
 
-void floydWarshall(vector<vector<unsigned int> > &W) {
+void floydWarshall(vector<vector<unsigned int> >& W) {
     // apply floyd warshall algorithm to ensure triangular inequality
     for (unsigned int k = 0; k < W.size(); k++) {
         for (unsigned int i = 0; i < W.size(); i++) {
@@ -22,8 +23,7 @@ void floydWarshall(vector<vector<unsigned int> > &W) {
     }
 }
 
-Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
-
+Instance::Instance(const string& instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
     ifstream in(("../instances/" + instance + ".dat").c_str(), ios::in);
     if (!in) {
         cout << "ERROR failed_open_file" << endl;
@@ -43,7 +43,7 @@ Instance::Instance(const string &instance) : V(0), W(0), RD(0), biggerRD(0), sym
     in.close();
 }
 
-void Instance::readDistanceMatrixInstance(ifstream &in) {
+void Instance::readDistanceMatrixInstance(ifstream& in) {
     readUntil(in, "DIMENSION:");
     in >> V;
     W.resize(V, vector<unsigned int>(V));
@@ -61,8 +61,7 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
     readUntil(in, "RELEASE_DATES");
     for (unsigned int i = 0; i < V; i++) {
         in >> RD[i];
-        if (RD[i] > biggerRD)
-            biggerRD = RD[i];
+        if (RD[i] > biggerRD) biggerRD = RD[i];
     }
 
     // verify matrix symmetry
@@ -76,7 +75,7 @@ void Instance::readDistanceMatrixInstance(ifstream &in) {
     floydWarshall(W);
 }
 
-void Instance::readCoordinatesListInstance(ifstream &in) {
+void Instance::readCoordinatesListInstance(ifstream& in) {
     symmetric = true;
 
     readUntil(in, "<DIMENSION>");
@@ -98,10 +97,9 @@ void Instance::readCoordinatesListInstance(ifstream &in) {
         in >> aux;
         in >> aux;
         in >> aux;
-        in >> aux; // not important data
+        in >> aux;  // not important data
         in >> RD[i];
-        if (RD[i] > biggerRD)
-            biggerRD = RD[i];
+        if (RD[i] > biggerRD) biggerRD = RD[i];
     }
 
     // calculate rounded euclidian distances between each pair of vertex
@@ -121,27 +119,14 @@ void Instance::readCoordinatesListInstance(ifstream &in) {
     floydWarshall(W);
 }
 
-unsigned int Instance::nVertex() const {
-    return V;
-}
+unsigned int Instance::nVertex() const { return V; }
 
-unsigned int Instance::nClients() const {
-    return V - 1;
-}
+unsigned int Instance::nClients() const { return V - 1; }
 
-unsigned int Instance::releaseDateOf(unsigned int c) const {
-    return RD[c];
-}
+unsigned int Instance::releaseDateOf(unsigned int c) const { return RD[c]; }
 
-unsigned int Instance::time(unsigned int i, unsigned int j) const {
-    return W[i][j];
-}
+unsigned int Instance::time(unsigned int i, unsigned int j) const { return W[i][j]; }
 
-const vector<vector<unsigned int> > &Instance::getW() const {
-    return W;
-}
+const vector<vector<unsigned int> >& Instance::getW() const { return W; }
 
-const vector<unsigned int> &Instance::getRD() const {
-    return RD;
-}
-
+const vector<unsigned int>& Instance::getRD() const { return RD; }

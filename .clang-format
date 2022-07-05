@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+ColumnLimit: 120
+IndentWidth: 4
+PackConstructorInitializers: BinPack
+DerivePointerAlignment: false
+PointerAlignment: Left
+QualifierAlignment: Left

@@ -1,8 +1,7 @@
-#include "IntraSearch.h"
-
 #include <cassert>
 #include <iostream>
 
+#include "IntraSearch.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
@@ -18,17 +17,17 @@ unsigned int IntraSearch::search(Solution* solution) {
     unsigned int oldTime = solution->time;
     shuffleSearchOrder();
 
-    for (auto& route : solution->routes) {
-        unsigned int whichSearch = 0;
+    for (int r = (int)solution->routes.size() - 1; r >= 0; r--) {
+        for (unsigned int i = 0; i < searchOrder.size(); i++) {
+            unsigned int gain = callIntraSearch(solution->routes[r], searchOrder[i]);
 
-        while (whichSearch < searchOrder.size()) {
-            unsigned int gain = callIntraSearch(route, searchOrder[whichSearch]);
-
-            if (gain > 0) {  // reset search order
-                shuffleSearchOrder();
-                whichSearch = 0;
-            } else {
-                whichSearch++;
+            if (gain > 0) {
+                unsigned int lastMovement = searchOrder[i];
+                i = -1;
+                shuffle(searchOrder.begin(), searchOrder.end(), generator);
+                if (searchOrder[0] == lastMovement) {
+                    swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
+                }
             }
         }
     }
@@ -59,8 +58,19 @@ unsigned int IntraSearch::callIntraSearch(vector<unsigned int>* route, unsigned 
     }
 }
 
-// realiza o swap entre dois conjuntos de vértices seguidos, de tamanhos n1 e n2
 unsigned int IntraSearch::swapSearch(vector<unsigned int>* route, unsigned int n1, unsigned int n2) {
+    unsigned int gain = 0, x;
+
+    do {
+        x = swapSearchIt(route, n1, n2);
+        gain += x;
+    } while (x > 0);
+
+    return gain;
+}
+
+// realiza o swap entre dois conjuntos de vértices seguidos, de tamanhos n1 e n2
+unsigned int IntraSearch::swapSearchIt(vector<unsigned int>* route, unsigned int n1, unsigned int n2) {
     unsigned int bestI, bestJ;  // armazena os indices que representa o melhor swap
     int bestO = 0;              // representa a melhora ao realizar o swap acima
 
@@ -176,6 +186,17 @@ int IntraSearch::evaluateSwap(vector<unsigned int>* route, unsigned int i1, unsi
     return (int)minus - (int)plus;
 }
 
+unsigned int IntraSearch::reinsertionSearch(vector<unsigned int>* route, unsigned int n) {
+    unsigned int gain = 0, x;
+
+    do {
+        x = reinsertionSearchIt(route, n);
+        gain += x;
+    } while (x > 0);
+
+    return gain;
+}
+
 /*
  * Tenta realizar a reinsercao de um conjunto de n clientes adjacentes em todas as outras posicoes possiveis
  *
@@ -185,7 +206,7 @@ int IntraSearch::evaluateSwap(vector<unsigned int>* route, unsigned int i1, unsi
  *
  * j representa onde será feita a tentativa de reinsercao
  */
-unsigned int IntraSearch::reinsertionSearch(vector<unsigned int>* route, unsigned int n) {
+unsigned int IntraSearch::reinsertionSearchIt(vector<unsigned int>* route, unsigned int n) {
     unsigned int bestI, bestJ;
     int bestGain = 0;
 
@@ -220,10 +241,21 @@ unsigned int IntraSearch::reinsertionSearch(vector<unsigned int>* route, unsigne
     return bestGain;
 }
 
+unsigned int IntraSearch::twoOptSearch(vector<unsigned int>* route) {
+    unsigned int gain = 0, x;
+
+    do {
+        x = twoOptSearchIt(route);
+        gain += x;
+    } while (x > 0);
+
+    return gain;
+}
+
 /*
  * tenta inverter a ordem de uma subrota que comeca no i-esimo cliente e termina no j-esimo cliente
  */
-unsigned int IntraSearch::twoOptSearch(vector<unsigned int>* route) {
+unsigned int IntraSearch::twoOptSearchIt(vector<unsigned int>* route) {
     unsigned int bestI, bestJ;
     int bestGain = 0;
 

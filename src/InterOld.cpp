@@ -1,9 +1,8 @@
-#include "InterSearch.h"
-
 #include <chrono>
 #include <iostream>
 #include <limits>
 
+#include "InterSearch.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
@@ -30,8 +29,12 @@ unsigned int InterSearch::search(Solution* solution) {
         if (gain > 0) {
             improved = true;
             if (solution->routes.size() == 1) break;
+            unsigned int lastMovement = searchOrder[whichSearch];
             shuffleSearchOrder();
             whichSearch = 0;
+            if (searchOrder[0] == lastMovement) {
+                swap(searchOrder[0], searchOrder[searchOrder.size() - 1]);
+            }
         } else {
             whichSearch++;
         }
@@ -59,34 +62,36 @@ unsigned int InterSearch::callInterSearch(Solution* solution, unsigned int which
     }
 }
 
-vector<pair<unsigned int, unsigned int> > InterSearch::getRoutesPairSequence(unsigned int nRoutes) {
-    while (routesPair.size() <= nRoutes) {
-        unsigned int n = routesPair.size();
-        routesPair.emplace_back(n * n);
-        routesPair[n].resize(0);  // resize but keep allocated space
-
-        for (unsigned int i = 0; i < n; i++) {
-            for (unsigned int j = 0; j < n; j++) {
-                if (i != j) routesPair[n].emplace_back(i, j);
-            }
+vector<pair<unsigned int, unsigned int> > getRoutesPairSequence(unsigned int nRoutes) {
+    vector<pair<unsigned int, unsigned int> > sequence(nRoutes * nRoutes);
+    sequence.resize(0);  // resize but keep allocated space
+    for (unsigned int i = 0; i < nRoutes; i++) {
+        for (unsigned int j = i + 1; j < nRoutes; j++) {
+            sequence.emplace_back(i, j);
         }
     }
-
-    shuffle(routesPair[nRoutes].begin(), routesPair[nRoutes].end(),
+    shuffle(sequence.begin(), sequence.end(),
             default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
-    return routesPair[nRoutes];
+    return sequence;
 }
 
 unsigned int InterSearch::vertexRelocation(Solution* solution) {
     const unsigned int originalTime = solution->time;
-
-    for (auto& routePair : getRoutesPairSequence(solution->routes.size())) {
-        if (vertexRelocationIt(solution, routePair.first, routePair.second) > 0) {
-            solution->removeEmptyRoutes();
-            break;
+    unsigned int gain;
+    do {
+        gain = 0;
+        for (auto& routePair : getRoutesPairSequence(solution->routes.size())) {
+            auto& r1 = routePair.first;
+            auto& r2 = routePair.second;
+            unsigned int gainIt;
+            do {
+                gainIt = vertexRelocationIt(solution, r1, r2);
+                gainIt += vertexRelocationIt(solution, r2, r1);
+                gain += gainIt;
+            } while (gainIt > 0);
         }
-    }
-
+    } while (gain > 0);
+    solution->removeEmptyRoutes();
     return originalTime - solution->time;
 }
 
@@ -136,14 +141,16 @@ unsigned int InterSearch::vertexRelocationIt(Solution* solution, unsigned int r1
 unsigned int InterSearch::interSwap(Solution* solution) {
     const unsigned int originalTime = solution->time;
     unsigned int gain;
-
-    for (auto& routePair : getRoutesPairSequence(solution->routes.size())) {
-        if (routePair.first > routePair.second) continue;
-        gain = interSwapIt(solution, routePair.first, routePair.second);
-        if (gain > 0) {
-            break;
+    do {
+        gain = 0;
+        for (auto& routePair : getRoutesPairSequence(solution->routes.size())) {
+            unsigned int gainIt;
+            do {
+                gainIt = interSwapIt(solution, routePair.first, routePair.second);
+                gain += gainIt;
+            } while (gainIt > 0);
         }
-    }
+    } while (gain > 0);
     return originalTime - solution->time;
 }
 
@@ -188,7 +195,10 @@ unsigned int InterSearch::interSwapIt(Solution* solution, unsigned int r1, unsig
 
 unsigned int InterSearch::insertDepotAndReorder(Solution* solution) {
     unsigned int originalTime = solution->time;
-    insertDepotAndReorderIt(solution);
+    bool improved;
+    do {
+        improved = insertDepotAndReorderIt(solution);
+    } while (improved);
     return originalTime - solution->time;
 }
 

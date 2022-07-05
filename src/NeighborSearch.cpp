@@ -1,20 +1,21 @@
 #include "NeighborSearch.h"
-#include "Split.h"
+
 #include <cassert>
 #include <chrono>
-#include <limits>
 #include <iostream>
+#include <limits>
 
-#define F(R) 1 // index of first client in a route
-#define L(R) ((R)->size() - 2) // index of last client in a route
+#include "Split.h"
 
-NeighborSearch::NeighborSearch(
-        const Instance &instance
-) : instance(instance), W(instance.getW()), RD(instance.getRD()), generator((random_device()) ()),
-    intraSearch(instance), interSearch(instance) {}
+#define F(R) 1                  // index of first client in a route
+#define L(R) ((R)->size() - 2)  // index of last client in a route
 
-unsigned int NeighborSearch::splitNs(Solution *solution) {
-    Sequence *sequence = solution->toSequence();
+NeighborSearch::NeighborSearch(const Instance& instance)
+    : instance(instance), W(instance.getW()), RD(instance.getRD()), generator((random_device())()),
+      intraSearch(instance), interSearch(instance) {}
+
+unsigned int NeighborSearch::splitNs(Solution* solution) {
+    Sequence* sequence = solution->toSequence();
     set<unsigned int> depotVisits;
     unsigned int splitTime = Split::split(depotVisits, instance.getW(), instance.getRD(), *sequence);
 
@@ -28,12 +29,12 @@ unsigned int NeighborSearch::splitNs(Solution *solution) {
     return gain;
 }
 
-unsigned int NeighborSearch::educate(Solution *solution) {
+unsigned int NeighborSearch::educate(Solution* solution) {
     const unsigned int originalTime = solution->time;
 
     intraSearch.search(solution);
 
-    int which = 1; // 0: intra   1: inter
+    int which = 1;  // 0: intra   1: inter
     bool splitImproved;
     do {
         unsigned int gain;

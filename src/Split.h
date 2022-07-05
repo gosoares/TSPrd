@@ -7,22 +7,19 @@
 using namespace std;
 
 class Split {
-public:
-    static unsigned int split(
-            set<unsigned int> &visits, const vector<vector<unsigned int> > &W, const vector<unsigned int> &RD,
-            const vector<unsigned int> &S
-    ) {
-        const unsigned int V = RD.size(), // total number of vertex, including the depot
-        N = V - 1; // total number of clients (excluding the depot)
+   public:
+    static unsigned int split(set<unsigned int>& visits, const vector<vector<unsigned int> >& W,
+                              const vector<unsigned int>& RD, const vector<unsigned int>& S) {
+        const unsigned int V = RD.size(),  // total number of vertex, including the depot
+            N = V - 1;                     // total number of clients (excluding the depot)
 
-
-        // stores for each position in the sequence, which vertex before it can be the one that determines the release date
-        // of the route containing the vertex on that position
+        // stores for each position in the sequence, which vertex before it can be the one that determines the release
+        // date of the route containing the vertex on that position
         vector<unsigned int> rdPos(N);
         rdPos[0] = 0;
 
         vector<unsigned int> cumulative(S.size());
-        cumulative[0] = 0; // cumulative of the arcs times till vertex in position i
+        cumulative[0] = 0;  // cumulative of the arcs times till vertex in position i
 
         // calculate the position of the vertices with increasing release dates
         for (unsigned int i = 1; i < S.size(); i++) {
@@ -34,8 +31,8 @@ public:
             cumulative[i] = cumulative[i - 1] + W[S[i - 1]][S[i]];
         }
 
-        vector<unsigned int> bestIn(N); // store the origin of the best arc arriving at i
-        vector<unsigned int> phi(N, numeric_limits<unsigned int>::max()); // value of the best arc arriving at i
+        vector<unsigned int> bestIn(N);  // store the origin of the best arc arriving at i
+        vector<unsigned int> phi(N, numeric_limits<unsigned int>::max());  // value of the best arc arriving at i
 
         for (unsigned int j = 0; j < N; j++) {
             unsigned int rdPosJ = rdPos[j];
@@ -65,4 +62,4 @@ public:
     }
 };
 
-#endif //TSPRD_SPLIT_H
+#endif  // TSPRD_SPLIT_H
