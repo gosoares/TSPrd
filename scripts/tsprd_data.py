@@ -13,7 +13,7 @@ def get_instances_names():
                     "pcb442", "d493"]
     tsplib_instances = [["TSPLIB", name] for name in tsplib_names]
     atsplib_instances = [["aTSPLIB", name] for name in ["ftv33", "ft53", "ftv70", "kro124p", "rbg403"]]
-    return chain(solomon_instances, tsplib_instances, atsplib_instances)
+    return chain(solomon_instances, atsplib_instances, tsplib_instances)
 
 
 def get_instances_execs():
@@ -63,7 +63,10 @@ def aggregate_data(df: pd.DataFrame):
 
 
 def split_instance_sets(df_agg: pd.DataFrame):
-    solomon, tsplib, atsplib = [group.droplevel(level=0) for _, group in df_agg.groupby(level=0)]
+    df_groups = df_agg.groupby(level=0)
+    solomon = df_groups.get_group("Solomon").droplevel(level=0)
+    tsplib = df_groups.get_group("TSPLIB").droplevel(level=0)
+    atsplib = df_groups.get_group("aTSPLIB").droplevel(level=0)
 
     solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
     solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
