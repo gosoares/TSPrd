@@ -9,7 +9,8 @@
 #define N_INTER_SEARCHES 3
 
 InterSearch::InterSearch(const Instance &instance) : instance(instance), W(instance.getW()), RD(instance.getRD()),
-    routesPair(), searchOrder(N_INTER_SEARCHES), generator((random_device()) ()) {
+                                                     routesPair(), searchOrder(N_INTER_SEARCHES),
+                                                     generator((random_device()) ()) {
     iota(searchOrder.begin(), searchOrder.end(), 1);
 }
 
@@ -17,7 +18,7 @@ unsigned int InterSearch::search(Solution *solution) {
     if (solution->routes.size() == 1) return 0;
 
     unsigned int oldTime = solution->time;
-    shuffle(searchOrder.begin(), searchOrder.end(), generator);
+    shuffleSearchOrder();
 
     unsigned int whichSearch = 0;
     bool improved = false;
@@ -25,10 +26,10 @@ unsigned int InterSearch::search(Solution *solution) {
         unsigned int gain = callInterSearch(solution, searchOrder[whichSearch]);
 
         if (gain > 0) {
+            improved = true;
+            if (solution->routes.size() == 1) break;
             shuffleSearchOrder();
             whichSearch = 0;
-            improved = true;
-            if (solution->routes.size() == 1) return 0;
         } else {
             whichSearch++;
         }
@@ -59,7 +60,7 @@ unsigned int InterSearch::callInterSearch(Solution *solution, unsigned int which
 vector<pair<unsigned int, unsigned int> > InterSearch::getRoutesPairSequence(unsigned int nRoutes) {
     while (routesPair.size() <= nRoutes) {
         unsigned int n = routesPair.size();
-        routesPair.emplace_back(n*n);
+        routesPair.emplace_back(n * n);
         routesPair[n].resize(0); // resize but keep allocated space
 
         for (unsigned int i = 0; i < n; i++) {
@@ -76,11 +77,9 @@ vector<pair<unsigned int, unsigned int> > InterSearch::getRoutesPairSequence(uns
 
 unsigned int InterSearch::vertexRelocation(Solution *solution) {
     const unsigned int originalTime = solution->time;
-    unsigned int gain;
 
     for (auto &routePair: getRoutesPairSequence(solution->routes.size())) {
-        gain = vertexRelocationIt(solution, routePair.first, routePair.second);
-        if (gain > 0) {
+        if (vertexRelocationIt(solution, routePair.first, routePair.second) > 0) {
             solution->removeEmptyRoutes();
             break;
         }
@@ -275,7 +274,6 @@ bool InterSearch::insertDepotAndReorderIt(Solution *s) {
 void InterSearch::shuffleSearchOrder() {
     shuffle(searchOrder.begin(), searchOrder.end(), generator);
 }
-
 // calculate the new ending time of route max(r1, r2) given that r1 and r2 changed
 unsigned int InterSearch::calculateEndingTime(
         Solution *solution, unsigned int r1, unsigned int r2
@@ -307,6 +305,7 @@ unsigned int InterSearch::routeReleaseDateRemoving(
                 rd = rdj;
         }
     }
+
     return rd;
 }
 
