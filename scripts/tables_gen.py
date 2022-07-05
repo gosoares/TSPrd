@@ -12,6 +12,7 @@ def main():
     args = parser.parse_args()
 
     gen_tables(args.results_folder)
+    print("Finished!")
 
 
 def gen_tables(results_folder: str):
