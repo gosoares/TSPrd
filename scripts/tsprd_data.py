@@ -6,7 +6,7 @@ import pandas as pd
 
 def get_instances_names():
     # return an iterable of tuples (instance_set, instance_name)
-    solomon_instances = [("Solomon", f"{n}/{name}") for n in [10, 15, 20, 50, 100] for name in ["C101", "C201", "R101", "RC101"]]
+    solomon_instances = [("Solomon", "{}/{}".format(n, name)) for n in [10, 15, 20, 50, 100] for name in ["C101", "C201", "R101", "RC101"]]
     tsplib_names = ["eil51", "berlin52", "st70", "eil76", "pr76", "rat99", "kroA100", "kroB100", "kroC100", "kroD100", "kroE100", "rd100", "eil101",
                     "lin105", "pr107", "pr124", "bier127", "ch130", "pr136", "pr144", "ch150", "kroA150", "kroB150", "pr152", "u159", "rat195",
                     "d198", "kroA200", "kroB200", "ts225", "tsp225", "pr226", "gil262", "pr264", "a280", "pr299", "lin318", "rd400", "fl417", "pr439",
@@ -78,12 +78,12 @@ def split_instance_sets(df_agg: pd.DataFrame):
 
 
 def read_instance_result(output_path: str, instance_set: str, instance: str, beta: str, exec_id: int):
-    file = f"{output_path}/{instance_set}/{instance}_{beta}_{exec_id}.txt"
+    file = "{}/{}/{}_{}_{}.txt".format(output_path, instance_set, instance, beta, exec_id)
     with open(file, 'r') as f:
         _, exec_time = f.readline().split()
         _, sol_time = f.readline().split()
         _, obj = f.readline().split()
-        return int(obj), int(exec_time), int(sol_time)
+        return int(obj), int(exec_time) * (1201.0 / 1976.0), int(sol_time) * (1201.0 / 1976.0)
 
 
 def calculate_gap(value: pd.Series, ref: pd.Series) -> float:
