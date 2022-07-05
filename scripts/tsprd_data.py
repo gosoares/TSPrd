@@ -83,7 +83,7 @@ def read_instance_result(output_path: str, instance_set: str, instance: str, bet
         _, exec_time = f.readline().split()
         _, sol_time = f.readline().split()
         _, obj = f.readline().split()
-        return int(obj), int(exec_time) * (1201.0 / 1976.0), int(sol_time) * (1201.0 / 1976.0)
+        return int(obj), int(exec_time), int(sol_time)
 
 
 def calculate_gap(value: pd.Series, ref: pd.Series) -> float:
