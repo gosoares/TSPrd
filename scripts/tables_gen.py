@@ -20,7 +20,7 @@ def gen_tables(results_folder: str):
     solomon_opt, solomon_nopt, tsplib, atsplib = split_instance_sets(df_agg)
 
     gen_solomon_tables(solomon_opt, solomon_nopt)
-    # gen_tsplib_tables(tsplib)
+    gen_tsplib_tables(tsplib)
     gen_atsplib_table(atsplib)
     gen_opt_summary_table(solomon_opt)
     gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
@@ -39,13 +39,15 @@ def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
 
 def gen_tsplib_tables(tsplib: pd.DataFrame):
     tsplib = tsplib.sort_index(level=["beta", "n"]).droplevel("n")
-    insert_blank_columns(tsplib, before=["ref_obj"])
+    insert_blank_columns(tsplib, before=["ref_obj", "best_obj", "avg_obj"])
 
     tsplib_betas, tsplib_dfs = zip(*tuple(tsplib.groupby(level="beta")))
     for i in range(0, 6, 2):
+        beta1, beta2 = tsplib_betas[i:i + 2]
         tsplib_two = pd.concat([tsplib_dfs[i].droplevel("beta"), tsplib_dfs[i + 1].droplevel("beta")],
-                               axis="columns", keys=[tsplib_betas[i], tsplib_betas[i + 1]])
-        save_table(f"tsplib_{tsplib_betas[i]}_{tsplib_betas[i + 1]}", tsplib_two, gen_avg_footer(tsplib_two))
+                               axis="columns", keys=[beta1, beta2])
+        save_table(f"tsplib_{beta1}_{beta2}", f"Results TSPLIB $\\beta \\in {{{beta1}, {beta2}}}$", tsplib_two, footer=gen_avg_footer(tsplib_two),
+                   add_options="\\setlength{\\tabcolsep}{3pt} \\tiny")
 
 
 def gen_atsplib_table(atsplib: pd.DataFrame):

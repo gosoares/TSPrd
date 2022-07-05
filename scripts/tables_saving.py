@@ -29,8 +29,7 @@ def save_table(name: str, caption: str, df: pd.DataFrame, footer: pd.DataFrame |
 
     if footer is not None:
         footer = footer if isinstance(footer, pd.DataFrame) else pd.concat(footer)
-        footer_tex = "" if df.index.nlevels > 1 else "\\midrule\n"
-        footer_tex += get_table_tex(footer)
+        footer_tex = get_table_tex(footer)
         footer_tex = footer_tex.split('\n', 5)[-1].replace("\\end{tabular}\n", "").replace("\\end{table}\n", "")
 
         tex = tex.replace("\\bottomrule", footer_tex)
@@ -47,7 +46,7 @@ def get_table_tex(df: pd.DataFrame, name: str = None, caption: str = None):
     df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
     tex: str = df.style.format(precision=2).hide(axis="columns") \
         .format_index(lambda x: f"\\shortstack{{{x.left + 1}\\\\\\~{{}}\\\\{x.right}}}" if isinstance(x, pd.Interval) else x) \
-        .to_latex(clines="skip-last;data", hrules=True, label=name, caption=caption, position="htb!", position_float="centering",
+        .to_latex(clines="skip-last;data", hrules=True, label=f"tab:{name}", caption=caption, position="htb!", position_float="centering",
                   column_format=alignments) \
         .replace("\\cline", "\\cmidrule")
     return tex
@@ -67,19 +66,25 @@ def format_time(time):
 
 
 def gen_table_headers(df: pd.DataFrame):
-    columns = list(chain(df.index.names, df.columns))
+    columns = list(chain(df.index.names, df.columns.get_level_values(-1)))
     n_columns = len(columns)
+    start = 0
+    first_row, second_row = [], []
 
-    # note: these indexes are 0-based, but when printing to the latex, it is 1-based
-    first_ref = index_first(columns, lambda x: x and "ref_" in x)
-    last_ref = index_firsts_last(columns, lambda x: "ref_" in x, first_ref)
-    first_hgs = index_first(columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref)
-    first_best = first_hgs
-    first_avg = index_first(columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"))
-    last_hgs = n_columns - 1
+    while start < n_columns:
+        first_ref = index_first(columns, lambda x: x and "ref_" in x, start)
+        last_ref = index_firsts_last(columns, lambda x: "ref_" in x, first_ref)
+        first_hgs = index_first(columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref)
+        first_best = first_hgs
+        first_avg = index_first(columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"), first_best)
+        last_hgs = index_firsts_last(columns, lambda x: x in ("gap_avg", "exec_time", "sol_time"), first_avg + 1)
+        start = last_hgs + 1
 
-    tex = tex_header(n_columns, [("\\archils{}", first_ref, last_ref), ("\\myalg{}", first_hgs, last_hgs)])
-    tex += tex_header(n_columns, [("best run", first_best, first_best + 1), ("all runs", first_avg, first_avg + 1)])
+        first_row.extend([("\\archils{}", first_ref, last_ref), ("\\myalg{}", first_hgs, last_hgs)])
+        second_row.extend([("best run", first_best, first_best + 1), ("all runs", first_avg, first_avg + 1)])
+
+    tex = tex_header(n_columns, first_row)
+    tex += tex_header(n_columns, second_row)
     translated_columns = ["" if not c or c.startswith("blank") or c.startswith("__fill_") else c_transl[c][0] for c in columns]
     tex += " & ".join(translated_columns) + " \\\\ \n"
     return tex
