@@ -1,5 +1,6 @@
 import re
 from itertools import chain
+from os.path import exists
 
 import pandas as pd
 
@@ -44,6 +45,11 @@ def read_execution_data(results_folder: str):
     df[["obj", "exec_time", "sol_time"]] = df.apply(
         lambda row: read_instance_result(results_folder, row["set"], row["name"], row["beta"], row["exec_id"]),
         axis='columns', result_type='expand')
+    missing = df["obj"].isna().sum()
+    if missing > 0:
+        print("There were {} missing results in the \"{}\" folder.".format(missing, results_folder))
+        df.dropna(subset="obj", inplace=True)
+
     df["obj"] = df["obj"].astype(int)
     df.insert(df.columns.get_loc("obj") + 1, "gap_obj_ref", calculate_gap(df["obj"], df["ref_obj"]))
 
@@ -82,6 +88,9 @@ def split_instance_sets(df_agg: pd.DataFrame):
 
 def read_instance_result(output_path: str, instance_set: str, instance: str, beta: str, exec_id: int):
     file = "{}/{}/{}_{}_{}.txt".format(output_path, instance_set, instance, beta, exec_id)
+    if not exists(file):
+        return None, None, None
+
     with open(file, 'r') as f:
         _, exec_time = f.readline().split()
         _, sol_time = f.readline().split()
