@@ -33,8 +33,8 @@ int main(int argc, char** argv) {
     s.validate();
 
     cout << "RESULT " << s.time << endl;
-    cout << "EXEC_TIME " << alg.getExecutionTime() << endl;
-    cout << "SOL_TIME " << alg.getBestSolutionTime() << endl;
+    cout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
+    cout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
 
     if (argc < 3) return 0;
 
@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
     if (dir != outFile) filesystem::create_directories(dir);  // make sure the path exists
 
     ofstream fout(outFile, ios::out);
-    fout << "EXEC_TIME " << alg.getExecutionTime() * TIME_COEFF << endl;
-    fout << "SOL_TIME " << alg.getBestSolutionTime() * TIME_COEFF << endl;
+    fout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
+    fout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
     fout << "OBJ " << s.time << endl;
     fout << "N_ROUTES " << s.routes.size() << endl;
     fout << "N_CLIENTS";
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     ofstream spout(spFile, ios::out);
     spout << "time,obj" << endl;
     for (auto x : alg.getSearchProgress()) {
-        spout << x.first * TIME_COEFF << "," << x.second << endl;
+        spout << (unsigned int)(x.first * TIME_COEFF) << "," << x.second << endl;
     }
     spout.close();
     return 0;

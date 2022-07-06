@@ -58,9 +58,13 @@ class GeneticAlgorithm {
 
     const Solution& getSolution() { return *bestSolution; };
 
-    unsigned int getExecutionTime() { return endTime.count(); }
+    unsigned int getExecutionTime(double normCoeff = 1.0) {
+        return max(0U, (unsigned int)(endTime.count() * normCoeff));
+    }
 
-    unsigned int getBestSolutionTime() { return bestSolutionFoundTime.count(); }
+    unsigned int getBestSolutionTime(double normCoeff = 1.0) {
+        return max(0U, (unsigned int)(bestSolutionFoundTime.count() * normCoeff));
+    }
 
     const vector<pair<unsigned int, unsigned int>>& getSearchProgress() { return searchProgress; }
 };
