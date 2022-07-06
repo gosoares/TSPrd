@@ -7,9 +7,14 @@
 
 using namespace std;
 
-unsigned int normalizeTime(unsigned int time) { return (unsigned int)(time * (1201.0 / 1976.0)); }
+const double TIME_COEFF = 1201.0 / 1976.0;  // time normalization coefficient
 
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        cout << "usage: TSPrd instance_file [output_file]" << endl;
+        exit(1);
+    }
+
     // genetic algorithm parameters
     unsigned int mi = 20;
     unsigned int lambda = 40;
@@ -18,7 +23,7 @@ int main(int argc, char** argv) {
     unsigned int itNi = 10000;                // max iterations without improvement to stop the algorithm
     auto itDiv = (unsigned int)(0.4 * itNi);  // iterations without improvement to diversify
 
-    auto timeLimit = (unsigned int)(10 * 60 * (1976.0 / 1201.0));  // in seconds
+    auto timeLimit = (unsigned int)(10 * 60 / TIME_COEFF);  // in seconds
 
     string instanceName = argv[1];
     Instance instance(instanceName);
@@ -36,11 +41,11 @@ int main(int argc, char** argv) {
     // output to file
     string outFile = string(argv[2]);
     string dir = outFile.substr(0, outFile.find_last_of('/'));
-    if (dir != outFile) system(("mkdir -p " + dir).c_str());  // make sure the path exists
+    if (dir != outFile) filesystem::create_directories(dir);  // make sure the path exists
 
     ofstream fout(outFile, ios::out);
-    fout << "EXEC_TIME " << normalizeTime(alg.getExecutionTime()) << endl;
-    fout << "SOL_TIME " << normalizeTime(alg.getBestSolutionTime()) << endl;
+    fout << "EXEC_TIME " << alg.getExecutionTime() * TIME_COEFF << endl;
+    fout << "SOL_TIME " << alg.getBestSolutionTime() * TIME_COEFF << endl;
     fout << "OBJ " << s.time << endl;
     fout << "N_ROUTES " << s.routes.size() << endl;
     fout << "N_CLIENTS";
@@ -61,7 +66,7 @@ int main(int argc, char** argv) {
     ofstream spout(spFile, ios::out);
     spout << "time,obj" << endl;
     for (auto x : alg.getSearchProgress()) {
-        spout << normalizeTime(x.first) << "," << x.second << endl;
+        spout << x.first * TIME_COEFF << "," << x.second << endl;
     }
     spout.close();
     return 0;

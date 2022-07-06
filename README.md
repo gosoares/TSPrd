@@ -9,14 +9,14 @@ git clone https://github.com/gosoares/TSPrd
 ## Build the binary
 ```
 cd TSPrd
-mkdir cmake-build
-cmake -DCMAKE_BUILD_TYPE="Release" -Bcmake-build .
-make -C cmake-build TSPrd
+mkdir build
+cmake -DCMAKE_BUILD_TYPE="Release" -Bbuild .
+make -C build TSPrd
 ```
 
 ## Running an instance
 ```
-./bin/TSPrd Solomon/50/C101_3 output.txt
+./build/TSPrd Solomon/50/C101_3 output.txt
 ```
 The first argument must match a file in the 'instances' folder, without the extension.
 

@@ -1,6 +1,9 @@
 .idea/
-bin/
+.vscode/
+launch.json
 cmake-*/
 output*/
-scripts/output*/
 instances/testSet
+.ipynb_checkpoints
+__pycache__
+build/
