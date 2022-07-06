@@ -11,7 +11,8 @@
 #define L(R) ((R)->size() - 2)  // index of last client in a route
 
 NeighborSearch::NeighborSearch(const Instance& instance)
-    : instance(instance), W(instance.getW()), RD(instance.getRD()), intraSearch(instance), interSearch(instance) {}
+    : instance(instance), W(instance.getW()), RD(instance.getRD()), generator((random_device())()),
+      intraSearch(instance), interSearch(instance) {}
 
 unsigned int NeighborSearch::splitNs(Solution* solution) {
     Sequence* sequence = solution->toSequence();
