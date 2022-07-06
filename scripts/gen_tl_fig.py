@@ -23,7 +23,8 @@ def gen_tl_tex(bounds: tuple[int, int], bins: Iterable[tuple[int, int]], name: s
 
     doc = Document(data=NoEscape("\\usetikzlibrary{shapes.geometric} \\usetikzlibrary{arrows.meta,arrows}"))
     with doc.create(TikZ()) as pic:
-        pic.append(TikZDraw([TikZCoordinate(bounds[0] * fc, 0), '--', TikZCoordinate(bounds[1] * fc, 0)], options=TikZOptions("->")))
+        pic.append(TikZDraw([TikZCoordinate(bounds[0] * fc, 0), '--',
+                   TikZCoordinate(bounds[1] * fc, 0)], options=TikZOptions("->")))
 
         pic.append(TikZDraw([TikZCoordinate(bounds[0] * fc, -CH / 2), '--', TikZCoordinate(bounds[0] * fc, CH / 2)], ))
         for b in set(chain(*bins)):

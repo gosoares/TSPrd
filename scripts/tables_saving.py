@@ -59,7 +59,8 @@ def get_table_tex(df: pd.DataFrame, name: str = None, caption: str = None):
 
 def format_time_columns(df: pd.DataFrame):
     columns = df.columns.get_level_values(-1).isin(["exec_time", "sol_time"])
-    df.iloc[:, columns] = df.iloc[:, columns].apply(lambda x: x.apply(format_time), axis='columns', result_type='expand')
+    df.iloc[:, columns] = df.iloc[:, columns].apply(
+        lambda x: x.apply(format_time), axis='columns', result_type='expand')
     return df
 
 
@@ -81,7 +82,8 @@ def gen_table_headers(df: pd.DataFrame):
         cs = []
         for level_column in level_columns:
             level_column_range = df.columns.get_loc(level_column)
-            cs.append((f"$\\beta = {level_column}$", n_plus + level_column_range.start + 1, n_plus + level_column_range.stop - 1))
+            cs.append((f"$\\beta = {level_column}$", n_plus +
+                      level_column_range.start + 1, n_plus + level_column_range.stop - 1))
         tex = tex_header(n_columns, cs)
 
     start = 0
@@ -102,7 +104,8 @@ def gen_table_headers(df: pd.DataFrame):
 
     tex += tex_header(n_columns, first_row)
     tex += tex_header(n_columns, second_row)
-    translated_columns = ["" if not c or c.startswith("blank") or c.startswith("__fill_") else c_transl[c][0] for c in columns]
+    translated_columns = ["" if not c or c.startswith("blank") or c.startswith(
+        "__fill_") else c_transl[c][0] for c in columns]
     tex += " & ".join(translated_columns) + " \\\\ \n"
     return tex
 

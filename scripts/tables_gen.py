@@ -8,7 +8,8 @@ from tsprd_data import *
 
 def main():
     parser = argparse.ArgumentParser(description="Generate table from the executor instance execution results folder.")
-    parser.add_argument("results_folder", action="store", type=str, help="Folder with the TSPrd instance execution results.")
+    parser.add_argument("results_folder", action="store", type=str,
+                        help="Folder with the TSPrd instance execution results.")
     args = parser.parse_args()
 
     gen_tables(args.results_folder)
@@ -64,9 +65,12 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
     sol_opt["ref_time"] = sol_opt["ref_time"].apply(lambda x: "-" if pd.isna(x) else int(x))
 
     # count how many each equal the optimal result
-    sol_opt.insert(sol_opt.columns.get_loc("ref_gap"), "n_ref_opt", solomon_opt.query("ref_obj == opt").groupby(sol_opt.index.names).size())
-    sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "n_opt_best", solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
-    sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("ref_gap"), "n_ref_opt",
+                   solomon_opt.query("ref_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "n_opt_best",
+                   solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
+    sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg",
+                   solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
     insert_blank_columns(sol_opt, before=("n_ref_opt", "n_opt_best", "n_opt_avg", "exec_time"))
     save_table("summary_opt", "Comparison of aggregated results for instances with known optimal.", sol_opt,
@@ -112,8 +116,10 @@ def nopt_summary_agg(df_grouped: DataFrameGroupBy):
     ref_pos = df_agg.columns.get_loc("n_inst") + 1  # position to insert next few columns
     df_agg.insert(ref_pos, "n_ref_sb_best", df_grouped.apply(lambda d: d.query("ref_obj < best_obj").shape[0]))
     df_agg.insert(ref_pos + 1, "n_ref_sb_avg", df_grouped.apply(lambda d: d.query("ref_obj < avg_obj").shape[0]))
-    df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best", df_grouped.apply(lambda d: d.query("best_obj < ref_obj").shape[0]))
-    df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg", df_grouped.apply(lambda d: d.query("avg_obj < ref_obj").shape[0]))
+    df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best",
+                  df_grouped.apply(lambda d: d.query("best_obj < ref_obj").shape[0]))
+    df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg",
+                  df_grouped.apply(lambda d: d.query("avg_obj < ref_obj").shape[0]))
     ref_time_column = df_grouped["ref_time"].mean().astype(int) if "ref_time" in df_agg else "-"
     df_agg.insert(df_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", ref_time_column)
     return df_agg
@@ -130,7 +136,8 @@ def insert_blank_columns(df: pd.DataFrame, pos: int | Iterable[int] = (), before
 def gen_avg_footer(df: pd.DataFrame):
     columns = set(filter(lambda x: "gap" in x or x.endswith("_time"), df.columns.get_level_values(-1)))
     footer = df.iloc[:, df.columns.get_level_values(-1).isin(columns)].mean(numeric_only=True).rename(f"Avg.")
-    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
+    # add columns to compensate if df has multiindex
+    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
     if type(df.columns) is pd.MultiIndex:
         footer.columns = pd.MultiIndex.from_tuples(footer.columns)
@@ -145,7 +152,8 @@ def gen_avg_footer(df: pd.DataFrame):
 def gen_sum_footer(df: pd.DataFrame):
     columns = filter(lambda c: c.startswith("n_"), df.columns)
     footer = df[columns].sum().astype("Int64").rename("Total")
-    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]  # add columns to compensate if df has multiindex
+    # add columns to compensate if df has multiindex
+    fill_columns = [f"__fill_{i}" for i in range(len(df.index.names) - 1)]
     footer = pd.DataFrame([footer], columns=(fill_columns + list(df.columns))).fillna('')
     return footer
 

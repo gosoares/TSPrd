@@ -7,7 +7,8 @@ import pandas as pd
 
 def get_instances_names():
     # return an iterable of tuples (instance_set, instance_name)
-    solomon_instances = [("Solomon", "{}/{}".format(n, name)) for n in [10, 15, 20, 50, 100] for name in ["C101", "C201", "R101", "RC101"]]
+    solomon_instances = [("Solomon", "{}/{}".format(n, name)) for n in [10, 15, 20, 50, 100]
+                         for name in ["C101", "C201", "R101", "RC101"]]
     tsplib_names = ["eil51", "berlin52", "st70", "eil76", "pr76", "rat99", "kroA100", "kroB100", "kroC100", "kroD100", "kroE100", "rd100", "eil101",
                     "lin105", "pr107", "pr124", "bier127", "ch130", "pr136", "pr144", "ch150", "kroA150", "kroB150", "pr152", "u159", "rat195",
                     "d198", "kroA200", "kroB200", "ts225", "tsp225", "pr226", "gil262", "pr264", "a280", "pr299", "lin318", "rd400", "fl417", "pr439",
@@ -24,7 +25,8 @@ def get_instances_execs():
     exec_ids = range(1, 11)
 
     r = re.compile(r"\d+")
-    instances = [(iset, int(r.search(name).group()), name, beta, exec_id) for iset, name in instances for beta in betas for exec_id in exec_ids]
+    instances = [(iset, int(r.search(name).group()), name, beta, exec_id)
+                 for iset, name in instances for beta in betas for exec_id in exec_ids]
     return instances
 
 
@@ -77,7 +79,8 @@ def split_instance_sets(df_agg: pd.DataFrame):
     solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
     solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
     # calculate gaps in relation to the optimal result
-    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap", calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
+    solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap",
+                       calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
     solomon_opt["gap_best"] = calculate_gap(solomon_opt["best_obj"], solomon_opt["opt"])
     solomon_opt["gap_avg"] = calculate_gap(solomon_opt["avg_obj"], solomon_opt["opt"])
 

@@ -12,8 +12,8 @@ class NeighborSearch {
     const vector<vector<unsigned int> >& W;
     const vector<unsigned int>& RD;
 
-    InterSearch interSearch;
     IntraSearch intraSearch;
+    InterSearch interSearch;
 
     unsigned int splitNs(Solution* solution);
 
