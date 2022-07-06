@@ -3,17 +3,24 @@
 #include <iostream>
 
 #include "GeneticAlgorithm.h"
+#include "Rng.h"
 #include "Solution.h"
 
 using namespace std;
 
 const double TIME_COEFF = 1201.0 / 1976.0;  // time normalization coefficient
+long long Rng::seed;
+mt19937* Rng::generator;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        cout << "usage: TSPrd instance_file [output_file]" << endl;
+        cout << "usage: TSPrd instance_file [output_file] [seed]" << endl;
         exit(1);
     }
+
+    // initialize Rng
+    long long seed = argc == 4 ? stoll(argv[3]) : random_device{}();
+    Rng::initialize(seed);
 
     // genetic algorithm parameters
     unsigned int mi = 20;
@@ -35,6 +42,7 @@ int main(int argc, char** argv) {
     cout << "RESULT " << s.time << endl;
     cout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
     cout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
+    cout << "SEED " << Rng::getSeed() << endl;
 
     if (argc < 3) return 0;
 
@@ -47,6 +55,7 @@ int main(int argc, char** argv) {
     fout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
     fout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
     fout << "OBJ " << s.time << endl;
+    fout << "SEED " << Rng::getSeed() << endl;
     fout << "N_ROUTES " << s.routes.size() << endl;
     fout << "N_CLIENTS";
     for (auto& r : s.routes) fout << " " << (r->size() - 2);

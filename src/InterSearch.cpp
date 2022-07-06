@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 
+#include "Rng.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
@@ -11,8 +12,7 @@
 #define N_INTER_SEARCHES 3
 
 InterSearch::InterSearch(const Instance& instance)
-    : instance(instance), W(instance.getW()), RD(instance.getRD()), routesPair(), searchOrder(N_INTER_SEARCHES),
-      generator((random_device())()) {
+    : instance(instance), W(instance.getW()), RD(instance.getRD()), routesPair(), searchOrder(N_INTER_SEARCHES) {
     iota(searchOrder.begin(), searchOrder.end(), 1);
 }
 
@@ -72,8 +72,7 @@ vector<pair<unsigned int, unsigned int> > InterSearch::getRoutesPairSequence(uns
         }
     }
 
-    shuffle(routesPair[nRoutes].begin(), routesPair[nRoutes].end(),
-            default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
+    shuffle(routesPair[nRoutes].begin(), routesPair[nRoutes].end(), Rng::getGenerator());
     return routesPair[nRoutes];
 }
 
@@ -266,7 +265,8 @@ bool InterSearch::insertDepotAndReorderIt(Solution* s) {
     return false;
 }
 
-void InterSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), generator); }
+void InterSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), Rng::getGenerator()); }
+
 // calculate the new ending time of route max(r1, r2) given that r1 and r2 changed
 unsigned int InterSearch::calculateEndingTime(Solution* solution, unsigned int r1, unsigned int r2) {
     if (r1 > r2) swap(r1, r2);

@@ -2,7 +2,8 @@
 
 #include <chrono>
 #include <queue>
-#include <random>
+
+#include "Rng.h"
 
 void freePopulation(vector<Sequence*>* population) {
     for (auto p : *population) {
@@ -14,8 +15,8 @@ void freePopulation(vector<Sequence*>* population) {
 GeneticAlgorithm::GeneticAlgorithm(const Instance& instance, unsigned int mi, unsigned int lambda, unsigned int nClose,
                                    unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit)
     : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
-      timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0), generator((random_device())()),
-      distPopulation(0, (int)mi - 1) {
+      timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0),
+      populationRandom(Rng::getIntGenerator(0, (int)mi - 1)) {
     milliseconds maxTime(this->timeLimit * 1000);
     timer.start();
 
@@ -99,7 +100,7 @@ vector<Sequence*>* GeneticAlgorithm::initializePopulation() {
 
     for (unsigned int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
-        shuffle(sequence->begin(), sequence->end(), generator);
+        shuffle(sequence->begin(), sequence->end(), Rng::getGenerator());
         pop->at(i) = sequence;
     }
 
@@ -233,13 +234,13 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution*>* solutions) 
 vector<unsigned int> GeneticAlgorithm::selectParents(vector<double>& biasedFitness) {
     // select first parent
     vector<unsigned int> p(2);
-    int p1a = distPopulation(generator), p1b = distPopulation(generator);
+    int p1a = populationRandom(), p1b = populationRandom();
     p[0] = p1a;
     if (biasedFitness[p1b] < biasedFitness[p1a]) p[0] = p1b;
 
     // select second parent, different from first
     do {
-        int p2a = distPopulation(generator), p2b = distPopulation(generator);
+        int p2a = populationRandom(), p2b = populationRandom();
         p[1] = p2a;
         if (biasedFitness[p2b] < biasedFitness[p2a]) p[1] = p2b;
     } while (p[0] == p[1]);
@@ -248,18 +249,15 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double>& biasedFitne
 }
 
 Sequence* GeneticAlgorithm::orderCrossover(const Sequence& parent1, const Sequence& parent2) {
-    static random_device rd;
-    static mt19937 generator(rd());
-
     unsigned int N = parent1.size();
-    uniform_int_distribution<int> dist(0, (int)N - 1);
+    auto dist = Rng::getIntGenerator(0, (int)N - 1);
 
     // choose randomly a sub-sequence of the first parent that goes to the offspring
     // a and b represents the start and end index of the sequence, respectively
     unsigned int a, b;
     do {
-        a = dist(generator);
-        b = dist(generator);
+        a = dist();
+        b = dist();
         if (a > b) {
             swap(a, b);
         }

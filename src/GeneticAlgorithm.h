@@ -30,9 +30,7 @@ class GeneticAlgorithm {
 
     vector<pair<unsigned int, unsigned int>> searchProgress;  // stores (time, value) of each best solution found
 
-    // random number generator
-    mt19937 generator;
-    uniform_int_distribution<int> distPopulation;  // distribution for the population [0, mi)
+    function<int()> populationRandom;  // generate a number in the population [0, mi)
 
     vector<Sequence*>* initializePopulation();
 

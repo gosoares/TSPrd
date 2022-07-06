@@ -7,7 +7,10 @@ from tsprd_data import *
 
 
 def main(output_folder: str, n_threads: int):
-    build_project()
+    if not build_project(output_folder):
+        print("There was an error building the project.")
+        return
+
     instances = get_instances_execs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_threads) as executor:
@@ -19,17 +22,19 @@ def main(output_folder: str, n_threads: int):
         print()
 
 
-def build_project():
-    subprocess.run(["mkdir -p ../cmake-build-release"], stdout=subprocess.DEVNULL, shell=True)
-    subprocess.run(["cmake -DCMAKE_BUILD_TYPE=\"Release\" -B../cmake-build-release .."], stdout=subprocess.DEVNULL, shell=True)
-    subprocess.run(["make -C../cmake-build-release TSPrd"], stdout=subprocess.DEVNULL, shell=True)
+def build_project(path: str):
+    status_sum = subprocess.run(["rm -r {}/build 2> /dev/null".format(path)], stdout=subprocess.DEVNULL, shell=True).returncode
+    status_sum += subprocess.run(["mkdir -p {}/build".format(path)], stdout=subprocess.DEVNULL, shell=True).returncode
+    status_sum += subprocess.run(["cmake -DCMAKE_BUILD_TYPE=\"Release\" -B{}/build ..".format(path)], stdout=subprocess.DEVNULL, shell=True).returncode
+    status_sum += subprocess.run(["make -C{}/build TSPrd".format(path)], stdout=subprocess.DEVNULL, shell=True).returncode
+    return status_sum == 0 # return if the build was sucessful
 
 
 def execute_instance(iset, _, name, beta, exec_id, output_folder):
     instance = "{}/{}_{}".format(iset, name, beta)
     output_file = "{}/{}_{}.txt".format(output_folder, instance, exec_id)
     if not exists(output_file):
-        process = subprocess.run(["../bin/TSPrd {} {}".format(instance, output_file)], stdout=subprocess.DEVNULL, shell=True)
+        process = subprocess.run(["{}/build/TSPrd {} {}".format(output_folder, instance, output_file)], stdout=subprocess.DEVNULL, shell=True)
         if process.returncode != 0:
             print(instance, file=open("{}/errors.txt".format(output_folder), 'a'))
             print("error while running {}.".format(instance))

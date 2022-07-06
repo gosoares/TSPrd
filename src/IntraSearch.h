@@ -1,8 +1,6 @@
 #ifndef TSPRD_INTRASEARCH_H
 #define TSPRD_INTRASEARCH_H
 
-#include <random>
-
 #include "Instance.h"
 #include "Solution.h"
 
@@ -11,7 +9,6 @@ class IntraSearch {
     const vector<vector<unsigned int> >& W;
 
     vector<unsigned int> searchOrder;
-    mt19937 generator;
 
     void shuffleSearchOrder();
     unsigned int callIntraSearch(vector<unsigned int>* route, unsigned int which);

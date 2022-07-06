@@ -3,14 +3,14 @@
 #include <cassert>
 #include <iostream>
 
+#include "Rng.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
 #define L(R) ((R)->size() - 2)  // index of last client in a route
 #define N_INTRA_SEARCHES 6
 
-IntraSearch::IntraSearch(const Instance& instance)
-    : W(instance.getW()), generator((random_device())()), searchOrder(N_INTRA_SEARCHES) {
+IntraSearch::IntraSearch(const Instance& instance) : W(instance.getW()), searchOrder(N_INTRA_SEARCHES) {
     iota(searchOrder.begin(), searchOrder.end(), 1);
 }
 
@@ -37,7 +37,7 @@ unsigned int IntraSearch::search(Solution* solution) {
     return oldTime - newTime;
 }
 
-void IntraSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), generator); }
+void IntraSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), Rng::getGenerator()); }
 
 unsigned int IntraSearch::callIntraSearch(vector<unsigned int>* route, unsigned int which) {
     switch (which) {
