@@ -49,6 +49,8 @@ class Data {
 
     explicit Data(const Instance& filename, const AlgParams& params);
     std::chrono::milliseconds elapsedTime() const;
+
+    static std::tuple<std::string, std::string, AlgParams> parseArgs(int argc, char** argv);
 };
 
 #endif  // TSPRD_DATA_H

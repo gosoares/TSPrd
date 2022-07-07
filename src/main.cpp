@@ -4,37 +4,20 @@
 #include "Solution.h"
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        std::cout << "usage: TSPrd instance_file [output_file] [seed]" << std::endl;
-        exit(1);
-    }
-
-    long long seed = (argc >= 4) ? std::stoll(argv[3]) : std::random_device{}();
-
-    AlgParams params{.mu = 20,
-                     .lambda = 40,
-                     .nbElite = 8,
-                     .nClose = 6,
-                     .itNi = 10000,
-                     .itDiv = 4000,
-                     .timeLimit = 600,
-                     .seed = seed};
-
-    std::string instanceName = argv[1];
-    Instance instance(instanceName);
-
+    auto [instanceName, outputFile, params] = Data::parseArgs(argc, argv);
+    auto instance = Instance(instanceName);
     auto data = Data(instance, params);
 
     auto alg = GeneticAlgorithm(data);
     Solution s = alg.getSolution();
     s.validate();
 
-    std::cout << "RESULT " << s.time << std::endl;
     std::cout << "EXEC_TIME " << alg.getExecutionTime() << std::endl;
     std::cout << "SOL_TIME " << alg.getBestSolutionTime() << std::endl;
+    std::cout << "OBJ " << s.time << std::endl;
     std::cout << "SEED " << params.seed << std::endl;
 
-    if (argc < 3) return 0;
+    if (outputFile == "") return 0;
 
     // output to file
     std::string outFile = std::string(argv[2]);
