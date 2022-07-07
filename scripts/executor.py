@@ -1,9 +1,9 @@
 import argparse
 import concurrent.futures
 import subprocess
+from os import cpu_count, getloadavg
 from os.path import exists
 import time
-from psutil import getloadavg, cpu_count
 
 from tsprd_data import *
 
@@ -21,7 +21,7 @@ def main(output_folder: str, n_threads: int):
         start_time = time.time()
         print(" Executed  |   Time   |  Load   | Last Instance")
         for r in executor.map(lambda i: execute_instance(*i, output_folder), instances):
-            total_cores = cpu_count(logical=False)
+            total_cores = cpu_count()
             current_element += 1
             current_time = time.time() - start_time
 
