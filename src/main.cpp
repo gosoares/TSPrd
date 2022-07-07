@@ -9,8 +9,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    long long seed = std::random_device{}();
-    if (argc >= 4) seed = std::stoll(argv[3]);
+    long long seed = (argc >= 4) ? std::stoll(argv[3]) : std::random_device{}();
 
     AlgParams params{.mu = 20,
                      .lambda = 40,

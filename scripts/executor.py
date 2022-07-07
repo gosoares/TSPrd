@@ -13,6 +13,9 @@ def main(output_folder: str, n_threads: int):
         print("There was an error building the project.")
         return
 
+    git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
+    print(git_hash, file=open("{}/git-commit.hash".format(output_folder), 'w'))
+
     instances = get_instances_execs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_threads) as executor:
