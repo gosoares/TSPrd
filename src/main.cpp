@@ -20,11 +20,10 @@ int main(int argc, char** argv) {
     if (outputFile == "") return 0;
 
     // output to file
-    std::string outFile = std::string(argv[2]);
-    std::string dir = outFile.substr(0, outFile.find_last_of('/'));
-    if (dir != outFile) std::filesystem::create_directories(dir);  // make sure the path exists
+    std::string dir = outputFile.substr(0, outputFile.find_last_of('/'));
+    if (dir != outputFile) std::filesystem::create_directories(dir);  // make sure the path exists
 
-    std::ofstream fout(outFile, std::ios::out);
+    std::ofstream fout(outputFile, std::ios::out);
     fout << "EXEC_TIME " << alg.getExecutionTime() << std::endl;
     fout << "SOL_TIME " << alg.getBestSolutionTime() << std::endl;
     fout << "OBJ " << s.time << std::endl;
@@ -43,8 +42,8 @@ int main(int argc, char** argv) {
     fout.close();
 
     // output search progress
-    auto dotPos = outFile.find_last_of('.');
-    std::string spFile = outFile.substr(0, dotPos) + "_SP" + outFile.substr(dotPos);
+    auto dotPos = outputFile.find_last_of('.');
+    std::string spFile = outputFile.substr(0, dotPos) + "_SP" + outputFile.substr(dotPos);
     std::ofstream spout(spFile, std::ios::out);
     spout << "time,obj" << std::endl;
     for (auto x : alg.getSearchProgress()) {

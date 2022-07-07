@@ -47,13 +47,17 @@ def build_project(path: str):
 
 def execute_instance(iset, _, name, beta, exec_id, output_folder):
     instance = "{}/{}_{}".format(iset, name, beta)
+    instance_file = "../instances/{}.dat".format(instance)
     output_file = "{}/{}_{}.txt".format(output_folder, instance, exec_id)
-    if not exists(output_file):
-        process = subprocess.run(["{}/build/TSPrd {} {}".format(
-            output_folder, instance, output_file)], stdout=subprocess.DEVNULL, shell=True)
+
+    if not exists(output_file):  # skip if it was already executed and saved
+        command = "{}/build/TSPrd {} -o {}".format(output_folder, instance_file, output_file)
+        process = subprocess.run([command], stdout=subprocess.DEVNULL, shell=True)
+
         if process.returncode != 0:
             print(instance, file=open("{}/errors.txt".format(output_folder), 'a'))
-            print("error while running {}.".format(instance))
+            print("error while running {}".format(instance))
+
     return "{} {}".format(instance, exec_id)
 
 
