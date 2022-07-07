@@ -35,8 +35,13 @@ std::tuple<std::string, std::string, AlgParams> Data::parseArgs(int argc, char**
         paramsError();
     }
 
-    std::string instanceName = argv[1];
+    std::string instanceFile = argv[1];
     std::string outputFile = "";
+
+    if (!std::filesystem::exists(instanceFile)) {
+        std::cout << "Not able to find this file: " << instanceFile << std::endl;
+        exit(1);
+    }
 
     for (int i = 2; i < argc; i += 2) {
         auto arg = std::string(argv[i]);
@@ -62,5 +67,5 @@ std::tuple<std::string, std::string, AlgParams> Data::parseArgs(int argc, char**
                      .timeLimit = timeLimit,
                      .seed = seed};
 
-    return std::make_tuple(instanceName, outputFile, params);
+    return std::make_tuple(instanceFile, outputFile, params);
 }

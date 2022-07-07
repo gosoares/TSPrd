@@ -19,20 +19,16 @@ void floydWarshall(std::vector<std::vector<int> >& W) {
     }
 }
 
-Instance::Instance(const std::string& instance) : V(0), timesMatrix(0), releaseDates(0) {
-    std::ifstream fin(("../instances/" + instance + ".dat").c_str(), std::ios::in);
-    if (!fin) {
-        std::cout << "ERROR failed_open_file" << std::endl;
-        exit(1);
-    }
+Instance::Instance(const std::string& instanceFile) : V(0), timesMatrix(0), releaseDates(0) {
+    std::ifstream fin(instanceFile, std::ios::in);
+    auto firstChar = fin.peek();
 
-    std::string instanceSet = instance.substr(0, instance.find('/'));
-    if (instanceSet == "aTSPLIB") {
-        readDistanceMatrixInstance(fin);
-    } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon" || instanceSet == "testSet") {
+    if (firstChar == '<') {  // instance from TSPLIB or Solomon, given by the distance matrix
         readCoordinatesListInstance(fin);
+    } else if (firstChar == 'N') {  // instance from aTSPLIB, given by a list of euclidian coordinates
+        readDistanceMatrixInstance(fin);
     } else {
-        std::cout << "ERROR unknown_instance_set" << std::endl;
+        std::cout << "Unknown instance file format." << std::endl;
         exit(1);
     }
 
