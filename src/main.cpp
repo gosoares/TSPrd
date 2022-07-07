@@ -1,11 +1,7 @@
 #include "Data.h"
 #include "GeneticAlgorithm.h"
 #include "Instance.h"
-#include "Rng.h"
 #include "Solution.h"
-
-long long Rng::seed;
-std::mt19937 Rng::generator;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -37,7 +33,7 @@ int main(int argc, char** argv) {
     std::cout << "RESULT " << s.time << std::endl;
     std::cout << "EXEC_TIME " << alg.getExecutionTime() << std::endl;
     std::cout << "SOL_TIME " << alg.getBestSolutionTime() << std::endl;
-    std::cout << "SEED " << Rng::getSeed() << std::endl;
+    std::cout << "SEED " << params.seed << std::endl;
 
     if (argc < 3) return 0;
 
@@ -50,7 +46,7 @@ int main(int argc, char** argv) {
     fout << "EXEC_TIME " << alg.getExecutionTime() << std::endl;
     fout << "SOL_TIME " << alg.getBestSolutionTime() << std::endl;
     fout << "OBJ " << s.time << std::endl;
-    fout << "SEED " << Rng::getSeed() << std::endl;
+    fout << "SEED " << params.seed << std::endl;
     fout << "N_ROUTES " << s.routes.size() << std::endl;
     fout << "N_CLIENTS";
     for (auto& r : s.routes) fout << " " << (r->size() - 2);

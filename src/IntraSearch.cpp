@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "Rng.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
@@ -37,7 +36,7 @@ int IntraSearch::search(Solution* solution) {
     return oldTime - newTime;
 }
 
-void IntraSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), Rng::getGenerator()); }
+void IntraSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), data.generator); }
 
 int IntraSearch::callIntraSearch(std::vector<int>* route, int which) {
     switch (which) {

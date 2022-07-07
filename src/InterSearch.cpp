@@ -1,6 +1,5 @@
 #include "InterSearch.h"
 
-#include "Rng.h"
 #include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
@@ -66,7 +65,7 @@ std::vector<std::pair<int, int> > InterSearch::getRoutesPairSequence(int nRoutes
             sequence.emplace_back(i, j);
         }
     }
-    shuffle(sequence.begin(), sequence.end(), Rng::getGenerator());
+    shuffle(sequence.begin(), sequence.end(), data.generator);
     return sequence;
 }
 
@@ -276,7 +275,7 @@ bool InterSearch::insertDepotAndReorderIt(Solution* s) {
     return false;
 }
 
-void InterSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), Rng::getGenerator()); }
+void InterSearch::shuffleSearchOrder() { shuffle(searchOrder.begin(), searchOrder.end(), data.generator); }
 // calculate the new ending time of route std::max(r1, r2) given that r1 and r2 changed
 int InterSearch::calculateEndingTime(Solution* solution, int r1, int r2) {
     if (r1 > r2) std::swap(r1, r2);
