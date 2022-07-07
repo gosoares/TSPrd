@@ -1,8 +1,6 @@
 #ifndef TSPRD_INTERSEARCH_H
 #define TSPRD_INTERSEARCH_H
 
-#include <random>
-
 #include "Instance.h"
 #include "Solution.h"
 
@@ -14,7 +12,6 @@ class InterSearch {
 
     vector<vector<pair<unsigned int, unsigned int> > > routesPair;
     vector<unsigned int> searchOrder;
-    mt19937 generator;
 
     unsigned int callInterSearch(Solution* solution, unsigned int which);
     unsigned int vertexRelocation(Solution* solution);

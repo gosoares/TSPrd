@@ -2,6 +2,7 @@
 #define TSPRD_GENETICALGORITHM_H
 
 #include <chrono>
+#include <random>
 
 #include "Instance.h"
 #include "NeighborSearch.h"
@@ -29,10 +30,7 @@ class GeneticAlgorithm {
     chrono::milliseconds bestSolutionFoundTime;
 
     vector<pair<unsigned int, unsigned int>> searchProgress;  // stores (time, value) of each best solution found
-
-    // random number generator
-    mt19937 generator;
-    uniform_int_distribution<int> distPopulation;  // distribution for the population [0, mi)
+    uniform_int_distribution<int> distPopulation;             // distribution for the population [0, mi)
 
     vector<Sequence*>* initializePopulation();
 

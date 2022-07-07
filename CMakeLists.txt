@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 set(mainFiles src/Instance.cpp src/Instance.h src/Solution.cpp src/Solution.h src/IntraSearch.cpp src/IntraSearch.h src/InterSearch.cpp src/InterSearch.h src/NeighborSearch.cpp src/NeighborSearch.h
-        src/GeneticAlgorithm.cpp src/GeneticAlgorithm.h src/Split.h src/Timer.h)
+        src/GeneticAlgorithm.cpp src/GeneticAlgorithm.h src/Split.h src/Timer.h src/Rng.h)
 add_executable(TSPrd src/main.cpp ${mainFiles})
 
 # set(CPLEX_DIR "/Applications/CPLEX_Studio201")

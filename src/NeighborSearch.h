@@ -1,8 +1,6 @@
 #ifndef TSPRD_NEIGHBORSEARCH_H
 #define TSPRD_NEIGHBORSEARCH_H
 
-#include <random>
-
 #include "Instance.h"
 #include "InterSearch.h"
 #include "IntraSearch.h"
@@ -16,8 +14,6 @@ class NeighborSearch {
 
     IntraSearch intraSearch;
     InterSearch interSearch;
-
-    mt19937 generator;
 
     unsigned int splitNs(Solution* solution);
 

@@ -4,6 +4,8 @@
 #include <queue>
 #include <random>
 
+#include "Rng.h"
+
 void freePopulation(vector<Sequence*>* population) {
     for (auto p : *population) {
         delete p;
@@ -14,8 +16,7 @@ void freePopulation(vector<Sequence*>* population) {
 GeneticAlgorithm::GeneticAlgorithm(const Instance& instance, unsigned int mi, unsigned int lambda, unsigned int nClose,
                                    unsigned int nbElite, unsigned int itNi, unsigned int itDiv, unsigned int timeLimit)
     : instance(instance), mi(mi), lambda(lambda), nbElite(nbElite), nClose(nClose), itNi(itNi), itDiv(itDiv),
-      timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0), generator((random_device())()),
-      distPopulation(0, (int)mi - 1) {
+      timeLimit(timeLimit), ns(instance), endTime(0), bestSolutionFoundTime(0), distPopulation(0, (int)mi - 1) {
     milliseconds maxTime(this->timeLimit * 1000);
     timer.start();
 
@@ -99,7 +100,7 @@ vector<Sequence*>* GeneticAlgorithm::initializePopulation() {
 
     for (unsigned int i = 0; i < 2 * mi; i++) {
         auto sequence = new Sequence(clients);
-        shuffle(sequence->begin(), sequence->end(), generator);
+        shuffle(sequence->begin(), sequence->end(), Rng::getGenerator());
         pop->at(i) = sequence;
     }
 
@@ -231,6 +232,7 @@ vector<double> GeneticAlgorithm::getBiasedFitness(vector<Solution*>* solutions) 
 }
 
 vector<unsigned int> GeneticAlgorithm::selectParents(vector<double>& biasedFitness) {
+    auto generator = Rng::getGenerator();
     // select first parent
     vector<unsigned int> p(2);
     int p1a = distPopulation(generator), p1b = distPopulation(generator);
@@ -248,8 +250,7 @@ vector<unsigned int> GeneticAlgorithm::selectParents(vector<double>& biasedFitne
 }
 
 Sequence* GeneticAlgorithm::orderCrossover(const Sequence& parent1, const Sequence& parent2) {
-    static random_device rd;
-    static mt19937 generator(rd());
+    auto generator = Rng::getGenerator();
 
     unsigned int N = parent1.size();
     uniform_int_distribution<int> dist(0, (int)N - 1);
