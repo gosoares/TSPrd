@@ -1,41 +1,33 @@
 #ifndef TSPRD_SOLUTION_H
 #define TSPRD_SOLUTION_H
 
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <set>
-#include <vector>
+#include "Data.h"
 
-#include "Instance.h"
-
-using namespace std;
-using Sequence = vector<unsigned int>;
+using Sequence = std::vector<int>;
 
 class Solution {
    private:
-    const Instance* instance;
-    explicit Solution(const Instance* instance);
+    Data* data;
+    explicit Solution(Data* data);
 
    public:
-    Solution(const Instance& instance, Sequence& sequence,
-             set<unsigned int>* depotVisits =
-                 nullptr);  // create a solution given the sequence, by applying the split algorithm
-    Solution(const Instance& instance, vector<vector<unsigned int>*> routes);  // create a solution given the routes
-    vector<vector<unsigned int>*> routes;
+    // create a solution given the sequence, by applying the split algorithm
+    Solution(Data& data, Sequence& sequence, std::set<int>* depotVisits = nullptr);
+    Solution(Data& data, std::vector<std::vector<int>*> routes);  // create a solution given the routes
+    std::vector<std::vector<int>*> routes;
 
-    vector<unsigned int> routeRD;     // release date of each route
-    vector<unsigned int> routeTime;   // time to perform the route
-    vector<unsigned int> routeStart;  // starting time of each route
-    unsigned int time;                // completion time
+    std::vector<int> routeRD;     // release date of each route
+    std::vector<int> routeTime;   // time to perform the route
+    std::vector<int> routeStart;  // starting time of each route
+    int time;                     // completion time
 
-    unsigned int id = 0;  // aux field
-    unsigned int N;       // number of clients
+    int id = 0;  // aux field
+    int N;       // number of clients
 
     // should be called if the routes change to update values of RD, Time and Start
     // returns the new completion time
-    unsigned int update();
-    unsigned int updateStartingTimes(unsigned int from = 0);
+    int update();
+    int updateStartingTimes(int from = 0);
     bool removeEmptyRoutes();
 
     void validate();
@@ -51,11 +43,11 @@ class Solution {
 
     static Solution* INF() {
         auto* sol = new Solution(nullptr);
-        sol->time = numeric_limits<unsigned int>::max();
+        sol->time = std::numeric_limits<int>::max();
         return sol;
     }
 
-    static vector<Solution*>* solutionsFromSequences(const Instance& instance, vector<Sequence*>* sequences);
+    static std::vector<Solution*>* solutionsFromSequences(Data& data, std::vector<Sequence*>* sequences);
 
     ~Solution();
 };

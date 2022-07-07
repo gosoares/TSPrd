@@ -5,8 +5,6 @@
 
 #include <set>
 
-#include "Instance.h"
-
 // this math model is defined by archetti
 class MathModel {
    public:

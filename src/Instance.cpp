@@ -1,132 +1,112 @@
 #include "Instance.h"
 
-#include <cmath>
-#include <fstream>
-#include <iostream>
-
 // read the stream until 's' appear
-void readUntil(ifstream& in, const string& s) {
-    string x;
+void readUntil(std::ifstream& in, const std::string& s) {
+    std::string x;
     while (x != s) {
         in >> x;
     }
 }
 
-void floydWarshall(vector<vector<unsigned int> >& W) {
+void floydWarshall(std::vector<std::vector<int> >& W) {
     // apply floyd warshall algorithm to ensure triangular inequality
-    for (unsigned int k = 0; k < W.size(); k++) {
-        for (unsigned int i = 0; i < W.size(); i++) {
-            for (unsigned int j = 0; j < W.size(); j++) {
-                W[i][j] = min(W[i][j], W[i][k] + W[k][j]);
+    for (int k = 0; k < W.size(); k++) {
+        for (int i = 0; i < W.size(); i++) {
+            for (int j = 0; j < W.size(); j++) {
+                W[i][j] = std::min<int>(W[i][j], W[i][k] + W[k][j]);
             }
         }
     }
 }
 
-Instance::Instance(const string& instance) : V(0), W(0), RD(0), biggerRD(0), symmetric(false) {
-    ifstream in(("../instances/" + instance + ".dat").c_str(), ios::in);
-    if (!in) {
-        cout << "ERROR failed_open_file" << endl;
+Instance::Instance(const std::string& instance) : V(0), timesMatrix(0), releaseDates(0) {
+    std::ifstream fin(("../instances/" + instance + ".dat").c_str(), std::ios::in);
+    if (!fin) {
+        std::cout << "ERROR failed_open_file" << std::endl;
         exit(1);
     }
 
-    string instanceSet = instance.substr(0, instance.find('/'));
+    std::string instanceSet = instance.substr(0, instance.find('/'));
     if (instanceSet == "aTSPLIB") {
-        readDistanceMatrixInstance(in);
+        readDistanceMatrixInstance(fin);
     } else if (instanceSet == "TSPLIB" || instanceSet == "Solomon" || instanceSet == "testSet") {
-        readCoordinatesListInstance(in);
+        readCoordinatesListInstance(fin);
     } else {
-        cout << "ERROR unknown_instance_set" << endl;
+        std::cout << "ERROR unknown_instance_set" << std::endl;
         exit(1);
     }
 
-    in.close();
+    fin.close();
 }
 
-void Instance::readDistanceMatrixInstance(ifstream& in) {
+void Instance::readDistanceMatrixInstance(std::ifstream& in) {
     readUntil(in, "DIMENSION:");
     in >> V;
-    W.resize(V, vector<unsigned int>(V));
-    RD.resize(V);
+    timesMatrix.resize(V, std::vector<int>(V));
+    releaseDates.resize(V);
 
     readUntil(in, "EDGE_WEIGHT_SECTION");
-    for (unsigned int i = 0; i < V; i++) {
-        for (unsigned int j = 0; j < V; j++) {
-            in >> W[i][j];
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            in >> timesMatrix[i][j];
         }
-        W[i][i] = 0;
+        timesMatrix[i][i] = 0;
     }
 
-    biggerRD = 0;
     readUntil(in, "RELEASE_DATES");
-    for (unsigned int i = 0; i < V; i++) {
-        in >> RD[i];
-        if (RD[i] > biggerRD) biggerRD = RD[i];
+    for (int i = 0; i < V; i++) {
+        in >> releaseDates[i];
     }
+
+    floydWarshall(timesMatrix);
 
     // verify matrix symmetry
     symmetric = true;
-    for (unsigned int i = 0; i < V && symmetric; i++) {
-        for (unsigned int j = i + 1; j < V && symmetric; j++) {
-            symmetric = W[i][j] == W[j][i];
+    for (int i = 0; i < V && symmetric; i++) {
+        for (int j = i + 1; j < V && symmetric; j++) {
+            symmetric = timesMatrix[i][j] == timesMatrix[j][i];
         }
     }
-
-    floydWarshall(W);
 }
 
-void Instance::readCoordinatesListInstance(ifstream& in) {
+void Instance::readCoordinatesListInstance(std::ifstream& in) {
     symmetric = true;
 
     readUntil(in, "<DIMENSION>");
     in >> V;
 
-    W.resize(V, vector<unsigned int>(V));
-    RD.resize(V);
+    timesMatrix.resize(V, std::vector<int>(V));
+    releaseDates.resize(V);
 
     readUntil(in, "</VERTICES>");
 
-    vector<double> X(V);
-    vector<double> Y(V);
+    std::vector<double> X(V);
+    std::vector<double> Y(V);
     double aux;
 
-    biggerRD = 0;
-    for (unsigned int i = 0; i < V; i++) {
+    for (int i = 0; i < V; i++) {
         in >> X[i];
         in >> Y[i];
         in >> aux;
         in >> aux;
         in >> aux;
         in >> aux;  // not important data
-        in >> RD[i];
-        if (RD[i] > biggerRD) biggerRD = RD[i];
+        in >> releaseDates[i];
     }
 
     // calculate rounded euclidian distances between each pair of vertex
-    for (unsigned int i = 0; i < V; i++) {
-        W[i][i] = 0;
-        for (unsigned j = i + 1; j < V; j++) {
+    for (int i = 0; i < V; i++) {
+        timesMatrix[i][i] = 0;
+        for (int j = i + 1; j < V; j++) {
             double a = X[i] - X[j];
             double b = Y[i] - Y[j];
 
-            double distance = sqrt(a * a + b * b);
+            double distance = std::sqrt(a * a + b * b);
 
-            W[i][j] = floor(distance + 0.5);
-            W[j][i] = W[i][j];
+            timesMatrix[i][j] = std::floor(distance + 0.5);
+            timesMatrix[j][i] = timesMatrix[i][j];
         }
     }
 
-    floydWarshall(W);
+    floydWarshall(timesMatrix);
 }
-
-unsigned int Instance::nVertex() const { return V; }
-
-unsigned int Instance::nClients() const { return V - 1; }
-
-unsigned int Instance::releaseDateOf(unsigned int c) const { return RD[c]; }
-
-unsigned int Instance::time(unsigned int i, unsigned int j) const { return W[i][j]; }
-
-const vector<vector<unsigned int> >& Instance::getW() const { return W; }
-
-const vector<unsigned int>& Instance::getRD() const { return RD; }

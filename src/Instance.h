@@ -1,38 +1,24 @@
 #ifndef TSPRD_INSTANCE_H
 #define TSPRD_INSTANCE_H
 
+#include <math.h>
+
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
-using namespace std;
-
 class Instance {
-    unsigned int V;
-    vector<vector<unsigned int> > W;
-    vector<unsigned int> RD;
-    unsigned int biggerRD;
-    bool symmetric;
-
-    void readDistanceMatrixInstance(ifstream& in);
-
-    void readCoordinatesListInstance(ifstream& in);
+    void readDistanceMatrixInstance(std::ifstream& in);
+    void readCoordinatesListInstance(std::ifstream& in);
 
    public:
-    explicit Instance(const string& filename);
+    int V;                                       // number of vertices including depot
+    std::vector<std::vector<int> > timesMatrix;  // time between each pair of vertex
+    std::vector<int> releaseDates;               // release date of each vertex
+    bool symmetric;                              // whether `timesMatrix` is symmetric
 
-    unsigned int releaseDateOf(unsigned int c) const;
-
-    unsigned int time(unsigned int i, unsigned int j) const;
-
-    unsigned int nVertex() const;
-
-    unsigned int nClients() const;
-
-    const vector<vector<unsigned int> >& getW() const;
-
-    const vector<unsigned int>& getRD() const;
-
-    bool isSymmetric() const { return symmetric; }
+    explicit Instance(const std::string& filename);
 };
 
 #endif  // TSPRD_INSTANCE_H

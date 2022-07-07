@@ -1,38 +1,35 @@
 #ifndef TSPRD_INTERSEARCH_H
 #define TSPRD_INTERSEARCH_H
 
-#include "Instance.h"
+#include "Data.h"
 #include "Solution.h"
 
 class InterSearch {
    private:
-    const Instance& instance;
-    const vector<vector<unsigned int> >& W;
-    const vector<unsigned int>& RD;
+    Data& data;
 
-    vector<vector<pair<unsigned int, unsigned int> > > routesPair;
-    vector<unsigned int> searchOrder;
+    std::vector<std::vector<std::pair<int, int> > > routesPair;
+    std::vector<int> searchOrder;
 
-    unsigned int callInterSearch(Solution* solution, unsigned int which);
-    unsigned int vertexRelocation(Solution* solution);
-    unsigned int vertexRelocationIt(Solution* solution, unsigned int r1, unsigned int r2);
-    unsigned int interSwap(Solution* solution);
-    unsigned int interSwapIt(Solution* solution, unsigned int r1, unsigned int r2);
-    unsigned int insertDepotAndReorder(Solution* solution);
+    int callInterSearch(Solution* solution, int which);
+    int vertexRelocation(Solution* solution);
+    int vertexRelocationIt(Solution* solution, int r1, int r2);
+    int interSwap(Solution* solution);
+    int interSwapIt(Solution* solution, int r1, int r2);
+    int insertDepotAndReorder(Solution* solution);
     bool insertDepotAndReorderIt(Solution* s);
 
-    vector<pair<unsigned int, unsigned int> > getRoutesPairSequence(unsigned int nRoutes);
-    static unsigned int calculateEndingTime(Solution* solution, unsigned int r1, unsigned int r2);
-    unsigned int routeReleaseDateRemoving(Solution* s, unsigned int r, unsigned int vertex);
-    static unsigned int verifySolutionChangingRoutes(Solution* solution, unsigned int r1, unsigned int r2,
-                                                     unsigned int r1RD, unsigned int r1Time, unsigned int r2RD,
-                                                     unsigned int r2Time);
+    std::vector<std::pair<int, int> > getRoutesPairSequence(int nRoutes);
+    static int calculateEndingTime(Solution* solution, int r1, int r2);
+    int routeReleaseDateRemoving(Solution* s, int r, int vertex);
+    static int verifySolutionChangingRoutes(Solution* solution, int r1, int r2, int r1RD, int r1Time, int r2RD,
+                                            int r2Time);
 
     void shuffleSearchOrder();
 
    public:
-    explicit InterSearch(const Instance& instance);
-    unsigned int search(Solution* solution);
+    explicit InterSearch(Data& data);
+    int search(Solution* solution);
 };
 
 #endif  // TSPRD_INTERSEARCH_H
