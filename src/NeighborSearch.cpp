@@ -15,7 +15,7 @@ NeighborSearch::NeighborSearch(Data& data) : data(data), intraSearch(data), inte
 int NeighborSearch::splitNs(Solution* solution) {
     Sequence* sequence = solution->toSequence();
     std::set<int> depotVisits;
-    int splitTime = Split::split(depotVisits, data.timesMatrix, data.releaseDates, *sequence);
+    int splitTime = Solution::split(depotVisits, data.timesMatrix, data.releaseDates, *sequence);
 
     int gain = 0;
     if (splitTime < solution->time) {
@@ -27,10 +27,10 @@ int NeighborSearch::splitNs(Solution* solution) {
     return gain;
 }
 
-int NeighborSearch::educate(Solution* solution) {
-    const int originalTime = solution->time;
+int NeighborSearch::educate(Individual* indiv) {
+    const int originalTime = indiv->eval;
 
-    intraSearch.search(solution);
+    Solution* solution = new Solution(data, indiv->giantTour, nullptr);
 
     int which = 1;  // 0: intra   1: inter
     bool splitImproved;
@@ -44,5 +44,15 @@ int NeighborSearch::educate(Solution* solution) {
         splitImproved = splitNs(solution) > 0;
     } while (splitImproved);
 
-    return originalTime - solution->time;
+    int i = 0;
+    for (const std::vector<int>* route : solution->routes) {
+        for (int j = 1; j < route->size() - 1; j++) {
+            indiv->giantTour[i] = route->at(j);
+            i++;
+        }
+    }
+    auto improved = originalTime - solution->time;
+    delete solution;
+
+    return improved;
 }

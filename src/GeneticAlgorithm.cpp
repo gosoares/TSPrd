@@ -9,6 +9,7 @@ GeneticAlgorithm::GeneticAlgorithm(Data& data) : data(data), split(data), localS
     while (itNotImproved < this->data.params.itNi && data.elapsedTime() < maxTime) {
         auto offspring = orderCrossover();
         localSearch.educate(offspring);
+        split.split(offspring);  // TODO remove
 
         bool improvedBest = population.add(offspring);
 

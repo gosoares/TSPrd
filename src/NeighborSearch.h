@@ -3,7 +3,7 @@
 
 #include "InterSearch.h"
 #include "IntraSearch.h"
-#include "Solution.h"
+#include "Population.h"
 
 class NeighborSearch {
    private:
@@ -16,7 +16,7 @@ class NeighborSearch {
 
    public:
     explicit NeighborSearch(Data& instance);
-    int educate(Solution* solution);
+    int educate(Individual* indiv);
 };
 
 #endif  // TSPRD_NEIGHBORSEARCH_H

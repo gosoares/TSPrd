@@ -8,11 +8,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-comp
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 set(mainFiles
-        src/Instance.cpp src/Instance.h src/Solution.cpp src/Solution.h
-        src/IntraSearch.cpp src/IntraSearch.h src/InterSearch.cpp src/InterSearch.h
-        src/NeighborSearch.cpp src/NeighborSearch.h src/GeneticAlgorithm.cpp
-        src/GeneticAlgorithm.h src/Split.h src/Split.cpp src/Data.cpp src/Data.h
-        src/Individual.h
+        src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
+        src/Individual.h src/Instance.h src/Instance.cpp
+        src/IntraSearch.h src/IntraSearch.cpp src/NeighborSearch.h src/NeighborSearch.cpp
+        src/Population.h src/Population.cpp src/Split.h src/Split.cpp
+        src/Solution.cpp src/Solution.h src/InterSearch.cpp src/InterSearch.h
 )
 add_executable(TSPrd src/main.cpp ${mainFiles})
 

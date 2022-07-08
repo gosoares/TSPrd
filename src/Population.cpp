@@ -43,7 +43,7 @@ bool Population::add(Individual* indiv) {
     return false;
 }
 
-void Population::survivorsSelection(int nSurvivors = -1) {
+void Population::survivorsSelection(int nSurvivors) {
     if (nSurvivors == -1) nSurvivors = data.params.mu;
     while (individuals.size() > nSurvivors) {
         removeWorst();
@@ -53,7 +53,6 @@ void Population::survivorsSelection(int nSurvivors = -1) {
 void Population::removeWorst() {
     updateBiasedFitness();
 
-    Individual* worst;
     int worstPosition;
     bool worstClone = false;
     double worstFit = -1.;

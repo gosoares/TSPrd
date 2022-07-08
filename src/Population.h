@@ -12,17 +12,17 @@ class Population {
     Data& data;
     Split split;
 
+   public:
     Individuals individuals;
     Individual bestSolution;  // best solution found
     std::vector<std::pair<int, int>> searchProgress;
 
-   public:
     Population(Data& data, Split& split);
     ~Population();
 
     void initialize();
     bool add(Individual* indiv);
-    void survivorsSelection(int nSurvivors);
+    void survivorsSelection(int nSurvivors = -1);
     void removeWorst();
 
     void updateBiasedFitness();

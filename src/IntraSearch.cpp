@@ -1,9 +1,6 @@
 #include "IntraSearch.h"
 
 #include <cassert>
-#include <iostream>
-
-#include "Split.h"
 
 #define F(R) 1                  // index of first client in a route
 #define L(R) ((R)->size() - 2)  // index of last client in a route

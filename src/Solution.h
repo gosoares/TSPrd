@@ -12,7 +12,7 @@ class Solution {
 
    public:
     // create a solution given the sequence, by applying the split algorithm
-    Solution(Data& data, Sequence& sequence, std::set<int>* depotVisits = nullptr);
+    Solution(Data& data, Sequence& sequence, std::set<int>* depotVisits);
     Solution(Data& data, std::vector<std::vector<int>*> routes);  // create a solution given the routes
     std::vector<std::vector<int>*> routes;
 
@@ -48,6 +48,9 @@ class Solution {
     }
 
     static std::vector<Solution*>* solutionsFromSequences(Data& data, std::vector<Sequence*>* sequences);
+
+    static int split(std::set<int>& visits, const std::vector<std::vector<int> >& W, const std::vector<int>& RD,
+                     const std::vector<int>& S);
 
     ~Solution();
 };
