@@ -3,27 +3,21 @@
 
 #include "Data.h"
 #include "NeighborSearch.h"
+#include "Population.h"
+#include "Split.h"
 
 class GeneticAlgorithm {
-   private:
-    Data& data;
-
-    NeighborSearch ns;
-    Solution* bestSolution;
-
-    std::chrono::milliseconds endTime;
-    std::chrono::milliseconds bestSolutionFoundTime;
-
-    Sequence* orderCrossover(const Sequence& parent1, const Sequence& parent2);
-
-    void diversify(std::vector<Solution*>* solutions);
-
    public:
+    Data& data;
+    Split split;
+    NeighborSearch localSearch;
+    Population population;
+
     GeneticAlgorithm(Data& instance);
 
-    int getExecutionTime() { return endTime.count(); }
+    Individual* orderCrossover();
 
-    int getBestSolutionTime() { return bestSolutionFoundTime.count(); }
+    void diversify();
 };
 
 #endif  // TSPRD_GENETICALGORITHM_H

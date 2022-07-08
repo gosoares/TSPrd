@@ -3,18 +3,19 @@
 Population::Population(Data& data, Split& split)
     : data(data), split(split), individuals(data.params.mu + data.params.lambda + 1), bestSolution(data) {
     individuals.resize(0);
-
-    // initialize population
-    for (int i = 0; i < 2 * data.params.mu; i++) {
-        auto individual = new Individual(data);
-        split.split(individual);
-        add(individual);
-    }
 }
 
 Population::~Population() {
     for (auto indiv : individuals) delete indiv;
     individuals.clear();
+}
+
+void Population::initialize() {
+    for (int i = 0; i < 2 * data.params.mu; i++) {
+        auto individual = new Individual(data);
+        split.split(individual);
+        add(individual);
+    }
 }
 
 bool Population::add(Individual* indiv) {
@@ -30,9 +31,6 @@ bool Population::add(Individual* indiv) {
     while (position > 0 && indiv->eval < individuals[position - 1]->eval) position--;
     individuals.emplace(individuals.begin() + position, indiv);
 
-    // Check if the populatio reached the maximum size
-    if (individuals.size() > data.params.mu + data.params.lambda) survivorsSelection();
-
     if (indiv->eval < bestSolution.eval) {
         bestSolution = *indiv;
         int time =
@@ -40,12 +38,14 @@ bool Population::add(Individual* indiv) {
                 .count();
         searchProgress.push_back({time, indiv->eval});
         return true;
-    } else
-        return false;
+    }
+
+    return false;
 }
 
-void Population::survivorsSelection() {
-    while (individuals.size() > data.params.mu) {
+void Population::survivorsSelection(int nSurvivors = -1) {
+    if (nSurvivors == -1) nSurvivors = data.params.mu;
+    while (individuals.size() > nSurvivors) {
         removeWorst();
     }
 }
@@ -140,3 +140,10 @@ std::pair<Individual*, Individual*> Population::selectParents() {
 
     return {firstParent, secondParent};
 }
+
+void Population::diversify() {
+    survivorsSelection(data.params.mu / 3);  // keeps the mi/3 best solutions we have so far
+    initialize();                            // generate 2*mu new individuals
+}
+
+size_t Population::size() { return individuals.size(); }

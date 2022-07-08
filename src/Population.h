@@ -20,9 +20,9 @@ class Population {
     Population(Data& data, Split& split);
     ~Population();
 
-    void initializePopulation();
+    void initialize();
     bool add(Individual* indiv);
-    void survivorsSelection();
+    void survivorsSelection(int nSurvivors);
     void removeWorst();
 
     void updateBiasedFitness();
@@ -30,6 +30,9 @@ class Population {
     double nCloseMean(Individual* indiv);
 
     std::pair<Individual*, Individual*> selectParents();
+    void diversify();
+
+    size_t size();
 };
 
 #endif  // TSPRD_POPULATION_H
