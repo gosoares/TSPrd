@@ -36,7 +36,7 @@ def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
         if df["ref_time"].isnull().all():
             df.drop(columns="ref_time", inplace=True)
         df = df.droplevel(0)
-        save_table(f"solomon{n}", f"Results for instances of Solomon n = {n}", df, gen_avg_footer(df))
+        save_table(f"solomon{n}", f"Results for Solomon instances with n = {n}", df, gen_avg_footer(df))
 
 
 def gen_tsplib_tables(tsplib: pd.DataFrame):
@@ -48,7 +48,7 @@ def gen_tsplib_tables(tsplib: pd.DataFrame):
         beta1, beta2 = tsplib_betas[i:i + 2]
         tsplib_two = pd.concat([tsplib_dfs[i].droplevel("beta"), tsplib_dfs[i + 1].droplevel("beta")],
                                axis="columns", keys=[beta1, beta2])
-        save_table(f"tsplib_{beta1}_{beta2}", f"Results TSPLIB $\\beta \\in {{{beta1}, {beta2}}}$", tsplib_two, footer=gen_avg_footer(tsplib_two),
+        save_table(f"tsplib_{beta1}_{beta2}", f"Results for TSPLIB instances with $\\beta \\in {{{beta1}, {beta2}}}$", tsplib_two, footer=gen_avg_footer(tsplib_two),
                    add_options="\\setlength{\\tabcolsep}{3pt} \\tiny")
 
 
@@ -73,7 +73,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame):
                    solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
 
     insert_blank_columns(sol_opt, before=("n_ref_opt", "n_opt_best", "n_opt_avg", "exec_time"))
-    save_table("summary_opt", "Comparison of aggregated results for instances with known optimal.", sol_opt,
+    save_table("summary_opt", "Comparison of aggregated results for instances with known optimal", sol_opt,
                [gen_avg_footer(sol_opt), gen_sum_footer(sol_opt)], add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
@@ -86,7 +86,7 @@ def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, ats
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     insert_blank_columns(summary_nopt, before=("n_ref_sb_best", "n_sb_best", "n_sb_avg", "exec_time"))
-    save_table("summary_nopt", "Comparison of aggregated results bigger instances.", summary_nopt,
+    save_table("summary_nopt", "Comparison of aggregated results for the instances in which the optimal solution is unknown", summary_nopt,
                footer=[gen_avg_footer(summary_nopt), gen_sum_footer(summary_nopt)],
                add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{2.5pt}")
 
