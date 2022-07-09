@@ -9,10 +9,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 set(mainFiles
         src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
-        src/Individual.h src/Instance.h src/Instance.cpp
-        src/IntraSearch.h src/IntraSearch.cpp src/NeighborSearch.h src/NeighborSearch.cpp
+        src/Individual.h src/Instance.h src/Instance.cpp src/LocalSearch.h src/LocalSearch.cpp
         src/Population.h src/Population.cpp src/Split.h src/Split.cpp
-        src/Solution.cpp src/Solution.h src/InterSearch.cpp src/InterSearch.h
 )
 add_executable(TSPrd src/main.cpp ${mainFiles})
 

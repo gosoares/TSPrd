@@ -47,9 +47,9 @@ void Split::load(Individual* indiv) {
 void Split::save(Individual* indiv) {
     int i = data.N - 1;
     indiv->predecessors[0] = indiv->giantTour[i];  // predecessor of depot is the last client
-    indiv->successors[i] = indiv->giantTour[0];    // successor of depot is the first client
-    indiv->predecessors[indiv->giantTour[0]] = 0;
-    indiv->successors[indiv->giantTour[i]] = 0;
+    indiv->successors[0] = indiv->giantTour[0];    // successor of depot is the first client
+    indiv->predecessors[indiv->giantTour[0]] = 0;  // predecessor of first client is the depot
+    indiv->successors[indiv->giantTour[i]] = 0;    // successor of the last client is the depot
 
     int nextDepot = bestIn[i] - 1;
     for (i = i - 1; i >= 0; i--) {

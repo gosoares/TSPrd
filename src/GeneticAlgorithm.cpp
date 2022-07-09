@@ -8,12 +8,13 @@ GeneticAlgorithm::GeneticAlgorithm(Data& data) : data(data), split(data), localS
     int itNotImproved = 0;
     while (itNotImproved < this->data.params.itNi && data.elapsedTime() < maxTime) {
         auto offspring = orderCrossover();
-        localSearch.educate(offspring);
-        split.split(offspring);  // TODO remove
+        split.split(offspring);
+
+        localSearch.educate(*offspring);
 
         bool improvedBest = population.add(offspring);
 
-        // Check if the populatio reached the maximum size
+        // Check if the population reached the maximum size
         if (population.size() > data.params.mu + data.params.lambda) {
             population.survivorsSelection();
         }
