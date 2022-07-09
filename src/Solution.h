@@ -41,9 +41,9 @@ class Solution {
 
     bool equals(Solution* solution) const;
 
-    static Solution* INF() {
+    static Solution* worst() {
         auto* sol = new Solution(nullptr);
-        sol->time = std::numeric_limits<int>::max();
+        sol->time = INF;
         return sol;
     }
 

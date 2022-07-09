@@ -16,6 +16,8 @@
 
 #include "Instance.h"
 
+const int INF = std::numeric_limits<int>::max() / 2;
+
 // parameters for the algorithm
 struct AlgParams {
     int mu;         // minimum size of the population

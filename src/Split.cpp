@@ -5,7 +5,7 @@ Split::Split(Data& data) : data(data), rdPos(data.N), cumulative(data.N), bestIn
 void Split::split(Individual* indiv) {
     load(indiv);
 
-    fill(phi.begin(), phi.end(), std::numeric_limits<int>::max());
+    fill(phi.begin(), phi.end(), INF);
 
     for (int j = 0; j < data.N; j++) {
         int rdPosJ = rdPos[j];

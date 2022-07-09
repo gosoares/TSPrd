@@ -111,7 +111,7 @@ int InterSearch::vertexRelocationIt(Solution* solution, int r1, int r2) {
         int r1RD = std::max(solution->routeRD[r1], data.releaseDates[vertex]);
 
         // check where to put vertex to have the smaller route time
-        int r1Time = std::numeric_limits<int>::max();
+        int r1Time = INF;
         int bestJ;
         for (int j = 0; j < route1->size() - 1; j++) {
             int time = solution->routeTime[r1] - data.timesMatrix[route1->at(j)][route1->at(j + 1)] +

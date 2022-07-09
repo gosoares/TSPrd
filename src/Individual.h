@@ -13,14 +13,14 @@ class Individual {
     double biasedFitness;                                   // this solution biased fitness
 
     Individual(Data& data)  // create a random individual only with the giant tour
-        : eval(std::numeric_limits<int>::max()), giantTour(data.N), successors(data.V), predecessors(data.V), closest(),
+        : eval(INF), giantTour(data.N), successors(data.V), predecessors(data.V), closest(),
           biasedFitness(std::numeric_limits<double>::max()) {
         std::iota(giantTour.begin(), giantTour.end(), 1);
         std::shuffle(giantTour.begin(), giantTour.end(), data.generator);
     }
 
     Individual(int N)  // create a empty individual
-        : eval(std::numeric_limits<int>::max()), giantTour(N), successors(N + 1), predecessors(N + 1), closest(),
+        : eval(INF), giantTour(N), successors(N + 1), predecessors(N + 1), closest(),
           biasedFitness(std::numeric_limits<double>::max()) {}
 };
 

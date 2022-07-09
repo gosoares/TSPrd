@@ -23,8 +23,8 @@ int Solution::split(std::set<int>& visits, const std::vector<std::vector<int> >&
         cumulative[i] = cumulative[i - 1] + W[S[i - 1]][S[i]];
     }
 
-    std::vector<int> bestIn(N);                                // store the origin of the best arc arriving at i
-    std::vector<int> phi(N, std::numeric_limits<int>::max());  // value of the best arc arriving at i
+    std::vector<int> bestIn(N);    // store the origin of the best arc arriving at i
+    std::vector<int> phi(N, INF);  // value of the best arc arriving at i
 
     for (int j = 0; j < N; j++) {
         int rdPosJ = rdPos[j];
