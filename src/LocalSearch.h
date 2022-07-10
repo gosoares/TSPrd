@@ -4,7 +4,7 @@
 #include "Data.h"
 #include "Population.h"
 
-#define N_INTRA 5  // number of implemented intra moves
+#define N_INTRA 6  // number of implemented intra moves
 #define N_INTER 0  // number of implemented inter moves
 
 struct Node {
@@ -57,13 +57,13 @@ class LocalSearch {
 
     // Auxiliary variables used within the local search functions
     Route *route1, *route2, *lastRoute;
-    Node *node, *aux, *posNode;
+    Node *node, *aux;
     int i, whichMove, move, pos, preMinus, prePlus, minus, plus;
     int improvement, bestImprovement;
 
     // variables representing two blocks on which moves are made
-    Node *b1Start, *b1End, *b2Start, *b2End;
-    Node *bestB1Start, *bestB1End, *bestB2Start, *bestB2End;
+    Node *b1, *b1End, *b2, *b2End;
+    Node *bestB1, *bestB1End, *bestB2, *bestB2End;
     int b1Size, b2Size;
     bool blocksFinished;
 
@@ -78,6 +78,7 @@ class LocalSearch {
     bool intraSwap();
     void intraSwapOneWay();
     bool intraRelocation();
+    bool intraTwoOpt();
 
     bool interSearch();
     bool callInterSearch();
@@ -89,9 +90,10 @@ class LocalSearch {
     void moveBlock1Forward();  // move block1 to next position in its route
     void moveBlock2Forward();  // move block2 to next position in its route
     void swapBlocks();         // swap block1 and block2
-    void relocateBlock();      // relocate block1 to posNode
+    void relocateBlock();      // relocate block1 to after block2Start
+    void revertBlock();        // revert block1
 
-    void evaluateImprovement();
+    void evaluateImprovement();  // if improved, save current blocks in best blocks pointers
     void updateRoutesData();
     void addRoute();  // add a route to the end of routes
 
