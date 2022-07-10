@@ -61,6 +61,9 @@ bool LocalSearch::callIntraSearch() {
     } else if (move == 4) {  // relocation 1
         b1Size = 1;
         return intraRelocation();
+    } else if (move == 5) {  // relocation 2
+        b1Size = 2;
+        return intraRelocation();
     }
 
     throw "Intra move id not known: " + whichMove;
@@ -82,10 +85,10 @@ bool LocalSearch::intraSwap() {
     if (route1->nClients < b1Size + b2Size) return false;  // not enough clients to make blocks of these sizes
 
     bestImprovement = 0;
-    intraSwapOneDir();
+    intraSwapOneWay();
     if (b1Size != b2Size) {
         std::swap(b1Size, b2Size);
-        intraSwapOneDir();
+        intraSwapOneWay();
     }
 
     if (bestImprovement > 0) {  // found an improvement
@@ -96,13 +99,12 @@ bool LocalSearch::intraSwap() {
     return false;
 }
 
-void LocalSearch::intraSwapOneDir() {
-    resetBlocks();
-    for (; !blocksFinished; moveBlock1Forward(), resetBlock2()) {
+void LocalSearch::intraSwapOneWay() {
+    for (resetBlock1(); !blocksFinished; moveBlock1Forward()) {
         preMinus = b1Start->prev->timeTo[b1Start->id]  // before b1
                    + b1End->timeTo[b1End->next->id];   // after b1
 
-        for (; b2End->id != 0; moveBlock2Forward()) {
+        for (resetBlock2Intra(); b2End->id != 0; moveBlock2Forward()) {
             minus = preMinus + b2End->timeTo[b2End->next->id];  // after b2
             plus = b1Start->prev->timeTo[b2Start->id]           // new arc before b2
                    + b1End->timeTo[b2End->next->id];            // new arc after b1
@@ -110,9 +112,9 @@ void LocalSearch::intraSwapOneDir() {
             if (b1End->next == b2Start) {            // adjacent
                 plus += b2End->timeTo[b1Start->id];  // after new b2 == before new b1
             } else {
-                minus += b2Start->prev->timeTo[b2Start->id];   // before old b2
-                plus += b2End->timeTo[b1End->next->id]         // after new b1
-                        + b2Start->prev->timeTo[b1Start->id];  // before new b2
+                minus += b2Start->prev->timeTo[b2Start->id];  // old arc before b2
+                plus += b2Start->prev->timeTo[b1Start->id]    // new arc before b1
+                        + b2End->timeTo[b1End->next->id];     // new arc after b2
             }
 
             improvement = minus - plus;
@@ -122,41 +124,31 @@ void LocalSearch::intraSwapOneDir() {
 }
 
 bool LocalSearch::intraRelocation() {
+    bestImprovement = 0;
+    for (resetBlock1(); b1End->id != 0; moveBlock1Forward()) {
+        posNode = &(route1->begin);  // position to try relocate to
+
+        preMinus = b1Start->prev->timeTo[b1Start->id] + b1End->timeTo[b1End->next->id];
+        prePlus = b1Start->prev->timeTo[b1End->next->id];
+
+        while (posNode->id != 0) {
+            if (posNode->next == b1Start) posNode = b1End->next;  // skip the block
+
+            minus = preMinus + posNode->timeTo[posNode->next->id];
+            plus = prePlus + posNode->prev->timeTo[b1Start->id] + b1End->timeTo[posNode->next->id];
+            posNode = posNode->next;
+
+            improvement = minus - plus;
+            evaluateImprovement();
+        }
+    }
+
     if (bestImprovement > 0) {  // found a improvement
-        swapBlocks();
+        relocateBlock();
         return true;
     }
     return false;
 }
-
-// void LocalSearch::intraRelocationOneDir(Node* bStart, Node* bEnd, Node* pos) {
-//     startingIntraRoute();
-//     for (; !block1Finished; moveBlock1Forward()) {
-//         preMinus = b1Start->prev->timeTo[b1Start->id]  // before b1
-//                    + b1End->timeTo[b1End->next->id];   // after b1
-
-//         for (; !block2Finished; moveBlock2Forward()) {
-//             minus = preMinus + b2End->timeTo[b2End->next->id];  // after b2
-//             plus = b1Start->prev->timeTo[b2Start->id]           // new arc before b2
-//                    + b1End->timeTo[b2End->next->id];            // new arc after b1
-
-//             if (blocksAdjacent) {
-//                 plus += b2End->timeTo[b1Start->id];  // after new b2 == before new b1
-//             } else {
-//                 minus += b2Start->prev->timeTo[b2Start->id];   // before old b2
-//                 plus += b1End->timeTo[b2End->next->id]         // after new b1
-//                         + b1Start->prev->timeTo[b2Start->id];  // before new b2
-
-//                 improvement = minus - plus;
-//                 evaluateImprovement();
-//             }
-//         }
-//     }
-// }
-
-/*
-********************** INTER SEARCH FUNCTIONS *****************************
-*/
 
 bool LocalSearch::interSearch() {
     std::shuffle(interMovesOrder.begin(), interMovesOrder.end(), data.generator);
@@ -199,32 +191,35 @@ bool LocalSearch::callInterSearch() {
 ********************** OTHER FUNCTIONS *****************************
 */
 
-void LocalSearch::resetBlocks() {  // set blocks to the first positions in the route
+void LocalSearch::resetBlock1() {
     blocksFinished = false;
 
     b1Start = route1->begin.next;
     b1End = b1Start;
     for (i = 1; i < b1Size; i++) b1End = b1End->next;
+}
 
+void LocalSearch::resetBlock2Intra() {
     b2Start = b1End->next;
     b2End = b2Start;
     for (i = 1; i < b2Size; i++) b2End = b2End->next;
-    b2NextEnd = b2End->next;
+
+    if (b2End->id == 0) {
+        // not possible position for block2 after block1 in that route
+        blocksFinished = true;
+        return;
+    }
+}
+
+void LocalSearch::resetBlock2Inter() {
+    b2Start = route2->begin.next;
+    b2End = b2Start;
+    for (i = 1; i < b2Size; i++) b2End = b2End->next;
 }
 
 void LocalSearch::moveBlock1Forward() {
     b1Start = b1Start->next;
     b1End = b1End->next;
-}
-
-void LocalSearch::resetBlock2() {  // reset block 2 to immediatly after block 1
-    if (b2NextEnd->id == 0) {      // no possible position for block2 after block1 in that route
-        blocksFinished = true;
-        return;
-    }
-    b2Start = b1End->next;
-    b2End = b2NextEnd;
-    b2NextEnd = b2End->next;
 }
 
 void LocalSearch::moveBlock2Forward() {
@@ -246,6 +241,18 @@ void LocalSearch::swapBlocks() {
 
     b2End->next->prev = b1End;
     b2End->next = aux;
+}
+
+void LocalSearch::relocateBlock() {
+    b1Start->prev->next = b2End->next;
+    b2End->next->prev = b1Start->prev;
+
+    aux = posNode->next;
+    posNode->next->prev = b2End;
+    posNode->next = b1Start;
+
+    b1Start->prev = posNode;
+    b1End->next = aux;
 }
 
 void LocalSearch::evaluateImprovement() {
