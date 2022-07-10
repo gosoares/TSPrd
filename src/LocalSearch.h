@@ -38,7 +38,16 @@ struct Route {
     int duration;     // total travel time in the route
     int endTime;      // startingTime + duration
 
-    Route(Data& data) : begin(data, 0), end(data, 0) {}
+    // how much clearence this route have in relation to the route after it
+    // c = clearence[j] > 0 means that this route can increase its and time by at most c
+    // without affecting the start time of route r. After that, it will increase the starting
+    // time of route j by the difference between the time increase and c
+    // c = clearence[j] < 0 means that this route is coupled with the route j (there's no waiting time
+    // between theses routes), decreasing the endtime of this route will decrease the starting time of
+    // route j by the max of the decrease and c
+    std::vector<int> clearence;
+
+    Route(Data& data) : begin(data, 0), end(data, 0), clearence(data.N) {}
 };
 
 class LocalSearch {
@@ -50,7 +59,6 @@ class LocalSearch {
     std::vector<Route> routesObj;     // objects for routes
     std::vector<Route*> routes;       // routes of the solution, in order
     std::vector<Route*> emptyRoutes;  // routes that became empty and were removed from `routes` and may get reused
-    std::vector<std::vector<int> > routesCoupling;
 
     std::vector<int> intraMovesOrder;  // order to apply the intra moves
     std::vector<int> interMovesOrder;  // order to apply the intra moves
@@ -99,6 +107,7 @@ class LocalSearch {
 
     void load(const Individual& indiv);
     void saveTo(Individual& indiv);
+    void printRoutes();
 };
 
 #endif  // TSPRD_LOCALSEARCH_H

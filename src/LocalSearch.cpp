@@ -1,8 +1,8 @@
 #include "LocalSearch.h"
 
 LocalSearch::LocalSearch(Data& data, Split& split)
-    : data(data), split(split), clients(), routesObj(data.V + 1, {data}), routes(data.V + 1),
-      routesCoupling(data.N, {data.N}), intraMovesOrder(N_INTRA), interMovesOrder(N_INTER) {
+    : data(data), split(split), clients(), routesObj(data.V + 1, {data}), routes(data.V + 1), intraMovesOrder(N_INTRA),
+      interMovesOrder(N_INTER) {
     routes.resize(0);  // resize but keep allocated space
     clients.reserve(data.V);
     for (int c = 0; c < data.V; c++) clients.emplace_back(data, c);
@@ -64,7 +64,6 @@ bool LocalSearch::intraSearch() {
         }
     }
 
-    updateRoutesData();
     return improvedAny;
 }
 
@@ -89,18 +88,6 @@ bool LocalSearch::callIntraSearch() {
     }
 
     throw "Intra move id not known: " + whichMove;
-}
-
-void printRoute(Node* node) {
-    std::cout << 0;
-    int totalTime = 0, time;
-    while (node != nullptr) {
-        time = node->prev->timeTo[node->id];
-        totalTime += time;
-        std::cout << " -(" << time << ")> " << node->id;
-        node = node->next;
-    }
-    std::cout << " T = " << totalTime << std::endl << std::endl;
 }
 
 bool LocalSearch::intraSwap() {
@@ -193,6 +180,8 @@ bool LocalSearch::intraTwoOpt() {
 ***************************************************************************/
 
 bool LocalSearch::interSearch() {
+    updateRoutesData();
+
     std::shuffle(interMovesOrder.begin(), interMovesOrder.end(), data.generator);
     bool improvedAnyRoute, improvedAny = false;
 
@@ -325,7 +314,7 @@ void LocalSearch::evaluateImprovement() {
     }
 }
 
-void LocalSearch::updateRoutesData() {
+void LocalSearch::updateRoutesData() {  // this data is only used during inter route moves
     int prevEnd = 0;
 
     for (auto route : routes) {
@@ -355,24 +344,30 @@ void LocalSearch::updateRoutesData() {
         prevEnd = route->endTime;
     }
 
-    // calculate the coupling between each pair of routes
+    // calculate the clearence between each pair of routes
     // first between adjacent routes
-    // int R = routes.size() - 1;
-    // for (int r = 0; r < R; r++) {
-    //     routesCoupling[r][r] = INF;
-    //     routesCoupling[r][r + 1] = (routes[r]->startingTime + routes[r]->duration) - (routes[r +
-    //     1]->releaseDate);
-    // }
-    // routesCoupling[R][R] = INF;
+    int R = routes.size() - 1;
+    for (int r = 0; r < R; r++) {
+        routes[r]->clearence[r] = INF;
+        routes[r]->clearence[r + 1] = routes[r + 1]->releaseDate - routes[r]->endTime;
+    }
+    routes[R]->clearence[R] = INF;
 
-    // int couplingTotal = INF, couplingNext;
-    // for (int r2 = routes.size() - 1; r2 >= 1; r2--) {
-    //     for (int r1 = r2 - 2; r1 >= 0; r1--) {
-    //         couplingNext = routesCoupling[r1][r1 + 1];
-    //         couplingTotal = std::min<int>(couplingTotal, couplingNext, couplingTotal + couplingNext);
-    //         routesCoupling[r1][r2] = couplingTotal;
-    //     }
-    // }
+    int clearence, prevClearence;
+    for (int r1 = 0; r1 < routes.size(); r1++) {
+        clearence = routes[r1]->clearence[r1 + 1];
+        for (int r2 = r1 + 2; r2 < routes.size(); r2++) {
+            prevClearence = routes[r2 - 1]->clearence[r2];
+            if (clearence > 0) {
+                clearence += std::max<int>(prevClearence, 0);
+            } else if (prevClearence > 0) {
+                clearence = prevClearence;
+            } else {
+                clearence = std::max<int>(clearence, prevClearence);
+            }
+            routes[r1]->clearence[r2] = clearence;
+        }
+    }
 }
 
 void LocalSearch::addRoute() {
@@ -393,11 +388,12 @@ void LocalSearch::load(const Individual& indiv) {
     emptyRoutes.clear();
     addRoute();
     node = &(lastRoute->begin);
-
+    lastRoute->nClients = 0;
     for (int i = 0; i < data.N; i++) {
         node->next = &(clients[indiv.giantTour[i]]);
         node->next->prev = node;
         node = node->next;
+        lastRoute->nClients++;
 
         if (indiv.successors[indiv.giantTour[i]] == 0) {
             node->next = &(lastRoute->end);
@@ -406,13 +402,12 @@ void LocalSearch::load(const Individual& indiv) {
             if (i + 1 < data.N) {
                 addRoute();
                 node = &(lastRoute->begin);
+                lastRoute->nClients = 0;
             }
         }
     }
     node->next = &(lastRoute->end);
     lastRoute->end.prev = node;
-
-    updateRoutesData();
 }
 
 void LocalSearch::saveTo(Individual& indiv) {
@@ -432,4 +427,30 @@ void LocalSearch::saveTo(Individual& indiv) {
             node = node->next;
         } while (node->id != 0);
     }
+}
+
+void LocalSearch::printRoutes() {  // for debugging
+    printf("    RD  |  DURAT |  START |   END  |  ROUTE\n");
+    int time;
+
+    for (auto route : routes) {
+        printf("  %4d  |  %4d  |  %4d  |  %4d  |  ", route->releaseDate, route->duration, route->startTime,
+               route->endTime);
+
+        // print route
+        std::cout << "[ 0]";
+        for (node = route->begin.next; node != nullptr; node = node->next) {
+            time = node->prev->timeTo[node->id];
+            printf(" -(%2d)-> [%2d]", time, node->id);
+        }
+
+        // print clearences
+        std::cout << "  Clearences: ";
+        for (int r = route->pos + 1; r < routes.size(); r++) {
+            printf("(%d,%d)[%d]  ", route->pos, r, route->clearence[r]);
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl << std::endl;
 }
