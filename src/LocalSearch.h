@@ -5,7 +5,7 @@
 #include "Population.h"
 
 #define N_INTRA 6  // number of implemented intra moves
-#define N_INTER 0  // number of implemented inter moves
+#define N_INTER 2  // number of implemented inter moves
 
 struct Node {
     const int id;                    // id of the client, 0 represents the depot
@@ -64,16 +64,19 @@ class LocalSearch {
     std::vector<int> interMovesOrder;  // order to apply the intra moves
 
     // Auxiliary variables used within the local search functions
-    Route *route1, *route2, *lastRoute;
     Node *node, *aux;
+    Route *route1, *route2, *lastRoute;
+    int beforeR1End, beforeR2End, deltaR1End, newBeforeR2End;
     int i, whichMove, move, pos, preMinus, prePlus, minus, plus;
-    int improvement, bestImprovement;
+    int improvement, bestImprovement, routesClearence;  // clearence between r1 and r2-1
+    int newR1EndTime, newR1ReleaseDate, newR1Duration;
+    int newR2EndTime, newR2ReleaseDate, newR2Duration, newR2Start;
 
     // variables representing two blocks on which moves are made
     Node *b1, *b1End, *b2, *b2End;
     Node *bestB1, *bestB1End, *bestB2, *bestB2End;
-    int b1Size, b2Size;
-    bool blocksFinished;
+    int b1Size, b2Size, b1ReleaseDate, b2ReleaseDate, b1Duration, b2Duration;
+    bool blocks1Finished, blocks2Finished;
 
    public:
     LocalSearch(Data& data, Split& split);
@@ -90,6 +93,7 @@ class LocalSearch {
 
     bool interSearch();
     bool callInterSearch();
+    bool interRelocation();
 
     // functions that operates in blocks b1 and b2
     void resetBlock1();        // set block1 to start of route1
@@ -103,7 +107,8 @@ class LocalSearch {
 
     void evaluateImprovement();  // if improved, save current blocks in best blocks pointers
     void updateRoutesData();
-    void addRoute();  // add a route to the end of routes
+    void addRoute();         // add a route to the end of routes
+    void checkEmptyRoute();  // check if route1 is empty
 
     void load(const Individual& indiv);
     void saveTo(Individual& indiv);

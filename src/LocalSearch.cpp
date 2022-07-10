@@ -27,6 +27,7 @@ void LocalSearch::educate(Individual& indiv) {
         improved = splitSearch(indiv);
     } while (improved);
 
+    updateRoutesData();
     saveTo(indiv);
 }
 
@@ -35,7 +36,7 @@ bool LocalSearch::splitSearch(Individual& indiv) {
     saveTo(indiv);
     split.split(&indiv);
     load(indiv);
-    return indiv.eval - prevTime;
+    return (prevTime - indiv.eval) > 0;
 }
 
 /**************************************************************************
@@ -87,7 +88,7 @@ bool LocalSearch::callIntraSearch() {
         return intraTwoOpt();
     }
 
-    throw "Intra move id not known: " + whichMove;
+    throw "Intra move id not known: " + move;
 }
 
 bool LocalSearch::intraSwap() {
@@ -108,11 +109,11 @@ bool LocalSearch::intraSwap() {
 }
 
 void LocalSearch::intraSwapOneWay() {
-    for (resetBlock1(); !blocksFinished; moveBlock1Forward()) {
+    for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
         preMinus = b1->prev->timeTo[b1->id]           // before b1
                    + b1End->timeTo[b1End->next->id];  // after b1
 
-        for (resetBlock2Intra(); b2End->id != 0; moveBlock2Forward()) {
+        for (resetBlock2Intra(); !blocks2Finished; moveBlock2Forward()) {
             minus = preMinus + b2End->timeTo[b2End->next->id];  // after b2
             plus = b1->prev->timeTo[b2->id]                     // new arc before b2
                    + b1End->timeTo[b2End->next->id];            // new arc after b1
@@ -133,15 +134,17 @@ void LocalSearch::intraSwapOneWay() {
 
 bool LocalSearch::intraRelocation() {
     bestImprovement = 0;
-    for (resetBlock1(); b1End->id != 0; moveBlock1Forward()) {
+    for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
         preMinus = b1->prev->timeTo[b1->id] + b1End->timeTo[b1End->next->id];
         prePlus = b1->prev->timeTo[b1End->next->id];
 
-        for (b2 = &(route1->begin); b2->id != 0; b2 = b2->next) {
-            if (b2->next == b1) b2 = b1End->next;  // skip the block
-
+        for (b2 = &(route1->begin); b2->next != nullptr; b2 = b2->next) {
+            if (b2->next == b1) {
+                b2 = b1End->next;        // skip block
+                if (b2->id == 0) break;  // no position after block
+            }
             minus = preMinus + b2->timeTo[b2->next->id];
-            plus = prePlus + b2->prev->timeTo[b1->id] + b1End->timeTo[b2->next->id];
+            plus = prePlus + b2->timeTo[b1->id] + b1End->timeTo[b2->next->id];
 
             improvement = minus - plus;
             evaluateImprovement();
@@ -158,11 +161,14 @@ bool LocalSearch::intraRelocation() {
 bool LocalSearch::intraTwoOpt() {
     bestImprovement = 0;
     for (b1 = route1->begin.next; b1->next != 0; b1 = b1->next) {
-        preMinus = b1->prev->timeTo[b1->id];
+        minus = b1->prev->timeTo[b1->id] + b1->timeTo[b1->next->id];
+        prePlus = 0;
 
         for (b1End = b1->next; b1End->id != 0; b1End = b1End->next) {
-            minus = preMinus + b1End->timeTo[b1End->next->id];
-            plus = b1->prev->timeTo[b1End->id] + b1->timeTo[b1End->next->id];
+            minus += b1End->timeTo[b1End->next->id];
+            prePlus += b1End->timeTo[b1End->prev->id];
+
+            plus = prePlus + b1->prev->timeTo[b1End->id] + b1->timeTo[b1End->next->id];
             improvement = minus - plus;
             evaluateImprovement();
         }
@@ -192,18 +198,22 @@ bool LocalSearch::interSearch() {
         improvedAnyRoute = false;
         for (int r2 = 1; r2 < routes.size() && !improvedAnyRoute; r2++) {
             route2 = routes[r2];
+            beforeR2End = routes[r2 - 1]->endTime;
 
-            for (int r1 = r2 - 1; r1 >= 0 && !improvedAnyRoute; r1++) {
+            for (int r1 = 0; r1 < r2 && !improvedAnyRoute; r1++) {
                 route1 = routes[r1];
+                beforeR1End = r1 == 0 ? 0 : routes[r1 - 1]->endTime;
+                routesClearence = route1->clearence[r2 - 1];
 
                 improvedAnyRoute = callInterSearch();
             }
         }
 
         if (improvedAnyRoute) {
-            std::shuffle(intraMovesOrder.begin(), intraMovesOrder.end(), data.generator);
+            std::shuffle(interMovesOrder.begin(), interMovesOrder.end(), data.generator);
             whichMove = 0;
             improvedAny = true;
+            updateRoutesData();
         } else {
             whichMove++;
         }
@@ -213,9 +223,45 @@ bool LocalSearch::interSearch() {
 }
 
 bool LocalSearch::callInterSearch() {
-    if (whichMove == 1) return false;
+    if (move == 1) {  // relocation 1
+        b1Size = 1;
+        return interRelocation();
+    } else if (move == 2) {  // relocation 2
+        b1Size = 2;
+        return interRelocation();
+    }
 
-    throw "Inter move id not known: " + whichMove;
+    throw "Inter move id not known: " + move;
+}
+
+bool LocalSearch::interRelocation() {
+    for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
+        newR1ReleaseDate = std::max<int>(b1->predecessorsRd, b1End->successorsRd);
+        newR1Duration = b1->prev->durationBefore + b1->prev->timeTo[b1End->next->id] + b1End->next->durationAfter;
+        newR1EndTime = std::max<int>(beforeR1End, newR1ReleaseDate) + newR1Duration;
+        deltaR1End = newR1EndTime - route1->endTime;
+
+        newR2ReleaseDate = std::max<int>(route2->releaseDate, b1ReleaseDate);
+
+        for (b2 = &(route2->begin); b2->next != nullptr; b2 = b2->next) {
+            newR2Duration = b2->durationBefore + b2->timeTo[b1->id] + b1Duration + b1End->timeTo[b2->next->id] +
+                            b2->next->durationAfter;
+
+            newBeforeR2End = beforeR2End + std::min<int>(std::max<int>(0, deltaR1End - routesClearence),
+                                                         std::max<int>(deltaR1End, routesClearence));
+            newR2Start = std::max<int>(newR2ReleaseDate, newBeforeR2End);
+            newR2EndTime = newR2Start + newR2Duration;
+
+            if (newR2EndTime < route2->endTime) {
+                bestB1 = b1, bestB1End = b1End, bestB2 = b2;
+                relocateBlock();
+                checkEmptyRoute();
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**************************************************************************
@@ -223,39 +269,66 @@ bool LocalSearch::callInterSearch() {
 ***************************************************************************/
 
 void LocalSearch::resetBlock1() {
-    blocksFinished = false;
+    blocks1Finished = false;
 
     b1 = route1->begin.next;
     b1End = b1;
-    for (i = 1; i < b1Size; i++) b1End = b1End->next;
+    b1ReleaseDate = b1->releaseDate;
+    b1Duration = 0;
+    for (i = 1; i < b1Size; i++) {
+        b1End = b1End->next;
+        if (b1End->id == 0) {
+            blocks1Finished = true;
+            break;
+        }
+        b1ReleaseDate = std::max<int>(b1ReleaseDate, b1End->releaseDate);
+        b1Duration += b1End->prev->timeTo[b1End->id];
+    }
 }
 
 void LocalSearch::resetBlock2Intra() {
+    blocks2Finished = false;
+
     b2 = b1End->next;
     b2End = b2;
-    for (i = 1; i < b2Size; i++) b2End = b2End->next;
+    for (i = 1; i < b2Size; i++) {
+        b2End = b2End->next;
+    }
 
     if (b2End->id == 0) {
         // not possible position for block2 after block1 in that route
-        blocksFinished = true;
-        return;
+        blocks1Finished = true;
+        blocks2Finished = true;
     }
 }
 
 void LocalSearch::resetBlock2Inter() {
     b2 = route2->begin.next;
     b2End = b2;
-    for (i = 1; i < b2Size; i++) b2End = b2End->next;
+    b2ReleaseDate = b2->releaseDate;
+    b2Duration = 0;
+    for (i = 1; i < b2Size; i++) {
+        b2End = b2End->next;
+        b2ReleaseDate = std::max<int>(b2ReleaseDate, b2End->releaseDate);
+        b2Duration += b2End->prev->timeTo[b2->id];
+    }
+    blocks2Finished = b2End->id == 0;
 }
 
 void LocalSearch::moveBlock1Forward() {
     b1 = b1->next;
     b1End = b1End->next;
+    b1ReleaseDate = std::max<int>(b1->releaseDate, b1End->releaseDate);  // valid for blocks of size up to 2
+    b1Duration = b1->durationAfter - b1End->durationAfter;
+    if (b1End->id == 0) blocks1Finished = true;
 }
 
 void LocalSearch::moveBlock2Forward() {
     b2 = b2->next;
     b2End = b2End->next;
+    b2ReleaseDate = std::max<int>(b2->releaseDate, b2End->releaseDate);  // valid for blocks of size up to 2
+    b2Duration = b2->durationAfter - b2End->durationAfter;
+    if (b2End->id == 0) blocks2Finished = true;
 }
 
 void LocalSearch::swapBlocks() {
@@ -348,10 +421,10 @@ void LocalSearch::updateRoutesData() {  // this data is only used during inter r
     // first between adjacent routes
     int R = routes.size() - 1;
     for (int r = 0; r < R; r++) {
-        routes[r]->clearence[r] = INF;
+        routes[r]->clearence[r] = -INF;
         routes[r]->clearence[r + 1] = routes[r + 1]->releaseDate - routes[r]->endTime;
     }
-    routes[R]->clearence[R] = INF;
+    routes[R]->clearence[R] = -INF;
 
     int clearence, prevClearence;
     for (int r1 = 0; r1 < routes.size(); r1++) {
@@ -380,6 +453,14 @@ void LocalSearch::addRoute() {
     }
     lastRoute = routes.back();
     lastRoute->pos = pos;
+}
+
+void LocalSearch::checkEmptyRoute() {
+    if (route1->begin.next->id == 0) {
+        for (i = route1->pos + 1; i < routes.size(); i++) routes[i]->pos--;
+        routes.erase(routes.begin() + route1->pos);
+        emptyRoutes.push_back(route1);
+    }
 }
 
 void LocalSearch::load(const Individual& indiv) {
