@@ -4,7 +4,7 @@
 #include "Data.h"
 #include "Population.h"
 
-#define N_INTRA 4  // number of implemented intra moves
+#define N_INTRA 3  // number of implemented intra moves
 #define N_INTER 0  // number of implemented inter moves
 
 struct Node {
@@ -64,7 +64,7 @@ class LocalSearch {
     Node *b1Start, *b1End, *b2Start, *b2End, *b2NextEnd;
     Node *bestB1Start, *bestB1End, *bestB2Start, *bestB2End;
     int b1Size, b2Size;
-    bool block1Finished, block2Finished, blocksAdjacent;
+    bool blocksFinished;
 
    public:
     LocalSearch(Data& data);
@@ -74,13 +74,16 @@ class LocalSearch {
     bool intraSearch();
     bool callIntraSearch();
     bool intraSwap();
+    void intraSwapOneDir();
+    bool intraRelocation();
 
     bool interSearch();
     bool callInterSearch();
 
-    void startingIntraRoute();
+    void resetBlocks();
     void moveBlock1Forward();
     void moveBlock2Forward();
+    void resetBlock2();
     void swapBlocks();
     void evaluateImprovement();
 

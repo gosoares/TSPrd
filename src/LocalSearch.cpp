@@ -55,49 +55,104 @@ bool LocalSearch::callIntraSearch() {
     } else if (move == 2) {  // swap 1 2
         b1Size = 1, b2Size = 2;
         return intraSwap();
-    } else if (move == 3) {  // swap 2 1
-        b1Size = 2, b2Size = 1;
-        return intraSwap();
-    } else if (move == 4) {  // swap 2 2
+    } else if (move == 3) {  // swap 2 2
         b1Size = 2, b2Size = 2;
         return intraSwap();
+    } else if (move == 4) {  // relocation 1
+        b1Size = 1;
+        return intraRelocation();
     }
 
     throw "Intra move id not known: " + whichMove;
 }
 
+void printRoute(Node* node) {
+    std::cout << 0;
+    int totalTime = 0, time;
+    while (node != nullptr) {
+        time = node->prev->timeTo[node->id];
+        totalTime += time;
+        std::cout << " -(" << time << ")> " << node->id;
+        node = node->next;
+    }
+    std::cout << " T = " << totalTime << std::endl << std::endl;
+}
+
 bool LocalSearch::intraSwap() {
-    startingIntraRoute();
+    if (route1->nClients < b1Size + b2Size) return false;  // not enough clients to make blocks of these sizes
 
     bestImprovement = 0;
-    for (; !block1Finished; moveBlock1Forward()) {
+    intraSwapOneDir();
+    if (b1Size != b2Size) {
+        std::swap(b1Size, b2Size);
+        intraSwapOneDir();
+    }
+
+    if (bestImprovement > 0) {  // found an improvement
+        b1Start = bestB1Start, b2Start = bestB2Start, b1End = bestB1End, b2End = bestB2End;
+        swapBlocks();
+        return true;
+    }
+    return false;
+}
+
+void LocalSearch::intraSwapOneDir() {
+    resetBlocks();
+    for (; !blocksFinished; moveBlock1Forward(), resetBlock2()) {
         preMinus = b1Start->prev->timeTo[b1Start->id]  // before b1
                    + b1End->timeTo[b1End->next->id];   // after b1
 
-        for (; !block2Finished; moveBlock2Forward()) {
+        for (; b2End->id != 0; moveBlock2Forward()) {
             minus = preMinus + b2End->timeTo[b2End->next->id];  // after b2
             plus = b1Start->prev->timeTo[b2Start->id]           // new arc before b2
                    + b1End->timeTo[b2End->next->id];            // new arc after b1
 
-            if (blocksAdjacent) {
+            if (b1End->next == b2Start) {            // adjacent
                 plus += b2End->timeTo[b1Start->id];  // after new b2 == before new b1
             } else {
                 minus += b2Start->prev->timeTo[b2Start->id];   // before old b2
-                plus += b1End->timeTo[b2End->next->id]         // after new b1
-                        + b1Start->prev->timeTo[b2Start->id];  // before new b2
-
-                improvement = minus - plus;
-                evaluateImprovement();
+                plus += b2End->timeTo[b1End->next->id]         // after new b1
+                        + b2Start->prev->timeTo[b1Start->id];  // before new b2
             }
+
+            improvement = minus - plus;
+            evaluateImprovement();
         }
     }
+}
 
+bool LocalSearch::intraRelocation() {
     if (bestImprovement > 0) {  // found a improvement
         swapBlocks();
         return true;
     }
     return false;
 }
+
+// void LocalSearch::intraRelocationOneDir(Node* bStart, Node* bEnd, Node* pos) {
+//     startingIntraRoute();
+//     for (; !block1Finished; moveBlock1Forward()) {
+//         preMinus = b1Start->prev->timeTo[b1Start->id]  // before b1
+//                    + b1End->timeTo[b1End->next->id];   // after b1
+
+//         for (; !block2Finished; moveBlock2Forward()) {
+//             minus = preMinus + b2End->timeTo[b2End->next->id];  // after b2
+//             plus = b1Start->prev->timeTo[b2Start->id]           // new arc before b2
+//                    + b1End->timeTo[b2End->next->id];            // new arc after b1
+
+//             if (blocksAdjacent) {
+//                 plus += b2End->timeTo[b1Start->id];  // after new b2 == before new b1
+//             } else {
+//                 minus += b2Start->prev->timeTo[b2Start->id];   // before old b2
+//                 plus += b1End->timeTo[b2End->next->id]         // after new b1
+//                         + b1Start->prev->timeTo[b2Start->id];  // before new b2
+
+//                 improvement = minus - plus;
+//                 evaluateImprovement();
+//             }
+//         }
+//     }
+// }
 
 /*
 ********************** INTER SEARCH FUNCTIONS *****************************
@@ -144,15 +199,9 @@ bool LocalSearch::callInterSearch() {
 ********************** OTHER FUNCTIONS *****************************
 */
 
-void LocalSearch::startingIntraRoute() {  // set starting blocks and reset values
-    bestImprovement = 0;
+void LocalSearch::resetBlocks() {  // set blocks to the first positions in the route
+    blocksFinished = false;
 
-    if (route1->nClients < b1Size, b2Size) {  // not enough clients to make blocks of these sizes
-        block1Finished = true, block2Finished = true;
-        return;
-    }
-
-    // update block pointers to the first blocks in the route
     b1Start = route1->begin.next;
     b1End = b1Start;
     for (i = 1; i < b1Size; i++) b1End = b1End->next;
@@ -161,36 +210,26 @@ void LocalSearch::startingIntraRoute() {  // set starting blocks and reset value
     b2End = b2Start;
     for (i = 1; i < b2Size; i++) b2End = b2End->next;
     b2NextEnd = b2End->next;
-
-    block1Finished = false, block2Finished = false;
 }
 
-void LocalSearch::moveBlock1Forward() {  // move block1 forward and reset block2
-
-    if (b2NextEnd->id == 0) {  // no more possible blocks
-        block1Finished = true;
-        return;
-    }
-
+void LocalSearch::moveBlock1Forward() {
     b1Start = b1Start->next;
     b1End = b1End->next;
+}
 
+void LocalSearch::resetBlock2() {  // reset block 2 to immediatly after block 1
+    if (b2NextEnd->id == 0) {      // no possible position for block2 after block1 in that route
+        blocksFinished = true;
+        return;
+    }
     b2Start = b1End->next;
     b2End = b2NextEnd;
     b2NextEnd = b2End->next;
-    block2Finished = false;
-    blocksAdjacent = true;  // only valid for intra moves
 }
 
 void LocalSearch::moveBlock2Forward() {
-    if (b2End->next->id == 0) {
-        block2Finished = true;
-        return;
-    }
-
     b2Start = b2Start->next;
     b2End = b2End->next;
-    blocksAdjacent = false;  // only valid for intra moves
 }
 
 void LocalSearch::swapBlocks() {
@@ -223,7 +262,7 @@ void LocalSearch::updateRoutesData() {
     int prevEnd = 0;
 
     for (auto route : routes) {
-        route->nClients = 0;
+        route->nClients = -1;
 
         // fill forward data
         Node* node = route->begin.next;
