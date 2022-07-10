@@ -1,6 +1,7 @@
 #include "GeneticAlgorithm.h"
 
-GeneticAlgorithm::GeneticAlgorithm(Data& data) : data(data), split(data), localSearch(data), population(data, split) {
+GeneticAlgorithm::GeneticAlgorithm(Data& data)
+    : data(data), split(data), localSearch(data, split), population(data, split) {
     std::chrono::milliseconds maxTime(this->data.params.timeLimit * 1000);
 
     population.initialize();

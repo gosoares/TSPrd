@@ -44,6 +44,7 @@ struct Route {
 class LocalSearch {
    private:
     Data& data;
+    Split& split;
     std::vector<Node> clients;  // nodes for all clients (0 is undefined)
 
     std::vector<Route> routesObj;     // objects for routes
@@ -67,9 +68,10 @@ class LocalSearch {
     bool blocksFinished;
 
    public:
-    LocalSearch(Data& data);
+    LocalSearch(Data& data, Split& split);
 
     void educate(Individual& indiv);
+    bool splitSearch(Individual& indiv);
 
     bool intraSearch();
     bool callIntraSearch();

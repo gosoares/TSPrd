@@ -1,8 +1,8 @@
 #include "LocalSearch.h"
 
-LocalSearch::LocalSearch(Data& data)
-    : data(data), clients(), routesObj(data.V + 1, {data}), routes(data.V + 1), routesCoupling(data.N, {data.N}),
-      intraMovesOrder(N_INTRA), interMovesOrder(N_INTER) {
+LocalSearch::LocalSearch(Data& data, Split& split)
+    : data(data), split(split), clients(), routesObj(data.V + 1, {data}), routes(data.V + 1),
+      routesCoupling(data.N, {data.N}), intraMovesOrder(N_INTRA), interMovesOrder(N_INTER) {
     routes.resize(0);  // resize but keep allocated space
     clients.reserve(data.V);
     for (int c = 0; c < data.V; c++) clients.emplace_back(data, c);
@@ -13,9 +13,29 @@ LocalSearch::LocalSearch(Data& data)
 
 void LocalSearch::educate(Individual& indiv) {
     load(indiv);
-    intraSearch();
-    interSearch();
+
+    bool improved;
+    int notImproved = 0, which = 0;  // 0: intra   1: inter
+
+    do {
+        do {
+            improved = (which == 0) ? intraSearch() : interSearch();
+            which = 1 - which;
+            notImproved = improved ? 0 : notImproved + 1;
+        } while (notImproved < 2);
+
+        improved = splitSearch(indiv);
+    } while (improved);
+
     saveTo(indiv);
+}
+
+bool LocalSearch::splitSearch(Individual& indiv) {
+    int prevTime = routes.back()->endTime;
+    saveTo(indiv);
+    split.split(&indiv);
+    load(indiv);
+    return indiv.eval - prevTime;
 }
 
 /*
@@ -300,7 +320,8 @@ void LocalSearch::updateRoutesData() {
     // int R = routes.size() - 1;
     // for (int r = 0; r < R; r++) {
     //     routesCoupling[r][r] = INF;
-    //     routesCoupling[r][r + 1] = (routes[r]->startingTime + routes[r]->duration) - (routes[r + 1]->releaseDate);
+    //     routesCoupling[r][r + 1] = (routes[r]->startingTime + routes[r]->duration) - (routes[r +
+    //     1]->releaseDate);
     // }
     // routesCoupling[R][R] = INF;
 
