@@ -31,7 +31,6 @@ int NeighborSearch::educate(Individual& indiv) {
     const int originalTime = indiv.eval;
 
     Solution* solution = new Solution(data, indiv.giantTour, nullptr);
-    intraSearch.search(solution);
 
     int which = 1;  // 0: intra   1: inter
     bool splitImproved;
