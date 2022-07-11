@@ -15,14 +15,27 @@ void LocalSearch::educate(Individual& indiv) {
     load(indiv);
 
     bool improved;
-    int notImproved = 0;  // 0: intra   1: inter
-    isIntraSearch = true;
+    int notImproved = 0;
+    moveType = 0;
     do {
         do {
-            improved = (isIntraSearch) ? intraSearch() : interSearch();
-            isIntraSearch = !isIntraSearch;
+            switch (moveType) {
+                case 0:
+                    improved = intraSearch();
+                    break;
+                case 1:
+                    improved = interSearch();
+                    break;
+                case 2:
+                    improved = false;
+                    // improved = divideAndSwap();
+                    break;
+            }
+            moveType = (moveType + 1) % 3;
+            if (improved && moveType != 0) updateRoutesData();  // dont need to update for intra moves
+
             notImproved = improved ? 0 : notImproved + 1;
-        } while (notImproved < 2);
+        } while (notImproved < 3);
 
         improved = splitSearch(indiv);
     } while (improved);
@@ -132,7 +145,7 @@ void LocalSearch::swapBlocks() {
 
 void LocalSearch::relocateBlock() {
 #ifndef NDEBUG
-    bestB2End = bestB2->next;  // avoid seg fault
+    bestB2End = (bestB2->next == nullptr) ? bestB2 : bestB2->next;  // avoid seg fault
     preMoveDebug("Relocation");
 #endif
     bestB1->prev->next = bestB1End->next;
@@ -216,20 +229,16 @@ void LocalSearch::updateRoutesData() {  // this data is only used during inter r
         route->nClients = -1;
 
         // fill forward data
-        Node* node = route->begin.next;
-        while (node != nullptr) {
+        for (node = route->begin.next; node != nullptr; node = node->next) {
             node->durationBefore = node->prev->durationBefore + node->prev->timeTo[node->id];
             node->predecessorsRd = std::max<int>(node->prev->predecessorsRd, node->prev->releaseDate);
-            node = node->next;
             route->nClients++;
         }
 
         // fill backward data
-        node = route->end.prev;
-        while (node != nullptr) {
+        for (node = route->end.prev; node != nullptr; node = node->prev) {
             node->durationAfter = node->next->durationAfter + node->timeTo[node->next->id];
             node->successorsRd = std::max<int>(node->next->successorsRd, node->next->releaseDate);
-            node = node->prev;
         }
 
         route->releaseDate = route->end.predecessorsRd;
@@ -265,16 +274,23 @@ void LocalSearch::updateRoutesData() {  // this data is only used during inter r
     }
 }
 
-void LocalSearch::addRoute() {
-    pos = routes.size();
+void LocalSearch::addRoute() { addRoute(routes.size()); }
+
+void LocalSearch::addRoute(int position) {
     if (emptyRoutes.empty()) {
-        routes.push_back(&(routesObj[routes.size()]));
+        routes.insert(routes.begin() + position, &(routesObj[routes.size()]));
     } else {
-        routes.push_back(emptyRoutes.back());
+        routes.insert(routes.begin() + position, emptyRoutes.back());
         emptyRoutes.pop_back();
     }
-    lastRoute = routes.back();
-    lastRoute->pos = pos;
+    lastRoute = routes[position];
+    lastRoute->pos = position;
+    lastRoute->begin.next = &(lastRoute)->end;
+    lastRoute->end.prev = &(lastRoute)->begin;
+
+    for (i = position + 1; i < routes.size(); i++) {
+        routes[i]->pos = i;
+    }
 }
 
 void LocalSearch::checkEmptyRoute(Route* route) {
@@ -333,6 +349,9 @@ void LocalSearch::saveTo(Individual& indiv) {
 }
 
 #ifndef NDEBUG
+/**************************************************************************
+************************** DEBUG FUNCTIONS ********************************
+***************************************************************************/
 
 std::string LocalSearch::getRoutesStr() {  // for debugging
     std::string str = "    RD  |  DURAT |  START |   END  |  ROUTE\n";
@@ -372,11 +391,14 @@ std::string LocalSearch::getBlockStr(Node* bStart, Node* bEnd) {
     return blockStr;
 }
 
+void LocalSearch::printRoutes() { std::cout << getRoutesStr() << std::endl; }
+
 void LocalSearch::preMoveDebug(std::string move, bool bothBlocks) {
     updateRoutesData();
-    _routeEnd = isIntraSearch || r1.pos > r2.pos ? r1.route->endTime : r2.route->endTime;
+    _routeEnd = r1.route->endTime;
+    if (moveType == 1 && r2.pos > r1.pos) _routeEnd = r2.route->endTime;
 
-    std::string _moveType = (isIntraSearch ? "Intra" : "Inter");
+    std::string _moveType = (moveType == 0 ? "Intra" : "Inter");
     _log = "(" + _moveType + ") " + move + " " + getBlockStr(bestB1, bestB1End);
     if (bothBlocks) _log += " and " + getBlockStr(bestB2, bestB2End);
     _log += '\n' + getRoutesStr();
@@ -384,12 +406,49 @@ void LocalSearch::preMoveDebug(std::string move, bool bothBlocks) {
 
 void LocalSearch::postMoveDebug(std::string move) {
     updateRoutesData();
-    int _newEnd = isIntraSearch || r1.pos > r2.pos ? r1.route->endTime : r2.route->endTime;
+    int _newEnd = r2.route->endTime;
+    if (moveType == 0 || r1.pos > r2.pos) _newEnd = r1.route->endTime;
+    if (moveType == 2) _newEnd = lastRoute->endTime;
 
     if (_newEnd >= _routeEnd) {
-        std::cout << "A " << (isIntraSearch ? "Intra " : "Inter ") << move
+        std::cout << "A " << (moveType == 0 ? "Intra " : "Inter ") << move
                   << " was performed, but lead to no improvement: " << _routeEnd << " -> " << _newEnd << std::endl;
         std::cout << _log << "Result:" << std::endl << getRoutesStr() << std::endl;
+    }
+}
+
+#include <assert.h>
+
+void LocalSearch::checkRoutesData() {
+    int endTime = 0;
+    for (auto route : routes) {
+        int releaseDate = 0, duration = 0, nClients = -1;
+
+        for (auto node = route->begin.next; node != nullptr; node = node->next) {
+            assert(node->prev->next == node);
+            assert(node->releaseDate == data.releaseDates[node->id]);
+            assert(node->predecessorsRd == releaseDate);
+            releaseDate = std::max<int>(releaseDate, node->releaseDate);
+            duration += node->prev->timeTo[node->id];
+            assert(node->durationBefore == duration);
+            nClients++;
+        }
+
+        assert(route->nClients == nClients);
+        assert(route->releaseDate == releaseDate);
+        assert(route->startTime == std::max<int>(endTime, releaseDate));
+        assert(route->duration == duration);
+        endTime = std::max<int>(endTime, releaseDate) + duration;
+        assert(route->endTime == endTime);
+
+        releaseDate = 0, duration = 0;
+        for (auto node = route->end.prev; node != nullptr; node = node->prev) {
+            assert(node->next->prev == node);
+            assert(node->successorsRd == releaseDate);
+            releaseDate = std::max<int>(releaseDate, data.releaseDates[node->id]);
+            duration += node->timeTo[node->next->id];
+            assert(node->durationAfter == duration);
+        }
     }
 }
 

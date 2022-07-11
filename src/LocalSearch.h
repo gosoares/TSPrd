@@ -4,7 +4,7 @@
 #include "Data.h"
 #include "Population.h"
 
-#define N_INTRA 0  // number of implemented intra moves
+#define N_INTRA 6  // number of implemented intra moves
 #define N_INTER 5  // number of implemented inter moves
 
 struct Node {
@@ -72,6 +72,8 @@ class LocalSearch {
     std::vector<int> intraMovesOrder;  // order to apply the intra moves
     std::vector<int> interMovesOrder;  // order to apply the intra moves
 
+    int moveType;  // 0: intra   1: inter   2: depot
+
     // Auxiliary variables used within the local search functions
     Node *node, *aux;
     Route* lastRoute;  // imRoute: route used in a intra move
@@ -80,7 +82,6 @@ class LocalSearch {
     RouteEval r1, r2, *routeA, *routeB;
     int newRAEnd, newRBEnd, deltaRAEnd, newBeforeRBEnd, newRBStart;
     int preR1ReleaseDate, preR1Duration;
-    bool isIntraSearch;
 
     // variables representing two blocks on which moves are made
     Node *b1, *b1End, *b2, *b2End;
@@ -119,7 +120,8 @@ class LocalSearch {
     bool evaluateImprovement();  // if improved, save current blocks in best blocks pointers
     bool evaluateInterRouteImprovement();
     void updateRoutesData();
-    void addRoute();                     // add a route to the end of routes
+    void addRoute();  // add a route to the end of routes
+    void addRoute(int position);
     void checkEmptyRoute(Route* route);  // check if route1 is empty
 
     void load(const Individual& indiv);
@@ -133,8 +135,10 @@ class LocalSearch {
     std::string _log;
     std::string getRoutesStr();
     std::string getBlockStr(Node* bStart, Node* bEnd);
+    void printRoutes();
     void preMoveDebug(std::string move, bool bothBlocks = true);
     void postMoveDebug(std::string move);
+    void checkRoutesData();
 #endif
 };
 
