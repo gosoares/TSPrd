@@ -2,7 +2,7 @@
 
 LocalSearch::LocalSearch(Data& data, Split& split)
     : data(data), split(split), clients(), routesObj(data.V + 1, {data}), routes(data.V + 1), intraMovesOrder(N_INTRA),
-      interMovesOrder(N_INTER) {
+      interMovesOrder(N_INTER), routesOrder((data.V + 1) * data.V), nRoutesOrder(0) {
     routes.resize(0);  // resize but keep allocated space
     clients.reserve(data.V);
     for (int c = 0; c < data.V; c++) clients.emplace_back(data, c);
@@ -132,7 +132,7 @@ void LocalSearch::resetBlock2Inter() {
     for (i = 1; i < b2Size; i++) {
         b2End = b2End->next;
         b2ReleaseDate = std::max<int>(b2ReleaseDate, b2End->releaseDate);
-        b2Duration += b2End->prev->timeTo[b2->id];
+        b2Duration += b2End->prev->timeTo[b2End->id];
     }
     blocks2Finished = b2End->id == 0;
 }
@@ -198,7 +198,7 @@ void LocalSearch::relocateBlock() {
 
 void LocalSearch::revertBlock() {
 #ifndef NDEBUG
-    preMoveDebug("Revert");
+    preMoveDebug("Revert", false);
 #endif
 
     aux = bestB1End->next;
@@ -234,6 +234,28 @@ bool LocalSearch::evaluateImprovement() {
     return false;
 }
 
+// bool LocalSearch::evaluateInterRouteImprovement() {
+//     if (r1.pos < r2.pos)
+//         routeA = &r1, routeB = &r2;
+//     else
+//         routeA = &r2, routeB = &r1;
+
+//     routesClearence = routeA->route->clearence[routeB->pos - 1];
+
+//     // evaluate a inter route search given that route1 and route2 new release dates are set by a inter route move
+//     // a inter route is evaluated w. r. t. the ending time of the second route in the move
+//     newRAEnd = std::max<int>(routeA->endBefore, routeA->newReleaseDate) + routeA->newDuration;
+//     deltaRAEnd = newRAEnd - routeA->route->endTime;
+
+//     newBeforeRBEnd = routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
+//                                                        std::max<int>(deltaRAEnd, routesClearence));
+//     newRBStart = std::max<int>(routeB->newReleaseDate, newBeforeRBEnd);
+//     newRBEnd = newRBStart + routeB->newDuration;
+
+//     improvement = routeB->route->endTime - newRBEnd;
+//     return evaluateImprovement();  //
+// }
+
 bool LocalSearch::evaluateInterRouteImprovement() {
     if (r1.pos < r2.pos)
         routeA = &r1, routeB = &r2;
@@ -244,15 +266,14 @@ bool LocalSearch::evaluateInterRouteImprovement() {
 
     // evaluate a inter route search given that route1 and route2 new release dates are set by a inter route move
     // a inter route is evaluated w. r. t. the ending time of the second route in the move
-    newRAEnd = std::max<int>(routeA->endBefore, routeA->newReleaseDate) + routeA->newDuration;
-    deltaRAEnd = newRAEnd - routeA->route->endTime;
+    deltaRAEnd =
+        std::max<int>(routeA->endBefore, routeA->newReleaseDate) + routeA->newDuration - routeA->route->endTime;
 
-    newBeforeRBEnd = routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
-                                                       std::max<int>(deltaRAEnd, routesClearence));
-    newRBStart = std::max<int>(routeB->newReleaseDate, newBeforeRBEnd);
-    newRBEnd = newRBStart + routeB->newDuration;
-
-    improvement = routeB->route->endTime - newRBEnd;
+    improvement = routeB->route->endTime -
+                  (std::max<int>(routeB->newReleaseDate,
+                                 routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
+                                                                   std::max<int>(deltaRAEnd, routesClearence))) +
+                   routeB->newDuration);
     return evaluateImprovement();  //
 }
 

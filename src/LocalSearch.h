@@ -4,8 +4,8 @@
 #include "Data.h"
 #include "Population.h"
 
-#define N_INTRA 6  // number of implemented intra moves
-#define N_INTER 5  // number of implemented inter moves
+#define N_INTRA 3  // number of implemented intra moves
+#define N_INTER 2  // number of implemented inter moves
 
 struct Node {
     const int id;                    // id of the client, 0 represents the depot
@@ -69,8 +69,10 @@ class LocalSearch {
     std::vector<Route*> routes;       // routes of the solution, in order
     std::vector<Route*> emptyRoutes;  // routes that became empty and were removed from `routes` and may get reused
 
-    std::vector<int> intraMovesOrder;  // order to apply the intra moves
-    std::vector<int> interMovesOrder;  // order to apply the intra moves
+    std::vector<int> intraMovesOrder;               // order to apply the intra moves
+    std::vector<int> interMovesOrder;               // order to apply the inter moves
+    std::vector<std::pair<int, int> > routesOrder;  // order to evaluate routes in inter moves
+    int nRoutesOrder;                               // how much routes are in `routesOrder`
 
     int moveType;  // 0: intra   1: inter   2: depot
 
@@ -107,6 +109,7 @@ class LocalSearch {
     bool callInterSearch();
     bool interRelocation();
     bool interSwap();
+    void updateRoutesOrder(bool shuffle = true);
 
     // functions that operates in blocks b1 and b2
     void resetBlock1();        // set block1 to start of route1

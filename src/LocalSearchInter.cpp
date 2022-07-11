@@ -4,20 +4,21 @@ bool LocalSearch::interSearch() {
     std::shuffle(interMovesOrder.begin(), interMovesOrder.end(), data.generator);
     bool improvedAnyRoute, improvedAny = false;
 
+    updateRoutesOrder(false);
+
     whichMove = 0;
     while (whichMove < N_INTER) {
         move = interMovesOrder[whichMove];
         improvedAnyRoute = false;
 
-        for (rx = 1; rx < routes.size() && !improvedAnyRoute; rx++) {
-            for (ry = 0; ry < rx && !improvedAnyRoute; ry++) {
-                r1.pos = ry, r2.pos = rx;
-                improvedAnyRoute = callInterSearch();
-            }
+        updateRoutesOrder();
 
-            for (ry = 0; ry < rx && !improvedAnyRoute; ry++) {
-                r1.pos = rx, r2.pos = ry;
-                improvedAnyRoute = callInterSearch();
+        for (auto routesPair : routesOrder) {
+            r1.pos = routesPair.first;
+            r2.pos = routesPair.second;
+            if (callInterSearch()) {
+                improvedAnyRoute = true;
+                break;
             }
         }
 
@@ -46,15 +47,15 @@ bool LocalSearch::callInterSearch() {
             return interRelocation();
             break;
 
-        case 2:  // relocation 2
-            b1Size = 2;
-            return interRelocation();
-            break;
-
-        case 3:  // swap 1 1
+        case 2:  // swap 1 1
             if (r1.pos > r2.pos) return false;
             b1Size = 1, b2Size = 1;
             return interSwap();
+            break;
+
+        case 3:  // relocation 2
+            b1Size = 2;
+            return interRelocation();
             break;
 
         case 4:  // swap 1 2
@@ -96,15 +97,19 @@ bool LocalSearch::interRelocation() {
 bool LocalSearch::interSwap() {
     for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
         preR1ReleaseDate = std::max<int>(b1->predecessorsRd, b1End->successorsRd);  // rd removing block
-        preR1Duration = b1->durationBefore + b1End->durationAfter;
+        preR1Duration = b1->prev->durationBefore + b1End->next->durationAfter;
 
         for (resetBlock2Inter(); !blocks2Finished; moveBlock2Forward()) {
-            r1.newReleaseDate = std::max<int>(preR1ReleaseDate, b2->releaseDate);
+            if (b1->id == 13 && b1End->id == 13 && b2->id == 11 && b2End->id == 6) {
+                std::cout << "here" << std::endl;
+            }
+
+            r1.newReleaseDate = std::max<int>(preR1ReleaseDate, b2ReleaseDate);
             r1.newDuration = preR1Duration + b2Duration + b1->prev->timeTo[b2->id] + b2End->timeTo[b1End->next->id];
 
-            r2.newReleaseDate = std::max<int>(std::max<int>(b2->predecessorsRd, b2->successorsRd), b1ReleaseDate);
-            r2.newDuration = b2->durationBefore + b2->durationAfter + b1Duration + b2->prev->timeTo[b1->id] +
-                             b1End->timeTo[b2->next->id];
+            r2.newReleaseDate = std::max<int>(std::max<int>(b2->predecessorsRd, b2End->successorsRd), b1ReleaseDate);
+            r2.newDuration = b2->prev->durationBefore + b2End->next->durationAfter + b1Duration +
+                             b2->prev->timeTo[b1->id] + b1End->timeTo[b2End->next->id];
 
             if (evaluateInterRouteImprovement()) {
                 swapBlocks();
@@ -115,4 +120,18 @@ bool LocalSearch::interSwap() {
         }
     }
     return false;
+}
+
+void LocalSearch::updateRoutesOrder(bool shuffle) {
+    if (nRoutesOrder != routes.size()) {
+        routesOrder.resize(routes.size() * (routes.size() - 1));  // initialize routes order
+        for (rx = 0, i = 0; rx < routes.size(); rx++) {
+            for (ry = 0; ry < routes.size(); ry++) {
+                if (rx == ry) continue;
+                routesOrder[i++] = {rx, ry};
+            }
+        }
+    }
+
+    if (shuffle) std::shuffle(routesOrder.begin(), routesOrder.end(), data.generator);
 }

@@ -27,23 +27,30 @@ bool LocalSearch::intraSearch() {
 }
 
 bool LocalSearch::callIntraSearch() {
-    if (move == 1) {  // swap 1 1
-        b1Size = 1, b2Size = 1;
-        return intraSwap();
-    } else if (move == 2) {  // swap 1 2
-        b1Size = 1, b2Size = 2;
-        return intraSwap();
-    } else if (move == 3) {  // swap 2 2
-        b1Size = 2, b2Size = 2;
-        return intraSwap();
-    } else if (move == 4) {  // relocation 1
-        b1Size = 1;
-        return intraRelocation();
-    } else if (move == 5) {  // relocation 2
-        b1Size = 2;
-        return intraRelocation();
-    } else if (move == 6) {  // two opt
-        return intraTwoOpt();
+    switch (move) {
+        case 1:  // relocation 1
+            b1Size = 1;
+            return intraRelocation();
+            break;
+        case 2:  // swap 1 1
+            b1Size = 1, b2Size = 1;
+            return intraSwap();
+            break;
+        case 3:  // two opt
+            return intraTwoOpt();
+            break;
+        case 4:  // relocation 2
+            b1Size = 2;
+            return intraRelocation();
+            break;
+        case 5:  // swap 1 2
+            b1Size = 1, b2Size = 2;
+            return intraSwap();
+            break;
+        case 6:  // swap 2 2
+            b1Size = 2, b2Size = 2;
+            return intraSwap();
+            break;
     }
 
     throw "Intra move id not known: " + move;
