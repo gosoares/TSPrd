@@ -11,7 +11,8 @@ add_definitions(-DLOG_VERBOSE=false)
 
 set(mainFiles
         src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
-        src/Individual.h src/Instance.h src/Instance.cpp src/LocalSearch.h src/LocalSearch.cpp
+        src/Individual.h src/Instance.h src/Instance.cpp
+        src/LocalSearch.h src/LocalSearch.cpp src/LocalSearchIntra.cpp src/LocalSearchInter.cpp
         src/Population.h src/Population.cpp src/Split.h src/Split.cpp
 )
 add_executable(TSPrd src/main.cpp ${mainFiles})
