@@ -234,6 +234,17 @@ bool LocalSearch::callInterSearch() {
     } else if (move == 2) {  // relocation 2
         b1Size = 2;
         return interRelocation();
+    } else if (move == 3) {  // swap 1 1
+        if (r1.pos > r2.pos) return false;
+        b1Size = 1, b2Size = 1;
+        return interSwap();
+    } else if (move == 4) {  // swap 1 2
+        b1Size = 1, b2Size = 2;
+        return interSwap();
+    } else if (move == 5) {  // swap 2 2
+        if (r1.pos > r2.pos) return false;
+        b1Size = 2, b2Size = 2;
+        return interSwap();
     }
 
     throw "Inter move id not known: " + move;
@@ -251,12 +262,36 @@ bool LocalSearch::interRelocation() {
 
             if (evaluateInterRouteImprovement()) {
                 relocateBlock();
-                checkEmptyRoute();
+                checkEmptyRoute(r1.route);
                 return true;
             }
         }
     }
 
+    return false;
+}
+
+bool LocalSearch::interSwap() {
+    for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
+        preR1ReleaseDate = std::max<int>(b1->predecessorsRd, b1End->successorsRd);  // rd removing block
+        preR1Duration = b1->durationBefore + b1End->durationAfter;
+
+        for (resetBlock2Inter(); !blocks2Finished; moveBlock2Forward()) {
+            r1.newReleaseDate = std::max<int>(preR1ReleaseDate, b2->releaseDate);
+            r1.newDuration = preR1Duration + b2Duration + b1->prev->timeTo[b2->id] + b2End->timeTo[b1End->next->id];
+
+            r2.newReleaseDate = std::max<int>(std::max<int>(b2->predecessorsRd, b2->successorsRd), b1ReleaseDate);
+            r2.newDuration = b2->durationBefore + b2->durationAfter + b1Duration + b2->prev->timeTo[b1->id] +
+                             b1End->timeTo[b2->next->id];
+
+            if (evaluateInterRouteImprovement()) {
+                swapBlocks();
+                checkEmptyRoute(r1.route);
+                checkEmptyRoute(r2.route);
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -475,11 +510,11 @@ void LocalSearch::addRoute() {
     lastRoute->pos = pos;
 }
 
-void LocalSearch::checkEmptyRoute() {
-    if (r1.route->begin.next->id == 0) {
-        for (i = r1.route->pos + 1; i < routes.size(); i++) routes[i]->pos--;
-        routes.erase(routes.begin() + r1.route->pos);
-        emptyRoutes.push_back(r1.route);
+void LocalSearch::checkEmptyRoute(Route* route) {
+    if (route->begin.next->id == 0) {
+        for (i = route->pos + 1; i < routes.size(); i++) routes[i]->pos--;
+        routes.erase(routes.begin() + route->pos);
+        emptyRoutes.push_back(route);
     }
 }
 

@@ -5,7 +5,7 @@
 #include "Population.h"
 
 #define N_INTRA 6  // number of implemented intra moves
-#define N_INTER 2  // number of implemented inter moves
+#define N_INTER 5  // number of implemented inter moves
 
 struct Node {
     const int id;                    // id of the client, 0 represents the depot
@@ -79,6 +79,7 @@ class LocalSearch {
     int improvement, bestImprovement, routesClearence;  // clearence between r1 and r2-1
     RouteEval r1, r2, *routeA, *routeB;
     int newRAEnd, newRBEnd, deltaRAEnd, newBeforeRBEnd, newRBStart;
+    int preR1ReleaseDate, preR1Duration;
 
     // variables representing two blocks on which moves are made
     Node *b1, *b1End, *b2, *b2End;
@@ -102,6 +103,7 @@ class LocalSearch {
     bool interSearch();
     bool callInterSearch();
     bool interRelocation();
+    bool interSwap();
 
     // functions that operates in blocks b1 and b2
     void resetBlock1();        // set block1 to start of route1
@@ -116,8 +118,8 @@ class LocalSearch {
     bool evaluateImprovement();  // if improved, save current blocks in best blocks pointers
     bool evaluateInterRouteImprovement();
     void updateRoutesData();
-    void addRoute();         // add a route to the end of routes
-    void checkEmptyRoute();  // check if route1 is empty
+    void addRoute();                     // add a route to the end of routes
+    void checkEmptyRoute(Route* route);  // check if route1 is empty
 
     void load(const Individual& indiv);
     void saveTo(Individual& indiv);
