@@ -94,6 +94,7 @@ class LocalSearch {
 
     void educate(Individual& indiv);
     bool splitSearch(Individual& indiv);
+    bool divideAndSwap();
 
     bool intraSearch();
     bool callIntraSearch();

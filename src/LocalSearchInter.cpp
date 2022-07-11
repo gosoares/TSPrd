@@ -1,8 +1,6 @@
 #include "LocalSearch.h"
 
 bool LocalSearch::interSearch() {
-    updateRoutesData();
-
     std::shuffle(interMovesOrder.begin(), interMovesOrder.end(), data.generator);
     bool improvedAnyRoute, improvedAny = false;
 
@@ -42,23 +40,33 @@ bool LocalSearch::callInterSearch() {
     r1.endBefore = r1.pos == 0 ? 0 : routes[r1.pos - 1]->endTime;
     r2.endBefore = r2.pos == 0 ? 0 : routes[r2.pos - 1]->endTime;
 
-    if (move == 1) {  // relocation 1
-        b1Size = 1;
-        return interRelocation();
-    } else if (move == 2) {  // relocation 2
-        b1Size = 2;
-        return interRelocation();
-    } else if (move == 3) {  // swap 1 1
-        if (r1.pos > r2.pos) return false;
-        b1Size = 1, b2Size = 1;
-        return interSwap();
-    } else if (move == 4) {  // swap 1 2
-        b1Size = 1, b2Size = 2;
-        return interSwap();
-    } else if (move == 5) {  // swap 2 2
-        if (r1.pos > r2.pos) return false;
-        b1Size = 2, b2Size = 2;
-        return interSwap();
+    switch (move) {
+        case 1:  // relocation 1
+            b1Size = 1;
+            return interRelocation();
+            break;
+
+        case 2:  // relocation 2
+            b1Size = 2;
+            return interRelocation();
+            break;
+
+        case 3:  // swap 1 1
+            if (r1.pos > r2.pos) return false;
+            b1Size = 1, b2Size = 1;
+            return interSwap();
+            break;
+
+        case 4:  // swap 1 2
+            b1Size = 1, b2Size = 2;
+            return interSwap();
+            break;
+
+        case 5:  // swap 2 2
+            if (r1.pos > r2.pos) return false;
+            b1Size = 2, b2Size = 2;
+            return interSwap();
+            break;
     }
 
     throw "Inter move id not known: " + move;

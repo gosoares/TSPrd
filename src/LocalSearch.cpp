@@ -13,6 +13,7 @@ LocalSearch::LocalSearch(Data& data, Split& split)
 
 void LocalSearch::educate(Individual& indiv) {
     load(indiv);
+    updateRoutesData();
 
     bool improved;
     int notImproved = 0;
@@ -27,7 +28,6 @@ void LocalSearch::educate(Individual& indiv) {
                     improved = interSearch();
                     break;
                 case 2:
-                    improved = false;
                     // improved = divideAndSwap();
                     break;
             }
@@ -38,9 +38,9 @@ void LocalSearch::educate(Individual& indiv) {
         } while (notImproved < 3);
 
         improved = splitSearch(indiv);
+        updateRoutesData();
     } while (improved);
 
-    updateRoutesData();
     saveTo(indiv);
 }
 
@@ -50,6 +50,40 @@ bool LocalSearch::splitSearch(Individual& indiv) {
     split.split(&indiv);
     load(indiv);
     return (prevTime - indiv.eval) > 0;
+}
+
+bool LocalSearch::divideAndSwap() {  // insert depot in a route, and swap the order
+    return false;                    // todo remove
+    for (r1.pos = 1; r1.pos < routes.size(); r1.pos++) {
+        r1.route = routes[r1.pos];
+        // if the ending time of the previous route is higher than the current route release date
+        // it's not possible to improve the ending time of the current route by adding a depot
+        // because the starting time of the newly generated route can't be less than the current route start time
+        if (routes[r1.pos - 1]->endTime >= r1.route->releaseDate) continue;
+        if (r1.route->end.prev->releaseDate == r1.route->releaseDate)
+            continue;  // vertex with larger release date is at the end
+
+        // skip the vertices before the one with higher release date
+        b1 = r1.route->begin.next;
+        while (b1->successorsRd == r1.route->releaseDate) b1 = b1->next;
+
+        // from here, r1 = rb (first route when dividing, second route after swap) r2 = ra
+        for (; b1->next->next->id != 0; b1 = b1->next) {
+            newRAEnd = std::max<int>(b1->successorsRd, routes[r1.pos - 1]->endTime) +  // starting time
+                       data.timesMatrix[0][b1->next->id] + b1->durationAfter;          // duration
+            newRBEnd = std::max<int>(newRAEnd, b1->next->predecessorsRd) +             // starting time
+                       b1->durationBefore + b1->timeTo[0];                             // duration
+
+            if (newRBEnd < r1.route->endTime) {
+                addRoute(r1.pos + 1);
+                bestB1End = b1, bestB1 = r1.route->begin.next, bestB2 = &(lastRoute->begin);
+                relocateBlock();
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**************************************************************************
@@ -394,6 +428,7 @@ std::string LocalSearch::getBlockStr(Node* bStart, Node* bEnd) {
 void LocalSearch::printRoutes() { std::cout << getRoutesStr() << std::endl; }
 
 void LocalSearch::preMoveDebug(std::string move, bool bothBlocks) {
+    checkRoutesData();
     updateRoutesData();
     _routeEnd = r1.route->endTime;
     if (moveType == 1 && r2.pos > r1.pos) _routeEnd = r2.route->endTime;
@@ -406,9 +441,13 @@ void LocalSearch::preMoveDebug(std::string move, bool bothBlocks) {
 
 void LocalSearch::postMoveDebug(std::string move) {
     updateRoutesData();
-    int _newEnd = r2.route->endTime;
-    if (moveType == 0 || r1.pos > r2.pos) _newEnd = r1.route->endTime;
-    if (moveType == 2) _newEnd = lastRoute->endTime;
+    int _newEnd;
+    if (moveType == 0 || r1.pos > r2.pos)
+        _newEnd = r1.route->endTime;
+    else if (moveType == 1)
+        _newEnd = r2.route->endTime;
+    else if (moveType == 2)
+        _newEnd = lastRoute->endTime;
 
     if (_newEnd >= _routeEnd) {
         std::cout << "A " << (moveType == 0 ? "Intra " : "Inter ") << move
