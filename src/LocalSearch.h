@@ -4,7 +4,7 @@
 #include "Data.h"
 #include "Population.h"
 
-#define N_INTRA 6  // number of implemented intra moves
+#define N_INTRA 0  // number of implemented intra moves
 #define N_INTER 5  // number of implemented inter moves
 
 struct Node {
@@ -80,6 +80,7 @@ class LocalSearch {
     RouteEval r1, r2, *routeA, *routeB;
     int newRAEnd, newRBEnd, deltaRAEnd, newBeforeRBEnd, newRBStart;
     int preR1ReleaseDate, preR1Duration;
+    bool isIntraSearch;
 
     // variables representing two blocks on which moves are made
     Node *b1, *b1End, *b2, *b2End;
@@ -123,7 +124,18 @@ class LocalSearch {
 
     void load(const Individual& indiv);
     void saveTo(Individual& indiv);
-    void printRoutes();
+
+#ifndef NDEBUG
+#ifndef LOG_VERBOSE
+#define LOG_VERBOSE @LOG_VERBOSE @
+#endif
+    int _routeEnd;
+    std::string _log;
+    std::string getRoutesStr();
+    std::string getBlockStr(Node* bStart, Node* bEnd);
+    void preMoveDebug(std::string move, bool bothBlocks = true);
+    void postMoveDebug(std::string move);
+#endif
 };
 
 #endif  // TSPRD_LOCALSEARCH_H

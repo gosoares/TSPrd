@@ -15,12 +15,12 @@ void LocalSearch::educate(Individual& indiv) {
     load(indiv);
 
     bool improved;
-    int notImproved = 0, which = 0;  // 0: intra   1: inter
-
+    int notImproved = 0;  // 0: intra   1: inter
+    isIntraSearch = true;
     do {
         do {
-            improved = (which == 0) ? intraSearch() : interSearch();
-            which = 1 - which;
+            improved = (isIntraSearch) ? intraSearch() : interSearch();
+            isIntraSearch = !isIntraSearch;
             notImproved = improved ? 0 : notImproved + 1;
         } while (notImproved < 2);
 
@@ -363,6 +363,10 @@ void LocalSearch::moveBlock2Forward() {
 }
 
 void LocalSearch::swapBlocks() {
+#ifndef NDEBUG
+    preMoveDebug("Swap");
+#endif
+
     bestB1->prev->next = bestB2;
     aux = bestB1->prev;
     bestB1->prev = bestB2->prev;
@@ -376,9 +380,17 @@ void LocalSearch::swapBlocks() {
 
     bestB2End->next->prev = bestB1End;
     bestB2End->next = aux;
+
+#ifndef NDEBUG
+    postMoveDebug("Swap");
+#endif
 }
 
 void LocalSearch::relocateBlock() {
+#ifndef NDEBUG
+    bestB2End = bestB2->next;  // avoid seg fault
+    preMoveDebug("Relocation");
+#endif
     bestB1->prev->next = bestB1End->next;
     bestB1End->next->prev = bestB1->prev;
 
@@ -388,9 +400,16 @@ void LocalSearch::relocateBlock() {
 
     bestB1->prev = bestB2;
     bestB1End->next = aux;
+#ifndef NDEBUG
+    postMoveDebug("Relocation");
+#endif
 }
 
 void LocalSearch::revertBlock() {
+#ifndef NDEBUG
+    preMoveDebug("Revert");
+#endif
+
     aux = bestB1End->next;
     for (node = bestB1; node != aux; node = node->prev) {
         std::swap(node->next, node->prev);
@@ -402,6 +421,10 @@ void LocalSearch::revertBlock() {
 
     bestB1->next = aux;
     aux->prev = bestB1;
+
+#ifndef NDEBUG
+    postMoveDebug("Revert");
+#endif
 }
 
 /**************************************************************************
@@ -565,28 +588,65 @@ void LocalSearch::saveTo(Individual& indiv) {
     }
 }
 
-void LocalSearch::printRoutes() {  // for debugging
-    printf("    RD  |  DURAT |  START |   END  |  ROUTE\n");
+#ifndef NDEBUG
+
+std::string LocalSearch::getRoutesStr() {  // for debugging
+    std::string str = "    RD  |  DURAT |  START |   END  |  ROUTE\n";
+    char buffer[100];
     int time;
 
     for (auto route : routes) {
-        printf("  %4d  |  %4d  |  %4d  |  %4d  |  ", route->releaseDate, route->duration, route->startTime,
-               route->endTime);
+        sprintf(buffer, "  %4d  |  %4d  |  %4d  |  %4d  |  ", route->releaseDate, route->duration, route->startTime,
+                route->endTime);
+        str += buffer;
 
         // print route
-        std::cout << "[ 0]";
+        str += "[ 0]";
         for (node = route->begin.next; node != nullptr; node = node->next) {
             time = node->prev->timeTo[node->id];
-            printf(" -(%2d)-> [%2d]", time, node->id);
+            sprintf(buffer, " -(%2d)-> [%2d]", time, node->id);
+            str += buffer;
         }
 
         // print clearences
-        std::cout << "  Clearences: ";
+        str += "  Clearences: ";
         for (int r = route->pos + 1; r < routes.size(); r++) {
-            printf("(%d,%d)[%d]  ", route->pos, r, route->clearence[r]);
+            sprintf(buffer, "(%d,%d)[%d]  ", route->pos, r, route->clearence[r]);
+            str += buffer;
         }
-        std::cout << std::endl;
+        str += '\n';
     }
-
-    std::cout << std::endl << std::endl;
+    return str;
 }
+
+std::string LocalSearch::getBlockStr(Node* bStart, Node* bEnd) {
+    std::string blockStr = "[ ";
+    for (; bStart != bEnd->next; bStart = bStart->next) {
+        blockStr += std::to_string(bStart->id) + " ";
+    }
+    blockStr += "] ";
+    return blockStr;
+}
+
+void LocalSearch::preMoveDebug(std::string move, bool bothBlocks) {
+    updateRoutesData();
+    _routeEnd = isIntraSearch || r1.pos > r2.pos ? r1.route->endTime : r2.route->endTime;
+
+    std::string _moveType = (isIntraSearch ? "Intra" : "Inter");
+    _log = "(" + _moveType + ") " + move + " " + getBlockStr(bestB1, bestB1End);
+    if (bothBlocks) _log += " and " + getBlockStr(bestB2, bestB2End);
+    _log += '\n' + getRoutesStr();
+}
+
+void LocalSearch::postMoveDebug(std::string move) {
+    updateRoutesData();
+    int _newEnd = isIntraSearch || r1.pos > r2.pos ? r1.route->endTime : r2.route->endTime;
+
+    if (_newEnd >= _routeEnd) {
+        std::cout << "A " << (isIntraSearch ? "Intra " : "Inter ") << move
+                  << " was performed, but lead to no improvement: " << _routeEnd << " -> " << _newEnd << std::endl;
+        std::cout << _log << "Result:" << std::endl << getRoutesStr() << std::endl;
+    }
+}
+
+#endif

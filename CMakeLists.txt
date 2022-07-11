@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIL_STD")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
+add_definitions(-DLOG_VERBOSE=false)
+
 set(mainFiles
         src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
         src/Individual.h src/Instance.h src/Instance.cpp src/LocalSearch.h src/LocalSearch.cpp
