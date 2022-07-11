@@ -50,6 +50,15 @@ struct Route {
     Route(Data& data) : begin(data, 0), end(data, 0), clearence(data.N) {}
 };
 
+struct RouteEval {  // represents a route that is being evaluated in a inter move search
+    Route* route;
+    int pos;
+    int endBefore;  // the ending time of the route before
+
+    int newReleaseDate;  // the evaluated release date after a move
+    int newDuration;     // the evaluated duration after a move
+};
+
 class LocalSearch {
    private:
     Data& data;
@@ -65,12 +74,11 @@ class LocalSearch {
 
     // Auxiliary variables used within the local search functions
     Node *node, *aux;
-    Route *route1, *route2, *lastRoute;
-    int beforeR1End, beforeR2End, deltaR1End, newBeforeR2End;
-    int i, whichMove, move, pos, preMinus, prePlus, minus, plus;
+    Route* lastRoute;  // imRoute: route used in a intra move
+    int i, whichMove, move, pos, preMinus, prePlus, minus, plus, rx, ry;
     int improvement, bestImprovement, routesClearence;  // clearence between r1 and r2-1
-    int newR1EndTime, newR1ReleaseDate, newR1Duration;
-    int newR2EndTime, newR2ReleaseDate, newR2Duration, newR2Start;
+    RouteEval r1, r2, *routeA, *routeB;
+    int newRAEnd, newRBEnd, deltaRAEnd, newBeforeRBEnd, newRBStart;
 
     // variables representing two blocks on which moves are made
     Node *b1, *b1End, *b2, *b2End;
@@ -105,7 +113,8 @@ class LocalSearch {
     void relocateBlock();      // relocate block1 to after block2Start
     void revertBlock();        // revert block1
 
-    void evaluateImprovement();  // if improved, save current blocks in best blocks pointers
+    bool evaluateImprovement();  // if improved, save current blocks in best blocks pointers
+    bool evaluateInterRouteImprovement();
     void updateRoutesData();
     void addRoute();         // add a route to the end of routes
     void checkEmptyRoute();  // check if route1 is empty

@@ -48,7 +48,8 @@ bool LocalSearch::intraSearch() {
     bool improvedAny = false, improved;
 
     for (auto route : routes) {
-        route1 = route;
+        r1.route = route;
+        r1.pos = route->pos;
 
         whichMove = 0;
         while (whichMove < N_INTRA) {
@@ -92,7 +93,7 @@ bool LocalSearch::callIntraSearch() {
 }
 
 bool LocalSearch::intraSwap() {
-    if (route1->nClients < b1Size + b2Size) return false;  // not enough clients to make blocks of these sizes
+    if (r1.route->nClients < b1Size + b2Size) return false;  // not enough clients to make blocks of these sizes
 
     bestImprovement = 0;
     intraSwapOneWay();
@@ -138,7 +139,7 @@ bool LocalSearch::intraRelocation() {
         preMinus = b1->prev->timeTo[b1->id] + b1End->timeTo[b1End->next->id];
         prePlus = b1->prev->timeTo[b1End->next->id];
 
-        for (b2 = &(route1->begin); b2->next != nullptr; b2 = b2->next) {
+        for (b2 = &(r1.route->begin); b2->next != nullptr; b2 = b2->next) {
             if (b2->next == b1) {
                 b2 = b1End->next;        // skip block
                 if (b2->id == 0) break;  // no position after block
@@ -160,7 +161,7 @@ bool LocalSearch::intraRelocation() {
 
 bool LocalSearch::intraTwoOpt() {
     bestImprovement = 0;
-    for (b1 = route1->begin.next; b1->next != 0; b1 = b1->next) {
+    for (b1 = r1.route->begin.next; b1->next != 0; b1 = b1->next) {
         minus = b1->prev->timeTo[b1->id] + b1->timeTo[b1->next->id];
         prePlus = 0;
 
@@ -194,17 +195,16 @@ bool LocalSearch::interSearch() {
     whichMove = 0;
     while (whichMove < N_INTER) {
         move = interMovesOrder[whichMove];
-
         improvedAnyRoute = false;
-        for (int r2 = 1; r2 < routes.size() && !improvedAnyRoute; r2++) {
-            route2 = routes[r2];
-            beforeR2End = routes[r2 - 1]->endTime;
 
-            for (int r1 = 0; r1 < r2 && !improvedAnyRoute; r1++) {
-                route1 = routes[r1];
-                beforeR1End = r1 == 0 ? 0 : routes[r1 - 1]->endTime;
-                routesClearence = route1->clearence[r2 - 1];
+        for (rx = 1; rx < routes.size() && !improvedAnyRoute; rx++) {
+            for (ry = 0; ry < rx && !improvedAnyRoute; ry++) {
+                r1.pos = ry, r2.pos = rx;
+                improvedAnyRoute = callInterSearch();
+            }
 
+            for (ry = 0; ry < rx && !improvedAnyRoute; ry++) {
+                r1.pos = rx, r2.pos = ry;
                 improvedAnyRoute = callInterSearch();
             }
         }
@@ -223,6 +223,11 @@ bool LocalSearch::interSearch() {
 }
 
 bool LocalSearch::callInterSearch() {
+    r1.route = routes[r1.pos];
+    r2.route = routes[r2.pos];
+    r1.endBefore = r1.pos == 0 ? 0 : routes[r1.pos - 1]->endTime;
+    r2.endBefore = r2.pos == 0 ? 0 : routes[r2.pos - 1]->endTime;
+
     if (move == 1) {  // relocation 1
         b1Size = 1;
         return interRelocation();
@@ -236,24 +241,15 @@ bool LocalSearch::callInterSearch() {
 
 bool LocalSearch::interRelocation() {
     for (resetBlock1(); !blocks1Finished; moveBlock1Forward()) {
-        newR1ReleaseDate = std::max<int>(b1->predecessorsRd, b1End->successorsRd);
-        newR1Duration = b1->prev->durationBefore + b1->prev->timeTo[b1End->next->id] + b1End->next->durationAfter;
-        newR1EndTime = std::max<int>(beforeR1End, newR1ReleaseDate) + newR1Duration;
-        deltaR1End = newR1EndTime - route1->endTime;
+        r1.newReleaseDate = std::max<int>(b1->predecessorsRd, b1End->successorsRd);
+        r1.newDuration = b1->prev->durationBefore + b1->prev->timeTo[b1End->next->id] + b1End->next->durationAfter;
+        r2.newReleaseDate = std::max<int>(r2.route->releaseDate, b1ReleaseDate);
 
-        newR2ReleaseDate = std::max<int>(route2->releaseDate, b1ReleaseDate);
+        for (b2 = &(r2.route->begin); b2->next != nullptr; b2 = b2->next) {
+            r2.newDuration = b2->durationBefore + b2->timeTo[b1->id] + b1Duration + b1End->timeTo[b2->next->id] +
+                             b2->next->durationAfter;
 
-        for (b2 = &(route2->begin); b2->next != nullptr; b2 = b2->next) {
-            newR2Duration = b2->durationBefore + b2->timeTo[b1->id] + b1Duration + b1End->timeTo[b2->next->id] +
-                            b2->next->durationAfter;
-
-            newBeforeR2End = beforeR2End + std::min<int>(std::max<int>(0, deltaR1End - routesClearence),
-                                                         std::max<int>(deltaR1End, routesClearence));
-            newR2Start = std::max<int>(newR2ReleaseDate, newBeforeR2End);
-            newR2EndTime = newR2Start + newR2Duration;
-
-            if (newR2EndTime < route2->endTime) {
-                bestB1 = b1, bestB1End = b1End, bestB2 = b2;
+            if (evaluateInterRouteImprovement()) {
                 relocateBlock();
                 checkEmptyRoute();
                 return true;
@@ -271,7 +267,7 @@ bool LocalSearch::interRelocation() {
 void LocalSearch::resetBlock1() {
     blocks1Finished = false;
 
-    b1 = route1->begin.next;
+    b1 = r1.route->begin.next;
     b1End = b1;
     b1ReleaseDate = b1->releaseDate;
     b1Duration = 0;
@@ -303,7 +299,7 @@ void LocalSearch::resetBlock2Intra() {
 }
 
 void LocalSearch::resetBlock2Inter() {
-    b2 = route2->begin.next;
+    b2 = r2.route->begin.next;
     b2End = b2;
     b2ReleaseDate = b2->releaseDate;
     b2Duration = 0;
@@ -377,14 +373,38 @@ void LocalSearch::revertBlock() {
 ************************** OTHER FUNCTIONS ********************************
 ***************************************************************************/
 
-void LocalSearch::evaluateImprovement() {
+bool LocalSearch::evaluateImprovement() {
     if (improvement > bestImprovement) {
         bestImprovement = improvement;
         bestB1 = b1;
         bestB1End = b1End;
         bestB2 = b2;
         bestB2End = b2End;
+        return true;
     }
+    return false;
+}
+
+bool LocalSearch::evaluateInterRouteImprovement() {
+    if (r1.pos < r2.pos)
+        routeA = &r1, routeB = &r2;
+    else
+        routeA = &r2, routeB = &r1;
+
+    routesClearence = routeA->route->clearence[routeB->pos - 1];
+
+    // evaluate a inter route search given that route1 and route2 new release dates are set by a inter route move
+    // a inter route is evaluated w. r. t. the ending time of the second route in the move
+    newRAEnd = std::max<int>(routeA->endBefore, routeA->newReleaseDate) + routeA->newDuration;
+    deltaRAEnd = newRAEnd - routeA->route->endTime;
+
+    newBeforeRBEnd = routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
+                                                       std::max<int>(deltaRAEnd, routesClearence));
+    newRBStart = std::max<int>(routeB->newReleaseDate, newBeforeRBEnd);
+    newRBEnd = newRBStart + routeB->newDuration;
+
+    improvement = routeB->route->endTime - newRBEnd;
+    return evaluateImprovement();  //
 }
 
 void LocalSearch::updateRoutesData() {  // this data is only used during inter route moves
@@ -456,10 +476,10 @@ void LocalSearch::addRoute() {
 }
 
 void LocalSearch::checkEmptyRoute() {
-    if (route1->begin.next->id == 0) {
-        for (i = route1->pos + 1; i < routes.size(); i++) routes[i]->pos--;
-        routes.erase(routes.begin() + route1->pos);
-        emptyRoutes.push_back(route1);
+    if (r1.route->begin.next->id == 0) {
+        for (i = r1.route->pos + 1; i < routes.size(); i++) routes[i]->pos--;
+        routes.erase(routes.begin() + r1.route->pos);
+        emptyRoutes.push_back(r1.route);
     }
 }
 
