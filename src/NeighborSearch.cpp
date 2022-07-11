@@ -27,10 +27,11 @@ int NeighborSearch::splitNs(Solution* solution) {
     return gain;
 }
 
-int NeighborSearch::educate(Individual* indiv) {
-    const int originalTime = indiv->eval;
+int NeighborSearch::educate(Individual& indiv) {
+    const int originalTime = indiv.eval;
 
-    Solution* solution = new Solution(data, indiv->giantTour, nullptr);
+    Solution* solution = new Solution(data, indiv.giantTour, nullptr);
+    intraSearch.search(solution);
 
     int which = 1;  // 0: intra   1: inter
     bool splitImproved;
@@ -47,7 +48,7 @@ int NeighborSearch::educate(Individual* indiv) {
     int i = 0;
     for (const std::vector<int>* route : solution->routes) {
         for (int j = 1; j < route->size() - 1; j++) {
-            indiv->giantTour[i] = route->at(j);
+            indiv.giantTour[i] = route->at(j);
             i++;
         }
     }

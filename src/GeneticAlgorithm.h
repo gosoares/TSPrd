@@ -2,7 +2,7 @@
 #define TSPRD_GENETICALGORITHM_H
 
 #include "Data.h"
-#include "LocalSearch.h"
+#include "NeighborSearch.h"
 #include "Population.h"
 #include "Split.h"
 
@@ -10,7 +10,7 @@ class GeneticAlgorithm {
    public:
     Data& data;
     Split split;
-    LocalSearch localSearch;
+    NeighborSearch localSearch;
     Population population;
 
     GeneticAlgorithm(Data& instance);

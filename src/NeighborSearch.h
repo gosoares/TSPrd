@@ -16,7 +16,7 @@ class NeighborSearch {
 
    public:
     explicit NeighborSearch(Data& instance);
-    int educate(Individual* indiv);
+    int educate(Individual& indiv);
 };
 
 #endif  // TSPRD_NEIGHBORSEARCH_H
