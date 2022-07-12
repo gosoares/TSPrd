@@ -36,11 +36,10 @@ def gen_instances_df():
     return pd.DataFrame(instances, columns=["set", "n", "name", "beta", "exec_id"])
 
 
-def read_execution_data(results_folder: str):
+def read_execution_data(results_folder: str, remove_solomon_n: bool = True):
     df = gen_instances_df()  # each row of this dataframe represents one of ten execution of each instance n_instance_beta
 
-    # read ref obj (obj from archetti paper)
-    ref_data = pd.read_csv("../instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_time": "Int64"})
+    ref_data = read_reference_data()
     df = df.merge(ref_data, how="left", on=["set", "name", "beta"], copy=False)
 
     # read obj, exec_time, sol_time for each execution row
@@ -55,10 +54,14 @@ def read_execution_data(results_folder: str):
     df["obj"] = df["obj"].astype(int)
     df.insert(df.columns.get_loc("obj") + 1, "gap_obj_ref", calculate_gap(df["obj"], df["ref_obj"]))
 
-    # remove n/ from solomon instances names, as it is not needed anymore
-    df["name"] = df["name"].apply(lambda x: x.split("/")[-1])
+    if remove_solomon_n:  # remove n/ from solomon instances names, as it is not needed anymore
+        df["name"] = df["name"].apply(lambda x: x.split("/")[-1])
 
     return df
+
+
+def read_reference_data():
+    return pd.read_csv("../instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_time": "Int64"})
 
 
 def aggregate_data(df: pd.DataFrame):
