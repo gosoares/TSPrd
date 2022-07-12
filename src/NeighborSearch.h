@@ -1,25 +1,22 @@
 #ifndef TSPRD_NEIGHBORSEARCH_H
 #define TSPRD_NEIGHBORSEARCH_H
 
-#include "Instance.h"
 #include "InterSearch.h"
 #include "IntraSearch.h"
-#include "Solution.h"
+#include "Population.h"
 
 class NeighborSearch {
    private:
-    const Instance& instance;
-    const vector<vector<unsigned int> >& W;
-    const vector<unsigned int>& RD;
+    Data& data;
 
     IntraSearch intraSearch;
     InterSearch interSearch;
 
-    unsigned int splitNs(Solution* solution);
+    int splitNs(Solution* solution);
 
    public:
-    explicit NeighborSearch(const Instance& instance);
-    unsigned int educate(Solution* solution);
+    explicit NeighborSearch(Data& instance);
+    int educate(Individual& indiv);
 };
 
 #endif  // TSPRD_NEIGHBORSEARCH_H

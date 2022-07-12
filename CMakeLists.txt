@@ -4,11 +4,19 @@ project(TSPrd)
 set(CMAKE_CXX_STANDARD 20)
 set(Boost_USE_STATIC_LIBS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIL_STD")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wno-sign-compare")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
-set(mainFiles src/Instance.cpp src/Instance.h src/Solution.cpp src/Solution.h src/IntraSearch.cpp src/IntraSearch.h src/InterSearch.cpp src/InterSearch.h src/NeighborSearch.cpp src/NeighborSearch.h
-        src/GeneticAlgorithm.cpp src/GeneticAlgorithm.h src/Split.h src/Timer.h src/Rng.h)
+add_definitions(-DLOG_VERBOSE=false)
+
+set(mainFiles
+        src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
+        src/Individual.h src/Instance.h src/Instance.cpp
+
+        # src/LocalSearch.h src/LocalSearch.cpp src/LocalSearchIntra.cpp src/LocalSearchInter.cpp
+        src/Population.h src/Population.cpp src/Split.h src/Split.cpp
+        src/NeighborSearch.h src/NeighborSearch.cpp src/IntraSearch.h src/IntraSearch.cpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
+)
 add_executable(TSPrd src/main.cpp ${mainFiles})
 
 # set(CPLEX_DIR "/Applications/CPLEX_Studio201")

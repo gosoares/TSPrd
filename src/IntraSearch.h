@@ -1,25 +1,24 @@
 #ifndef TSPRD_INTRASEARCH_H
 #define TSPRD_INTRASEARCH_H
 
-#include "Instance.h"
+#include "Data.h"
 #include "Solution.h"
 
 class IntraSearch {
    private:
-    const vector<vector<unsigned int> >& W;
-
-    vector<unsigned int> searchOrder;
+    Data& data;
+    std::vector<int> searchOrder;
 
     void shuffleSearchOrder();
-    unsigned int callIntraSearch(vector<unsigned int>* route, unsigned int which);
-    unsigned int swapSearch(vector<unsigned int>* route, unsigned int n1 = 1, unsigned int n2 = 1);
-    int evaluateSwap(vector<unsigned int>* route, unsigned int i1, unsigned int i2, unsigned int n1, unsigned int n2);
-    unsigned int reinsertionSearch(vector<unsigned int>* route, unsigned int n = 1);
-    unsigned int twoOptSearch(vector<unsigned int>* route);
+    int callIntraSearch(std::vector<int>* route, int which);
+    int swapSearch(std::vector<int>* route, int n1 = 1, int n2 = 1);
+    int evaluateSwap(std::vector<int>* route, int i1, int i2, int n1, int n2);
+    int reinsertionSearch(std::vector<int>* route, int n = 1);
+    int twoOptSearch(std::vector<int>* route);
 
    public:
-    explicit IntraSearch(const Instance& instance);
-    unsigned int search(Solution* solution);
+    explicit IntraSearch(Data& Data);
+    int search(Solution* solution);
 };
 
 #endif  // TSPRD_INTRASEARCH_H

@@ -1,82 +1,54 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-
+#include "Data.h"
 #include "GeneticAlgorithm.h"
-#include "Rng.h"
-#include "Solution.h"
-
-using namespace std;
-
-const double TIME_COEFF = 1201.0 / 1976.0;  // time normalization coefficient
-long long Rng::seed;
-mt19937 Rng::generator;
+#include "Instance.h"
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        cout << "usage: TSPrd instance_file [output_file] [seed]" << endl;
-        exit(1);
-    }
+    auto [instanceName, outputFile, params] = Data::parseArgs(argc, argv);
+    auto instance = Instance(instanceName);
+    auto data = Data(instance, params);
 
-    // initialize Rng
-    long long seed = argc == 4 ? stoll(argv[3]) : random_device{}();
-    Rng::initialize(seed);
+    auto alg = GeneticAlgorithm(data);
+    auto endTime = std::chrono::steady_clock::now();
+    auto execTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - data.startTime).count();
 
-    // genetic algorithm parameters
-    unsigned int mi = 20;
-    unsigned int lambda = 40;
-    auto nbElite = (unsigned int)(0.5 * mi);
-    auto nClose = (unsigned int)(0.3 * mi);
-    unsigned int itNi = 10000;                // max iterations without improvement to stop the algorithm
-    auto itDiv = (unsigned int)(0.4 * itNi);  // iterations without improvement to diversify
+    std::cout << "EXEC_TIME " << execTime << std::endl;
+    std::cout << "SOL_TIME " << alg.population.searchProgress.back().first << std::endl;
+    std::cout << "OBJ " << alg.population.bestSolution.eval << std::endl;
+    std::cout << "SEED " << params.seed << std::endl;
 
-    auto timeLimit = (unsigned int)(10 * 60 / TIME_COEFF);  // in seconds
-
-    string instanceName = argv[1];
-    Instance instance(instanceName);
-
-    auto alg = GeneticAlgorithm(instance, mi, lambda, nClose, nbElite, itNi, itDiv, timeLimit);
-    Solution s = alg.getSolution();
-    s.validate();
-
-    cout << "RESULT " << s.time << endl;
-    cout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
-    cout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
-    cout << "SEED " << Rng::getSeed() << endl;
-
-    if (argc < 3) return 0;
+    if (outputFile == "") return 0;
 
     // output to file
-    string outFile = string(argv[2]);
-    string dir = outFile.substr(0, outFile.find_last_of('/'));
-    if (dir != outFile) filesystem::create_directories(dir);  // make sure the path exists
+    std::string dir = outputFile.substr(0, outputFile.find_last_of('/'));
+    if (dir != outputFile) std::filesystem::create_directories(dir);  // make sure the path exists
 
-    ofstream fout(outFile, ios::out);
-    fout << "EXEC_TIME " << alg.getExecutionTime(TIME_COEFF) << endl;
-    fout << "SOL_TIME " << alg.getBestSolutionTime(TIME_COEFF) << endl;
-    fout << "OBJ " << s.time << endl;
-    fout << "SEED " << Rng::getSeed() << endl;
-    fout << "N_ROUTES " << s.routes.size() << endl;
-    fout << "N_CLIENTS";
-    for (auto& r : s.routes) fout << " " << (r->size() - 2);
-    fout << endl << "ROUTES" << endl;
-    for (auto& r : s.routes) {
-        for (unsigned int c = 1; c < r->size() - 1; c++) {
-            fout << r->at(c) << " ";
-        }
-        fout << endl;
-    }
-    fout << endl;
+    std::ofstream fout(outputFile, std::ios::out);
+    fout << "EXEC_TIME " << execTime << std::endl;
+    fout << "SOL_TIME " << alg.population.searchProgress.back().first << std::endl;
+    fout << "OBJ " << alg.population.bestSolution.eval << std::endl;
+    fout << "SEED " << params.seed << std::endl;
+    // fout << "N_ROUTES " << s.routes.size() << std::endl;
+    // fout << "N_CLIENTS";
+    // for (auto& r : s.routes) fout << " " << (r->size() - 2);
+    // fout << std::endl << "ROUTES" << std::endl;
+    // for (auto& r : s.routes) {
+    //     for (unsigned int c = 1; c < r->size() - 1; c++) {
+    //         fout << r->at(c) << " ";
+    //     }
+    //     fout << std::endl;
+    // }
+    // fout << std::endl;
     fout.close();
 
     // output search progress
-    auto dotPos = outFile.find_last_of('.');
-    string spFile = outFile.substr(0, dotPos) + "_SP" + outFile.substr(dotPos);
-    ofstream spout(spFile, ios::out);
-    spout << "time,obj" << endl;
-    for (auto x : alg.getSearchProgress()) {
-        spout << (unsigned int)(x.first * TIME_COEFF) << "," << x.second << endl;
-    }
-    spout.close();
+    // auto dotPos = outputFile.find_last_of('.');
+    // std::string spFile = outputFile.substr(0, dotPos) + "_SP" + outputFile.substr(dotPos);
+    // std::ofstream spout(spFile, std::ios::out);
+    // spout << "time,obj" << std::endl;
+    // for (auto x : alg.getSearchProgress()) {
+    //     spout << std::chrono::duration_cast<std::chrono::milliseconds>(x.first - data.startTime).count() << ","
+    //           << x.second << std::endl;
+    // }
+    // spout.close();
     return 0;
 }
