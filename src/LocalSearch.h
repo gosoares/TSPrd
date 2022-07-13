@@ -38,16 +38,16 @@ struct Route {
     int duration;     // total travel time in the route
     int endTime;      // startingTime + duration
 
-    // how much clearence this route have in relation to the route after it
-    // c = clearence[j] > 0 means that this route can increase its and time by at most c
+    // how much clearance this route have in relation to the route after it
+    // c = clearance[j] > 0 means that this route can increase its and time by at most c
     // without affecting the start time of route r. After that, it will increase the starting
     // time of route j by the difference between the time increase and c
-    // c = clearence[j] < 0 means that this route is coupled with the route j (there's no waiting time
+    // c = clearance[j] < 0 means that this route is coupled with the route j (there's no waiting time
     // between theses routes), decreasing the endtime of this route will decrease the starting time of
     // route j by the max of the decrease and c
-    std::vector<int> clearence;
+    std::vector<int> clearance;
 
-    Route(Data& data) : begin(data, 0), end(data, 0), clearence(data.N) {}
+    Route(Data& data) : begin(data, 0), end(data, 0), clearance(data.N) {}
 };
 
 struct RouteEval {  // represents a route that is being evaluated in a inter move search
@@ -80,7 +80,7 @@ class LocalSearch {
     Node *node, *aux;
     Route* lastRoute;  // imRoute: route used in a intra move
     int i, whichMove, move, pos, preMinus, prePlus, minus, plus, rx, ry;
-    int improvement, bestImprovement, routesClearence;  // clearence between r1 and r2-1
+    int improvement, bestImprovement, routesClearance;  // clearance between r1 and r2-1
     RouteEval r1, r2, *routeA, *routeB;
     int newRAEnd, newRBEnd, deltaRAEnd, newBeforeRBEnd, newRBStart;
     int preR1ReleaseDate, preR1Duration;
@@ -113,7 +113,7 @@ class LocalSearch {
 
     // functions that operates in blocks b1 and b2
     void resetBlock1();        // set block1 to start of route1
-    void resetBlock2Intra();   // set block2 do immediatly after block1
+    void resetBlock2Intra();   // set block2 do immediately after block1
     void resetBlock2Inter();   // set block2 to start of route 2
     void moveBlock1Forward();  // move block1 to next position in its route
     void moveBlock2Forward();  // move block2 to next position in its route

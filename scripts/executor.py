@@ -7,6 +7,8 @@ import time
 
 from tsprd_data import *
 
+TIME_LIMIT = 10 * 60 * (1976.0 / 1201.0)
+
 
 def tsprd_execute(output_folder: str, n_threads: int):
     build_project(output_folder)
@@ -22,10 +24,10 @@ def tsprd_execute(output_folder: str, n_threads: int):
             total_cores = cpu_count()
             current_element += 1
             current_time = time.time() - start_time
+            instance_name = "{}/{}_{} {}".format(iset, name, beta, exec_id)
 
             print("\r {:4d}/{:4d} | {:02d}:{:02d}:{:02d} | {:2.2f}/{:<2d} | {}".format(current_element, total_elements, int(current_time / 3600), int(
-                current_time / 60 % 60), int(current_time % 60), getloadavg()[0], total_cores, "{}/{}_{}_{}".format(iset, name, beta, exec_id), end='         '))
-        print()
+                current_time / 60 % 60), int(current_time % 60), getloadavg()[0], total_cores, instance_name, end="   ", flush=True))
 
 
 def save_git_commit_hash(output_folder: str):
@@ -52,18 +54,17 @@ def execute_instance(iset, _, name, beta, exec_id, output_folder):
     output_file = "{}/{}_{}.txt".format(output_folder, instance, exec_id)
 
     if not exists(output_file):  # skip if it was already executed and saved
-        command = "{}/build/TSPrd {} -o {}".format(output_folder, instance_file, output_file)
+        command = "{}/build/TSPrd {} -o {} -t {}".format(output_folder, instance_file, output_file, TIME_LIMIT)
         process = subprocess.run([command], stdout=subprocess.DEVNULL, shell=True)
 
         if process.returncode != 0:
             print(instance, file=open("{}/errors.txt".format(output_folder), 'a'))
-            print("error while running {}".format(instance))
             raise Exception("Error while running {}".format(instance))
 
     return iset, name, beta, exec_id
 
 
-def main(output_folder: str, n_threads: int):
+def main():
     parser = argparse.ArgumentParser(description='Run all instances of TSPrd.')
     parser.add_argument("output_folder_", action="store",
                         type=str, help="Which folder to save the output files.")

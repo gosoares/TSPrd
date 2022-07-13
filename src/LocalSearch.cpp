@@ -12,6 +12,7 @@ LocalSearch::LocalSearch(Data& data, Split& split)
 }
 
 void LocalSearch::educate(Individual& indiv) {
+    split.split(&indiv);
     load(indiv);
     updateRoutesData();
 
@@ -240,15 +241,15 @@ bool LocalSearch::evaluateImprovement() {
 //     else
 //         routeA = &r2, routeB = &r1;
 
-//     routesClearence = routeA->route->clearence[routeB->pos - 1];
+//     routesClearance = routeA->route->clearance[routeB->pos - 1];
 
 //     // evaluate a inter route search given that route1 and route2 new release dates are set by a inter route move
 //     // a inter route is evaluated w. r. t. the ending time of the second route in the move
 //     newRAEnd = std::max<int>(routeA->endBefore, routeA->newReleaseDate) + routeA->newDuration;
 //     deltaRAEnd = newRAEnd - routeA->route->endTime;
 
-//     newBeforeRBEnd = routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
-//                                                        std::max<int>(deltaRAEnd, routesClearence));
+//     newBeforeRBEnd = routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearance),
+//                                                        std::max<int>(deltaRAEnd, routesClearance));
 //     newRBStart = std::max<int>(routeB->newReleaseDate, newBeforeRBEnd);
 //     newRBEnd = newRBStart + routeB->newDuration;
 
@@ -262,7 +263,7 @@ bool LocalSearch::evaluateInterRouteImprovement() {
     else
         routeA = &r2, routeB = &r1;
 
-    routesClearence = routeA->route->clearence[routeB->pos - 1];
+    routesClearance = routeA->route->clearance[routeB->pos - 1];
 
     // evaluate a inter route search given that route1 and route2 new release dates are set by a inter route move
     // a inter route is evaluated w. r. t. the ending time of the second route in the move
@@ -271,8 +272,8 @@ bool LocalSearch::evaluateInterRouteImprovement() {
 
     improvement = routeB->route->endTime -
                   (std::max<int>(routeB->newReleaseDate,
-                                 routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearence),
-                                                                   std::max<int>(deltaRAEnd, routesClearence))) +
+                                 routeB->endBefore + std::min<int>(std::max<int>(0, deltaRAEnd - routesClearance),
+                                                                   std::max<int>(deltaRAEnd, routesClearance))) +
                    routeB->newDuration);
     return evaluateImprovement();  //
 }
@@ -303,28 +304,28 @@ void LocalSearch::updateRoutesData() {  // this data is only used during inter r
         prevEnd = route->endTime;
     }
 
-    // calculate the clearence between each pair of routes
+    // calculate the clearance between each pair of routes
     // first between adjacent routes
     int R = routes.size() - 1;
     for (int r = 0; r < R; r++) {
-        routes[r]->clearence[r] = -INF;
-        routes[r]->clearence[r + 1] = routes[r + 1]->releaseDate - routes[r]->endTime;
+        routes[r]->clearance[r] = -INF;
+        routes[r]->clearance[r + 1] = routes[r + 1]->releaseDate - routes[r]->endTime;
     }
-    routes[R]->clearence[R] = -INF;
+    routes[R]->clearance[R] = -INF;
 
-    int clearence, prevClearence;
+    int clearance, prevClearence;
     for (int r1 = 0; r1 < routes.size(); r1++) {
-        clearence = routes[r1]->clearence[r1 + 1];
+        clearance = routes[r1]->clearance[r1 + 1];
         for (int r2 = r1 + 2; r2 < routes.size(); r2++) {
-            prevClearence = routes[r2 - 1]->clearence[r2];
-            if (clearence > 0) {
-                clearence += std::max<int>(prevClearence, 0);
+            prevClearence = routes[r2 - 1]->clearance[r2];
+            if (clearance > 0) {
+                clearance += std::max<int>(prevClearence, 0);
             } else if (prevClearence > 0) {
-                clearence = prevClearence;
+                clearance = prevClearence;
             } else {
-                clearence = std::max<int>(clearence, prevClearence);
+                clearance = std::max<int>(clearance, prevClearence);
             }
-            routes[r1]->clearence[r2] = clearence;
+            routes[r1]->clearance[r2] = clearance;
         }
     }
 }
@@ -426,10 +427,10 @@ std::string LocalSearch::getRoutesStr() {  // for debugging
             str += buffer;
         }
 
-        // print clearences
-        str += "  Clearences: ";
+        // print clearances
+        str += "  Clearances: ";
         for (int r = route->pos + 1; r < routes.size(); r++) {
-            sprintf(buffer, "(%d,%d)[%d]  ", route->pos, r, route->clearence[r]);
+            sprintf(buffer, "(%d,%d)[%d]  ", route->pos, r, route->clearance[r]);
             str += buffer;
         }
         str += '\n';
