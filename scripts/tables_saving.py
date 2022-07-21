@@ -19,7 +19,7 @@ c_transl = {  # for each column put the name and the alignment
     "n_ref_sb_best": (sb_s("(best run)"), "c"), "n_ref_sb_avg": (sb_s("(all runs)"), "c"), "n_sb_best": (sb_s(), "c"), "n_sb_avg": (sb_s(), "c"),
     "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"), "ref_obj": ("obj", "r"), "ref_gap": (GAP, "c"), "ref_time": ("TB", "r"),
     "best_obj": ("obj", "r"), "gap_best": (GAP, "c"), "avg_obj": ("obj", "r"), "gap_avg": (GAP, "c"), "exec_time": ("TT", "r"),
-    "sol_time": ("TB", "r")
+    "sol_time": ("TB", "r"), "best_known": ("known", "r")
 }
 
 
@@ -132,9 +132,13 @@ def gen_table_headers(df: pd.DataFrame):
 
     start = 0
     first_row, second_row = [], []
+    has_ref = True
     while start < n_columns:
         first_ref = index_first(columns, lambda x: x and "ref_" in x, start)
-        last_ref = index_firsts_last(columns, lambda x, _: "ref_" in x, first_ref)
+        if first_ref == -1:  # no ref columns
+            has_ref, last_ref = False, 0
+        else:
+            last_ref = index_firsts_last(columns, lambda x, _: "ref_" in x, first_ref)
         first_hgs = index_first(columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref)
         first_best = first_hgs
         first_avg = index_first(columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"), first_best)
@@ -143,7 +147,9 @@ def gen_table_headers(df: pd.DataFrame):
                                      first_avg + 1)
         start = last_hgs + 1
 
-        first_row.extend([("\\archils{}", first_ref, last_ref), ("\\myalg{}", first_hgs, last_hgs)])
+        if has_ref:
+            first_row.append(("\\archils{}", first_ref, last_ref))
+        first_row.append(("\\myalg{}", first_hgs, last_hgs))
         second_row.extend([("best run", first_best, first_best + 1), ("all runs", first_avg, first_avg + 1)])
 
     tex += tex_header(n_columns, first_row)

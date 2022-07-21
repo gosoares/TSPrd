@@ -52,6 +52,7 @@ def read_execution_data(results_folder: str, remove_solomon_n: bool = True):
         df.dropna(subset="obj", inplace=True)
 
     df["obj"] = df["obj"].astype(int)
+    df["best_known"] = df["best_known"].astype("Int64")
     df.insert(df.columns.get_loc("obj") + 1, "gap_obj_ref", calculate_gap(df["obj"], df["ref_obj"]))
 
     if remove_solomon_n:  # remove n/ from solomon instances names, as it is not needed anymore
@@ -61,13 +62,13 @@ def read_execution_data(results_folder: str, remove_solomon_n: bool = True):
 
 
 def read_reference_data():
-    return pd.read_csv("../instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_time": "Int64"})
+    return pd.read_csv("../instances/reference_data.csv", dtype={"beta": str, "opt": "Int64", "ref_obj": "Int64", "ref_time": "Int64"})
 
 
 def aggregate_data(df: pd.DataFrame):
     # calculate avg and best of obj and avg of times
     grouped = df.groupby(["set", "n", "beta", "name"])
-    df_agg = grouped.agg(opt=("opt", "first"), ref_obj=("ref_obj", "first"), ref_time=("ref_time", "first"), best_obj=("obj", "min"),
+    df_agg = grouped.agg(opt=("opt", "first"), best_known=("best_known", "first"), ref_obj=("ref_obj", "first"), ref_time=("ref_time", "first"), best_obj=("obj", "min"),
                          gap_best=("gap_obj_ref", "min"), avg_obj=("obj", "mean"), gap_avg=("gap_obj_ref", "mean"), exec_time=("exec_time", "mean"),
                          sol_time=("sol_time", "mean"))
     return df_agg
@@ -79,17 +80,22 @@ def split_instance_sets(df_agg: pd.DataFrame):
     tsplib = df_groups.get_group("TSPLIB").droplevel(level=0)
     atsplib = df_groups.get_group("aTSPLIB").droplevel(level=0)
 
-    solomon_opt = solomon.iloc[solomon.index.get_level_values('n') <= 20].copy()
-    solomon_nopt = solomon.iloc[solomon.index.get_level_values('n') > 20].drop(columns="opt")
+    solomon_opt = solomon.query("n <= 30").drop(columns=["best_known"])
     # calculate gaps in relation to the optimal result
     solomon_opt.insert(solomon_opt.columns.get_loc("ref_obj") + 1, "ref_gap",
-                       calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]))
+                       calculate_gap(solomon_opt["ref_obj"], solomon_opt["opt"]).astype(float))
     solomon_opt["gap_best"] = calculate_gap(solomon_opt["best_obj"], solomon_opt["opt"])
     solomon_opt["gap_avg"] = calculate_gap(solomon_opt["avg_obj"], solomon_opt["opt"])
 
-    tsplib.drop(columns=["opt", "ref_time"], inplace=True)
-    atsplib.drop(columns=["opt", "ref_time"], inplace=True)
-    return solomon_opt, solomon_nopt, tsplib, atsplib
+    # mixed between instances with known and unknown optimal solution
+    solomon_mixed = solomon.query("35 <= n <= 45").drop(columns=["ref_obj"])
+
+    solomon50 = solomon.iloc[solomon.index.get_level_values('n') == 50]
+    solomon100 = solomon.iloc[solomon.index.get_level_values('n') == 100].drop(columns=["opt", "best_known"])
+
+    tsplib.drop(columns=["opt", "best_known", "ref_time"], inplace=True)
+    atsplib.drop(columns=["opt", "best_known", "ref_time"], inplace=True)
+    return solomon_opt, solomon_mixed, solomon50, solomon100, tsplib, atsplib
 
 
 def read_instance_result(output_path: str, instance_set: str, instance: str, beta: str, exec_id: int):
@@ -104,5 +110,5 @@ def read_instance_result(output_path: str, instance_set: str, instance: str, bet
         return int(obj), int(exec_time), int(sol_time)
 
 
-def calculate_gap(value: pd.Series, ref: pd.Series) -> float:
+def calculate_gap(value: pd.Series, ref: pd.Series):
     return (100 * value / ref) - 100

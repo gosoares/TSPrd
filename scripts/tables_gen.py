@@ -19,19 +19,20 @@ def main():
 def gen_tables(results_folder: str):
     df = read_execution_data(results_folder)  # read the results of the executions
     df_agg = aggregate_data(df)  # group the 10 executions and calculate the relevant data (means, sums)
-    solomon_opt, solomon_nopt, tsplib, atsplib = split_instance_sets(df_agg)
+    solomon_opt, solomon_mixed, solomon50, solomon100, tsplib, atsplib = split_instance_sets(df_agg)
 
-    gen_solomon_tables(solomon_opt, solomon_nopt)
+    gen_solomon_tables(solomon_opt, solomon_mixed, solomon50, solomon100)
     gen_tsplib_tables(tsplib)
     gen_atsplib_table(atsplib)
     gen_opt_summary_table(solomon_opt)
-    gen_nopt_summary_table(solomon_nopt, tsplib, atsplib)
+    gen_nopt_summary_table(solomon50, solomon100, tsplib, atsplib)
 
 
-def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_nopt: pd.DataFrame):
-    for n, df in chain(solomon_opt.groupby(level=0), solomon_nopt.groupby(level=0)):  # iterate a dataframe for each `n`
-        if df["ref_time"].isnull().all():
-            df.drop(columns="ref_time", inplace=True)
+def gen_solomon_tables(solomon_opt: pd.DataFrame, solomon_mixed: pd.DataFrame, solomon50: pd.DataFrame, solomon100: pd.DataFrame):
+    for n, df in chain(solomon_opt.groupby(level=0), solomon_mixed.groupby(level=0), solomon50.groupby(level=0), solomon100.groupby(level=0)):  # iterate a dataframe for each `n`
+        for check in ["ref_obj", "ref_time", "ref_gap", "best_known"]:
+            if check in df and df[check].isna().all():
+                df.drop(columns=check, inplace=True)
         df = df.droplevel(0)
         save_table(f"solomon{n}", f"Results for Solomon instances with n = {n}", df)
 
@@ -54,29 +55,30 @@ def gen_atsplib_table(atsplib: pd.DataFrame):
 
 
 def gen_opt_summary_table(solomon_opt: pd.DataFrame):
-    sol_opt = solomon_opt.groupby(["n", "beta"]) \
+    sol_opt = solomon_opt.query("n <= 20").groupby(["n", "beta"]) \
         .agg(n_inst=("exec_time", "count"), ref_gap=("ref_gap", "mean"), ref_time=("ref_time", "mean"), gap_best=("gap_best", "mean"),
              gap_avg=("gap_avg", "mean"), exec_time=("exec_time", "mean"), sol_time=("sol_time", "mean"))
     sol_opt["ref_time"] = sol_opt["ref_time"].apply(lambda x: "-" if pd.isna(x) else int(x))
 
     # count how many each equal the optimal result
     sol_opt.insert(sol_opt.columns.get_loc("ref_gap"), "n_ref_opt",
-                   solomon_opt.query("ref_obj == opt").groupby(sol_opt.index.names).size())
+                   solomon_opt.query("ref_obj == opt", engine="python").groupby(sol_opt.index.names).size())
     sol_opt.insert(sol_opt.columns.get_loc("gap_best"), "n_opt_best",
-                   solomon_opt.query("best_obj == opt").groupby(sol_opt.index.names).size())
+                   solomon_opt.query("best_obj == opt", engine="python").groupby(sol_opt.index.names).size())
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg",
-                   solomon_opt.query("avg_obj == opt").groupby(sol_opt.index.names).size())
+                   solomon_opt.query("avg_obj == opt", engine="python").groupby(sol_opt.index.names).size())
 
     save_table("summary_opt", "Comparison of aggregated results for instances with known optimal",
                sol_opt, add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
-def gen_nopt_summary_table(solomon_nopt: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
-    sol_agg = gen_solomon_nopt_summary(solomon_nopt)
+def gen_nopt_summary_table(solomon50: pd.DataFrame, solomon100: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
+    sol50_agg = gen_solomon_nopt_summary(solomon50.drop(columns=["opt"]))
+    sol100_agg = gen_solomon_nopt_summary(solomon100)
     tsplib_agg = gen_tsplib_summary(tsplib)
     atsplib_agg = gen_atsplib_summary(atsplib)
 
-    summary_nopt = pd.concat([sol_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
+    summary_nopt = pd.concat([sol50_agg, sol100_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
     summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]] = \
         summary_nopt[["n_ref_sb_best", "n_ref_sb_avg", "n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     save_table("summary_nopt", "Comparison of aggregated results for the instances in which the optimal solution is unknown", summary_nopt,
@@ -106,13 +108,13 @@ def nopt_summary_agg(df_grouped: DataFrameGroupBy):
                             sol_time=("sol_time", "mean"))
 
     ref_pos = df_agg.columns.get_loc("n_inst") + 1  # position to insert next few columns
-    df_agg.insert(ref_pos, "n_ref_sb_best", df_grouped.apply(lambda d: d.query("ref_obj < best_obj").shape[0]))
-    df_agg.insert(ref_pos + 1, "n_ref_sb_avg", df_grouped.apply(lambda d: d.query("ref_obj < avg_obj").shape[0]))
+    df_agg.insert(ref_pos, "n_ref_sb_best", df_grouped.apply(lambda d: d[d["ref_obj"] < d["best_obj"]].shape[0]))
+    df_agg.insert(ref_pos + 1, "n_ref_sb_avg", df_grouped.apply(lambda d: d[d["ref_obj"] < d["avg_obj"]].shape[0]))
     df_agg.insert(df_agg.columns.get_loc("gap_best"), "n_sb_best",
-                  df_grouped.apply(lambda d: d.query("best_obj < ref_obj").shape[0]))
+                  df_grouped.apply(lambda d: d[d["best_obj"] < d["ref_obj"]].shape[0]))
     df_agg.insert(df_agg.columns.get_loc("gap_avg"), "n_sb_avg",
-                  df_grouped.apply(lambda d: d.query("avg_obj < ref_obj").shape[0]))
-    ref_time_column = df_grouped["ref_time"].mean().astype(int) if "ref_time" in df_agg else "-"
+                  df_grouped.apply(lambda d: d[d["avg_obj"] < d["ref_obj"]].shape[0]))
+    ref_time_column = df_grouped["ref_time"].mean().astype(int) if "ref_time" in df_grouped.describe() else "-"
     df_agg.insert(df_agg.columns.get_loc("n_ref_sb_avg") + 1, "ref_time", ref_time_column)
     return df_agg
 
