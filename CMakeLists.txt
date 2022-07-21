@@ -12,8 +12,6 @@ add_definitions(-DLOG_VERBOSE=false)
 set(mainFiles
         src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
         src/Individual.h src/Instance.h src/Instance.cpp
-
-        # src/LocalSearch.h src/LocalSearch.cpp src/LocalSearchIntra.cpp src/LocalSearchInter.cpp
         src/Population.h src/Population.cpp src/Split.h src/Split.cpp
         src/NeighborSearch.h src/NeighborSearch.cpp src/IntraSearch.h src/IntraSearch.cpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
 )
