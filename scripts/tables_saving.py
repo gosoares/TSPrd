@@ -6,20 +6,15 @@ import pandas as pd
 import re
 
 
-def sb_s(s: str = ""):
-    s = f"\\\\{s}" if s else s
-    return f"\\shortstack{{strictly\\\\better{s}}}"
-
-
-GAP = "gap (\\%)"
+GAP = "gap"
 NOPT = "\\# opt"
+SB_S = "\\# better"
 
 c_transl = {  # for each column put the name and the alignment
     "n": ("n", "c"), "n_inst": ("\\# inst", "r"), "n_ref_opt": (NOPT, "c"), "n_opt_best": (NOPT, "c"), "n_opt_avg": (NOPT, "c"),
-    "n_ref_sb_best": (sb_s("(best run)"), "c"), "n_ref_sb_avg": (sb_s("(all runs)"), "c"), "n_sb_best": (sb_s(), "c"), "n_sb_avg": (sb_s(), "c"),
-    "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"), "ref_obj": ("obj", "r"), "ref_gap": (GAP, "c"), "ref_time": ("TB", "r"),
-    "best_obj": ("obj", "r"), "gap_best": (GAP, "c"), "avg_obj": ("obj", "r"), "gap_avg": (GAP, "c"), "exec_time": ("TT", "r"),
-    "sol_time": ("TB", "r"), "best_known": ("known", "r")
+    "n_sb_best": (SB_S, "c"), "n_sb_avg": (SB_S, "c"), "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"),
+    "ref_obj": ("obj", "r"), "ref_gap": (GAP, "r"), "ref_time": ("TB", "r"), "best_obj": ("obj", "r"), "gap_best": (GAP, "r"),
+    "avg_obj": ("obj", "r"), "gap_avg": (GAP, "r"), "exec_time": ("TT", "r"), "sol_time": ("TB", "r"), "lb": ("lb", "r"), "ub": ("ub", "r")
 }
 
 
@@ -28,7 +23,7 @@ def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\
 
     tex = get_table_tex(df, name, caption)
     reg = re.compile(r"(\\toprule)((?:.|\n)*)(\\bottomrule)")
-    body_tex = reg.search(tex).groups()[1] # get content between \toprule and \bottomrule
+    body_tex = reg.search(tex).groups()[1]  # get content between \toprule and \bottomrule
     tex = reg.sub(r"\1\n__BODY__\n\g<3>", tex)  # get the outer part of \toprule and \bottomrule
 
     header_tex = gen_table_headers(df)
@@ -46,7 +41,7 @@ def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\
 
 def with_blank_columns(df: pd.DataFrame):
     insert_before = ["ref_obj", "best_obj", "avg_obj", "exec_time", "n_ref_opt",
-                     "n_opt_best", "n_opt_avg", "n_ref_sb_best", "n_sb_best", "n_sb_avg"]
+                     "n_opt_best", "n_opt_avg", "n_sb_best", "n_sb_avg"]
     columns = df.columns
     blank_id = 1
     multi_index = isinstance(columns, pd.MultiIndex)
@@ -75,7 +70,8 @@ def get_table_tex(df: pd.DataFrame, name: str = None, caption: str = None):
         .to_latex(clines="skip-last;data", hrules=True, label=f"tab:{name}", caption=caption, position="htb!", position_float="centering",
                   column_format=alignments) \
         .replace("\\cline", "\\cmidrule")
-    tex = re.sub(r"(?:\\cmidrule{\d+-\d+}\s?)+\n(\\bottomrule)", r"\1", tex.strip(" \n"))  # remove \cmidrule{} from before \bottomrule
+    tex = re.sub(r"(?:\\cmidrule{\d+-\d+}\s?)+\n(\\bottomrule)", r"\1",
+                 tex.strip(" \n"))  # remove \cmidrule{} from before \bottomrule
     return tex
 
 
@@ -84,9 +80,10 @@ def gen_table_footer(df: pd.DataFrame):
     columns = set(filter(lambda x: "gap" in x or x.endswith("_time"), df.columns.get_level_values(-1)))
     index = ("Avg.",) + (" ",) * (len(df.index.names) - 1) if len(df.index.names) > 1 else "Avg."
     footer = df.iloc[:, df.columns.get_level_values(-1).isin(columns)].mean(numeric_only=True).rename(index)
-    if "ref_time" in footer:
-        footer["ref_time"] = footer["ref_time"].astype(int) if pd.api.types.is_numeric_dtype(df["ref_time"]) else "-"
     df_footer = footer.to_frame().reindex(df.columns, fill_value="").transpose()
+    if "ref_time" in df_footer:
+        df_footer["ref_time"] = df_footer["ref_time"].astype(
+            int) if pd.api.types.is_numeric_dtype(df["ref_time"]) else "-"
 
     # sum footer
     columns = list(filter(lambda c: c.startswith("n_"), df.columns.get_level_values(-1)))
@@ -150,7 +147,7 @@ def gen_table_headers(df: pd.DataFrame):
         if has_ref:
             first_row.append(("\\archils{}", first_ref, last_ref))
         first_row.append(("\\myalg{}", first_hgs, last_hgs))
-        second_row.extend([("best run", first_best, first_best + 1), ("all runs", first_avg, first_avg + 1)])
+        second_row.extend([("best run", first_best, first_best + 1), ("average", first_avg, first_avg + 1)])
 
     tex += tex_header(n_columns, first_row)
     tex += tex_header(n_columns, second_row)
