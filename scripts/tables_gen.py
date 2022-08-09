@@ -74,7 +74,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame, solomon50_opt):
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", grouped.apply(
         lambda d: d[(d["avg_obj"] - d["opt"]).abs() < 0.0001].shape[0]))
 
-    save_table("summary_opt", "Comparison of aggregated results for instances with known optimal",
+    save_table("summary_opt", "Comparison of aggregated results for instances with proved optimal solutions",
                sol_opt, add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
@@ -85,7 +85,7 @@ def gen_nopt_summary_table(solomon50: pd.DataFrame, solomon100: pd.DataFrame, ts
 
     summary_nopt = pd.concat([solomon_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
     summary_nopt[["n_sb_best", "n_sb_avg"]] = summary_nopt[["n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
-    save_table("summary_nopt", "Comparison of aggregated results for the instances in which the optimal solution is unknown", summary_nopt,
+    save_table("summary_nopt", "Comparison of aggregated results for the instances with unknown optimal solution", summary_nopt,
                add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{4pt}")
 
 
@@ -141,7 +141,7 @@ def gen_nref_opt_summary_table(nref_opt: pd.DataFrame):
     agg.insert(agg.columns.get_loc("gap_avg"), "n_opt_avg", grouped.apply(
         lambda d: d[(d["avg_obj"] - d["opt"]).abs() < 0.0001].shape[0]))
 
-    save_table("summary_nref_opt", "Results for remaining instances with known optimal",
+    save_table("summary_nref_opt", "Results for remaining instances with proved optimal solutions",
                agg, add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
@@ -152,7 +152,7 @@ def gen_nref_nopt_summary_table(nref_nopt: pd.DataFrame):
     agg.insert(agg.columns.get_loc("gap_avg"), "n_sb_avg", grouped.apply(
         lambda d: d[d["avg_obj"] < d["ub"]].shape[0]))
 
-    save_table("summary_nref_nopt", "Results for remaining instances with unknown optimal", agg,
+    save_table("summary_nref_nopt", "Results for remaining instances with unknown optimal solution", agg,
                add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{4pt}")
 
 
