@@ -26,7 +26,6 @@ def gen_tables(results_folder: str):
     solomon50.drop(columns=["opt"], inplace=True)
 
     gen_solomon_tables(solomon_opt, solomon_mixed, solomon50, solomon100)
-    gen_solomon_tables(solomon_opt, solomon_mixed, solomon50, solomon100)
     gen_tsplib_tables(tsplib)
     gen_atsplib_table(atsplib)
     gen_opt_summary_table(solomon_opt, solomon50_opt)
@@ -80,12 +79,11 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame, solomon50_opt):
 
 
 def gen_nopt_summary_table(solomon50: pd.DataFrame, solomon100: pd.DataFrame, tsplib: pd.DataFrame, atsplib: pd.DataFrame):
-    sol50_agg = gen_solomon_nopt_summary(solomon50)
-    sol100_agg = gen_solomon_nopt_summary(solomon100)
+    solomon_agg = gen_solomon_nopt_summary(pd.concat([solomon50, solomon100]))
     tsplib_agg = gen_tsplib_summary(tsplib)
     atsplib_agg = gen_atsplib_summary(atsplib)
 
-    summary_nopt = pd.concat([sol50_agg, sol100_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
+    summary_nopt = pd.concat([solomon_agg, tsplib_agg, atsplib_agg], keys=["Solomon", "TSPLIB", "aTSPLIB"])
     summary_nopt[["n_sb_best", "n_sb_avg"]] = summary_nopt[["n_sb_best", "n_sb_avg"]].fillna(0).astype(int)
     save_table("summary_nopt", "Comparison of aggregated results for the instances in which the optimal solution is unknown", summary_nopt,
                add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{4pt}")
