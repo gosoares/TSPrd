@@ -148,9 +148,9 @@ def gen_nref_opt_summary_table(nref_opt: pd.DataFrame):
 def gen_nref_nopt_summary_table(nref_nopt: pd.DataFrame):
     grouped, agg = nref_grouped_agg(nref_nopt)
     agg.insert(agg.columns.get_loc("gap_best"), "n_sb_best", grouped.apply(
-        lambda d: d[d["best_obj"] - 0.0001 <= d["ub"]].shape[0]))
+        lambda d: d[d["best_obj"] < d["ub"]].shape[0]))
     agg.insert(agg.columns.get_loc("gap_avg"), "n_sb_avg", grouped.apply(
-        lambda d: d[d["avg_obj"] - 0.0001 <= d["ub"]].shape[0]))
+        lambda d: d[d["avg_obj"] < d["ub"]].shape[0]))
 
     save_table("summary_nref_nopt", "Results for remaining instances with unknown optimal", agg,
                add_options="\\fontsize{8pt}{10pt}\\selectfont \\setlength{\\tabcolsep}{4pt}")
