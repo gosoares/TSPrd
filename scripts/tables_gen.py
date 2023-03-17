@@ -74,7 +74,7 @@ def gen_opt_summary_table(solomon_opt: pd.DataFrame, solomon50_opt):
     sol_opt.insert(sol_opt.columns.get_loc("gap_avg"), "n_opt_avg", grouped.apply(
         lambda d: d[(d["avg_obj"] - d["opt"]).abs() < 0.0001].shape[0]))
 
-    save_table("summary_opt", "Comparison of aggregated results for instances with proved optimal solutions",
+    save_table("summary_opt", "Comparison of aggregated results for instances with known optimal solutions",
                sol_opt, add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 
@@ -141,7 +141,7 @@ def gen_nref_opt_summary_table(nref_opt: pd.DataFrame):
     agg.insert(agg.columns.get_loc("gap_avg"), "n_opt_avg", grouped.apply(
         lambda d: d[(d["avg_obj"] - d["opt"]).abs() < 0.0001].shape[0]))
 
-    save_table("summary_nref_opt", "Results for remaining instances with proved optimal solutions",
+    save_table("summary_nref_opt", "Results for remaining instances with known optimal solutions",
                agg, add_options="\\fontsize{9pt}{11pt}\\selectfont")
 
 

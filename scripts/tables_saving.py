@@ -109,7 +109,7 @@ def format_time(time):
     if pd.isna(time):
         return time
     time = time / 1000.0  # ms to s
-    time = time * (1201.0 / 1976.0)  # time normalization
+    time = time * (1618.0 / 2021.0)  # time normalization
     return "{:.2f}".format(time) if time >= 0.01 else "<0.01"
 
 
