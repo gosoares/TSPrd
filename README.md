@@ -16,7 +16,7 @@ make -C build TSPrd
 
 ## Running an instance
 ```
-./build/TSPrd Solomon/50/C101_3 output.txt
+ ./build/TSPrd instances/Solomon/50/C101_3.dat -o output.txt
 ```
 The first argument must match a file in the 'instances' folder, without the extension.
 
