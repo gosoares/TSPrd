@@ -137,7 +137,7 @@ def format_lb_ub(df: pd.DataFrame):
     # if lb == ub make them bold to mark opt result
     def _format(r):
         if r.lb == r.ub:
-            t = f"\\textbf{{{int(r.ub)}}}"
+            t = "\\textbf\{{}\}".format(int(r.ub))
             return t, t
         else:
             return str(int(r.lb)), str(int(r.ub))

@@ -7,7 +7,7 @@ import time
 
 from tsprd_data import *
 
-TIME_LIMIT = 10 * 60 * (1976.0 / 1201.0)
+TIME_LIMIT = 10 * 60 * (2021.0 / 1618.0)
 
 
 def tsprd_execute(output_folder: str, n_threads: int):
