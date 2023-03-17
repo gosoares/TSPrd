@@ -1,6 +1,7 @@
 #include "Data.h"
 #include "GeneticAlgorithm.h"
 #include "Instance.h"
+#include "Solution.h"
 
 int main(int argc, char** argv) {
     auto [instanceName, outputFile, params] = Data::parseArgs(argc, argv);
@@ -27,18 +28,19 @@ int main(int argc, char** argv) {
     fout << "SOL_TIME " << alg.population.searchProgress.back().first << std::endl;
     fout << "OBJ " << alg.population.bestSolution.eval << std::endl;
     fout << "SEED " << params.seed << std::endl;
-    // fout << "N_ROUTES " << s.routes.size() << std::endl;
-    // fout << "N_CLIENTS";
-    // for (auto& r : s.routes) fout << " " << (r->size() - 2);
-    // fout << std::endl << "ROUTES" << std::endl;
-    // for (auto& r : s.routes) {
-    //     for (unsigned int c = 1; c < r->size() - 1; c++) {
-    //         fout << r->at(c) << " ";
-    //     }
-    //     fout << std::endl;
-    // }
-    // fout << std::endl;
-    fout.close();
+
+    auto s = Solution(data, alg.population.bestSolution.giantTour, nullptr);
+    fout << "N_ROUTES " << s.routes.size() << std::endl;
+    fout << "N_CLIENTS";
+    for (auto& r : s.routes) fout << " " << (r->size() - 2);
+    fout << std::endl << "ROUTES" << std::endl;
+    for (auto& r : s.routes) {
+        for (unsigned int c = 1; c < r->size() - 1; c++) {
+            fout << r->at(c) << " ";
+        }
+        fout << std::endl;
+    }
+    fout << std::endl;
 
     // output search progress
     // auto dotPos = outputFile.find_last_of('.');
