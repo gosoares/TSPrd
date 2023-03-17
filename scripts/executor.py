@@ -1,7 +1,7 @@
 import argparse
 import concurrent.futures
 import subprocess
-from os import cpu_count, getloadavg
+from os import cpu_count, getloadavg, makedirs
 from os.path import exists
 import time
 
@@ -52,6 +52,7 @@ def execute_instance(iset, _, name, beta, exec_id, output_folder):
     instance = "{}/{}_{}".format(iset, name, beta)
     instance_file = "../instances/{}.dat".format(instance)
     output_file = "{}/{}_{}.txt".format(output_folder, instance, exec_id)
+    makedirs(output_file.rsplit("/", 1)[0], exist_ok=True)
 
     if not exists(output_file):  # skip if it was already executed and saved
         command = "{}/build/TSPrd {} -o {} -t {}".format(output_folder, instance_file, output_file, TIME_LIMIT)

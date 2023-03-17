@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 
     // output to file
     std::string dir = outputFile.substr(0, outputFile.find_last_of('/'));
-    if (dir != outputFile) std::filesystem::create_directories(dir);  // make sure the path exists
+    // if (dir != outputFile) std::filesystem::create_directories(dir);  // make sure the path exists
 
     std::ofstream fout(outputFile, std::ios::out);
     fout << "EXEC_TIME " << execTime << std::endl;
