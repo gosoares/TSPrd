@@ -41,6 +41,7 @@ int main(int argc, char** argv) {
         fout << std::endl;
     }
     fout << std::endl;
+    fout.close();
 
     // output search progress
     // auto dotPos = outputFile.find_last_of('.');
