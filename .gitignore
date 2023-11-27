@@ -1,5 +1,6 @@
 .idea/
 .vscode/
+.venv/
 launch.json
 cmake-*/
 output*/
@@ -9,3 +10,4 @@ scripts/instances/
 __pycache__
 build/
 *_.ipynb
+scripts/results*/**
