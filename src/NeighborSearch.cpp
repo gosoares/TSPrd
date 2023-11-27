@@ -36,7 +36,7 @@ int NeighborSearch::educate(Individual& indiv) {
     int which = 1;  // 0: intra   1: inter     2: split
     int nNotImproved = 0;
     int gain;
-    bool splitImproved;
+
     do {
         switch (which) {
             case 0:
@@ -57,6 +57,8 @@ int NeighborSearch::educate(Individual& indiv) {
         } else {
             nNotImproved++;
         }
+
+        which = (which + 1) % 3;
 
     } while (nNotImproved < 2);
 
