@@ -31,18 +31,34 @@ int NeighborSearch::educate(Individual& indiv) {
     const int originalTime = indiv.eval;
 
     Solution* solution = new Solution(data, indiv.giantTour, nullptr);
+    intraSearch.search(solution);  // make sure all run at least once
 
-    int which = 1;  // 0: intra   1: inter
+    int which = 1;  // 0: intra   1: inter     2: split
+    int nNotImproved = 0;
+    int gain;
     bool splitImproved;
     do {
-        int gain;
-        do {
-            gain = (which == 0) ? intraSearch.search(solution) : interSearch.search(solution);
-            which = 1 - which;
-        } while (gain > 0);
+        switch (which) {
+            case 0:
+                gain = intraSearch.search(solution);
+                break;
+            case 1:
+                gain = interSearch.search(solution);
+                break;
+            case 2:
+                gain = splitNs(solution);
+                break;
+            default:
+                throw std::runtime_error("Invalid which");
+        }
 
-        splitImproved = splitNs(solution) > 0;
-    } while (splitImproved);
+        if (gain > 0) {
+            nNotImproved = 0;
+        } else {
+            nNotImproved++;
+        }
+
+    } while (nNotImproved < 2);
 
     int i = 0;
     for (const std::vector<int>* route : solution->routes) {
