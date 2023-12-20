@@ -24,7 +24,7 @@ struct AlgParams {
     int mu;         // minimum size of the population
     int lambda;     // maximum number of additional individuals in the population
     int nbElite;    // number of elite individuals for the biased fitness
-    int nClose;     // number of closest indivials to consider when calculating the diversity
+    int nClose;     // number of closest individuals to consider when calculating the diversity
     int itNi;       // max iterations without improvement to stop the algorithm
     int itDiv;      // iterations without improvement to diversify
     int timeLimit;  // in seconds
@@ -39,7 +39,7 @@ class Data {
     const std::vector<std::vector<int>>& timesMatrix;  // times matrix
     const std::vector<int>& releaseDates;              // release date of each vertex
     const int biggerReleaseDate;                       // the bigger release date in the instance
-    const bool symmetric;                              // whether the time matrix is simmetric
+    const bool symmetric;                              // whether the time matrix is symmetric
 
     // parameters for the algorithm
     const AlgParams& params;

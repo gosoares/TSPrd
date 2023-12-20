@@ -1,20 +1,36 @@
+import re
 from collections.abc import Callable
 from itertools import chain
 from pathlib import Path
 
 import pandas as pd
-import re
-
 
 GAP = "gap"
 NOPT = "\\# opt"
 SB_S = "\\# better"
 
 c_transl = {  # for each column put the name and the alignment
-    "n": ("n", "c"), "n_inst": ("\\# inst", "r"), "n_ref_opt": (NOPT, "c"), "n_opt_best": (NOPT, "c"), "n_opt_avg": (NOPT, "c"),
-    "n_sb_best": (SB_S, "c"), "n_sb_avg": (SB_S, "c"), "beta": ("$\\beta$", "c"), "name": ("inst", "l"), "opt": ("opt", "r"),
-    "ref_obj": ("obj", "r"), "ref_gap": (GAP, "r"), "ref_time": ("TB", "r"), "best_obj": ("obj", "r"), "gap_best": (GAP, "r"),
-    "avg_obj": ("obj", "r"), "gap_avg": (GAP, "r"), "exec_time": ("TT", "r"), "sol_time": ("TB", "r"), "lb": ("lb", "r"), "ub": ("ub", "r")
+    "n": ("n", "c"),
+    "n_inst": ("\\# inst", "r"),
+    "n_ref_opt": (NOPT, "c"),
+    "n_opt_best": (NOPT, "c"),
+    "n_opt_avg": (NOPT, "c"),
+    "n_sb_best": (SB_S, "c"),
+    "n_sb_avg": (SB_S, "c"),
+    "beta": ("$\\beta$", "c"),
+    "name": ("inst", "l"),
+    "opt": ("opt", "r"),
+    "ref_obj": ("obj", "r"),
+    "ref_gap": (GAP, "r"),
+    "ref_time": ("TB", "r"),
+    "best_obj": ("obj", "r"),
+    "gap_best": (GAP, "r"),
+    "avg_obj": ("obj", "r"),
+    "gap_avg": (GAP, "r"),
+    "exec_time": ("TT", "r"),
+    "sol_time": ("TB", "r"),
+    "lb": ("lb", "r"),
+    "ub": ("ub", "r"),
 }
 
 
@@ -23,8 +39,12 @@ def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\
 
     tex = get_table_tex(df, name, caption)
     reg = re.compile(r"(\\toprule)((?:.|\n)*)(\\bottomrule)")
-    body_tex = reg.search(tex).groups()[1]  # get content between \toprule and \bottomrule
-    tex = reg.sub(r"\1\n__BODY__\n\g<3>", tex)  # get the outer part of \toprule and \bottomrule
+    body_tex = reg.search(tex).groups()[
+        1
+    ]  # get content between \toprule and \bottomrule
+    tex = reg.sub(
+        r"\1\n__BODY__\n\g<3>", tex
+    )  # get the outer part of \toprule and \bottomrule
 
     header_tex = gen_table_headers(df)
     footer_tex = gen_table_footer(df)
@@ -33,15 +53,28 @@ def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\
     tex = tex.replace("\\begin{tabular}", f"{add_options}\n\\begin{{tabular}}", 1)
 
     if name.startswith("tsplib"):
-        tex = re.sub(r"(\\begin{tabular}(?:.|\n)*\\end{tabular})", r"\\resizebox{\\textwidth}{!}{\n\1\n}", tex)
+        tex = re.sub(
+            r"(\\begin{tabular}(?:.|\n)*\\end{tabular})",
+            r"\\resizebox{\\textwidth}{!}{\n\1\n}",
+            tex,
+        )
 
     Path("output").mkdir(parents=True, exist_ok=True)
     print(tex, file=open(f"output/{name}.tex", "w"))
 
 
 def with_blank_columns(df: pd.DataFrame):
-    insert_before = ["ref_obj", "best_obj", "avg_obj", "exec_time", "n_ref_opt",
-                     "n_opt_best", "n_opt_avg", "n_sb_best", "n_sb_avg"]
+    insert_before = [
+        "ref_obj",
+        "best_obj",
+        "avg_obj",
+        "exec_time",
+        "n_ref_opt",
+        "n_opt_best",
+        "n_opt_avg",
+        "n_sb_best",
+        "n_sb_avg",
+    ]
     columns = df.columns
     blank_id = 1
     multi_index = isinstance(columns, pd.MultiIndex)
@@ -61,35 +94,78 @@ def with_blank_columns(df: pd.DataFrame):
 
 def get_table_tex(df: pd.DataFrame, name: str = None, caption: str = None):
     df = format_time_columns(df.copy())  # format times
-    alignments = [c_transl.get(c, ('', 'c'))[1] for c in chain(df.index.names, df.columns.get_level_values(-1))]
-    alignments = ''.join(alignments)
+    alignments = [
+        c_transl.get(c, ("", "c"))[1]
+        for c in chain(df.index.names, df.columns.get_level_values(-1))
+    ]
+    alignments = "".join(alignments)
 
     df.index.names = [None for _ in range(len(df.index.names))]  # clear index names
-    tex: str = df.style.format(precision=2, na_rep="").hide(axis="columns") \
-        .format_index(lambda x: f"\\shortstack{{{x.left + 1}\\\\\\~{{}}\\\\{x.right}}}" if isinstance(x, pd.Interval) else x) \
-        .to_latex(clines="skip-last;data", hrules=True, label=f"tab:{name}", caption=caption, position="htb!", position_float="centering",
-                  column_format=alignments) \
+    tex: str = (
+        df.style.format(precision=2, na_rep="")
+        .hide(axis="columns")
+        .format_index(
+            lambda x: f"\\shortstack{{{x.left + 1}\\\\\\~{{}}\\\\{x.right}}}"
+            if isinstance(x, pd.Interval)
+            else x
+        )
+        .to_latex(
+            clines="skip-last;data",
+            hrules=True,
+            label=f"tab:{name}",
+            caption=caption,
+            position="htb!",
+            position_float="centering",
+            column_format=alignments,
+        )
         .replace("\\cline", "\\cmidrule")
-    tex = re.sub(r"(?:\\cmidrule{\d+-\d+}\s?)+\n(\\bottomrule)", r"\1",
-                 tex.strip(" \n"))  # remove \cmidrule{} from before \bottomrule
+    )
+    tex = re.sub(
+        r"(?:\\cmidrule{\d+-\d+}\s?)+\n(\\bottomrule)", r"\1", tex.strip(" \n")
+    )  # remove \cmidrule{} from before \bottomrule
     return tex
 
 
 def gen_table_footer(df: pd.DataFrame):
     # avg footer
-    columns = set(filter(lambda x: "gap" in x or x.endswith("_time"), df.columns.get_level_values(-1)))
-    index = ("Avg.",) + (" ",) * (len(df.index.names) - 1) if len(df.index.names) > 1 else "Avg."
-    footer = df.iloc[:, df.columns.get_level_values(-1).isin(columns)].mean(numeric_only=True).rename(index)
+    columns = set(
+        filter(
+            lambda x: "gap" in x or x.endswith("_time"), df.columns.get_level_values(-1)
+        )
+    )
+    index = (
+        ("Avg.",) + (" ",) * (len(df.index.names) - 1)
+        if len(df.index.names) > 1
+        else "Avg."
+    )
+    footer = (
+        df.iloc[:, df.columns.get_level_values(-1).isin(columns)]
+        .mean(numeric_only=True)
+        .rename(index)
+    )
     df_footer = footer.to_frame().reindex(df.columns, fill_value="").transpose()
     if "ref_time" in df_footer:
-        df_footer["ref_time"] = df_footer["ref_time"].astype(
-            int) if pd.api.types.is_numeric_dtype(df["ref_time"]) else "-"
+        df_footer["ref_time"] = (
+            df_footer["ref_time"].astype(int)
+            if pd.api.types.is_numeric_dtype(df["ref_time"])
+            else "-"
+        )
 
     # sum footer
-    columns = list(filter(lambda c: c.startswith("n_"), df.columns.get_level_values(-1)))
+    columns = list(
+        filter(lambda c: c.startswith("n_"), df.columns.get_level_values(-1))
+    )
     if columns:
-        index = ("Total",) + (" ",) * (len(df.index.names) - 1) if len(df.index.names) > 1 else "Total"
-        footer = df.iloc[:, df.columns.get_level_values(-1).isin(columns)].sum().astype("Int64")
+        index = (
+            ("Total",) + (" ",) * (len(df.index.names) - 1)
+            if len(df.index.names) > 1
+            else "Total"
+        )
+        footer = (
+            df.iloc[:, df.columns.get_level_values(-1).isin(columns)]
+            .sum()
+            .astype("Int64")
+        )
         df_footer.loc[index, :] = footer
 
     # footer_tex = "\n" if df.index.nlevels == 1 else ""
@@ -101,7 +177,8 @@ def gen_table_footer(df: pd.DataFrame):
 def format_time_columns(df: pd.DataFrame):
     columns = df.columns.get_level_values(-1).isin(["exec_time", "sol_time"])
     df.iloc[:, columns] = df.iloc[:, columns].apply(
-        lambda x: x.apply(format_time), axis='columns', result_type='expand')
+        lambda x: x.apply(format_time), axis="columns", result_type="expand"
+    )
     return df
 
 
@@ -124,8 +201,13 @@ def gen_table_headers(df: pd.DataFrame):
         cs = []
         for level_column in level_columns:
             level_column_range = df.columns.get_loc(level_column)
-            cs.append((f"$\\beta = {level_column}$", n_plus +
-                       level_column_range.start + 1, n_plus + level_column_range.stop - 1))
+            cs.append(
+                (
+                    f"$\\beta = {level_column}$",
+                    n_plus + level_column_range.start + 1,
+                    n_plus + level_column_range.stop - 1,
+                )
+            )
         tex = tex_header(n_columns, cs)
 
     start = 0
@@ -137,27 +219,46 @@ def gen_table_headers(df: pd.DataFrame):
             has_ref, last_ref = False, 0
         else:
             last_ref = index_firsts_last(columns, lambda x, _: "ref_" in x, first_ref)
-        first_hgs = index_first(columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref)
+        first_hgs = index_first(
+            columns, lambda x: x in ("best_obj", "n_opt_best", "n_sb_best"), last_ref
+        )
         first_best = first_hgs
-        first_avg = index_first(columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"), first_best)
+        first_avg = index_first(
+            columns, lambda x: x in ("avg_obj", "n_opt_avg", "n_sb_avg"), first_best
+        )
         rhc = ("gap_avg", "exec_time", "sol_time")  # remaining hgs columns
-        last_hgs = index_firsts_last(columns, lambda x, i: x in rhc or (x.startswith("__") and (i + 1 == len(columns) or columns[i + 1] in rhc)),
-                                     first_avg + 1)
+        last_hgs = index_firsts_last(
+            columns,
+            lambda x, i: x in rhc
+            or (
+                x.startswith("__") and (i + 1 == len(columns) or columns[i + 1] in rhc)
+            ),
+            first_avg + 1,
+        )
         start = last_hgs + 1
 
         if has_ref:
             first_row.append(("\\archils{}", first_ref, last_ref))
         first_row.append(("\\myalg{}", first_hgs, last_hgs))
-        second_row.extend([("best run", first_best, first_best + 1), ("average", first_avg, first_avg + 1)])
+        second_row.extend(
+            [
+                ("best run", first_best, first_best + 1),
+                ("average", first_avg, first_avg + 1),
+            ]
+        )
 
     tex += tex_header(n_columns, first_row)
     tex += tex_header(n_columns, second_row)
-    translated_columns = ["" if not c or c.startswith("__") else c_transl[c][0] for c in columns]
+    translated_columns = [
+        "" if not c or c.startswith("__") else c_transl[c][0] for c in columns
+    ]
     tex += " & ".join(translated_columns) + " \\\\ \n"
     return tex
 
 
-def tex_header(n_columns: int, texts: list[tuple[str, int, int]]):  # texts: lists of (text, start_pos, end_pos)
+def tex_header(
+    n_columns: int, texts: list[tuple[str, int, int]]
+):  # texts: lists of (text, start_pos, end_pos)
     line = (" & " * texts[0][1]) + multicolumn(*texts[0])
     for i in range(1, len(texts)):
         line += (" & " * (texts[i][1] - texts[i - 1][2])) + multicolumn(*texts[i])

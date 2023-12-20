@@ -61,24 +61,24 @@ int IntraSearch::swapSearch(std::vector<int>* route, int n1, int n2) {
     int bestO = 0;     // representa a melhora ao realizar o swap acima
 
     /*
-     * i: indice do primeiro elemento do primeiro conjunto
-     * j: indice do segundo elemento do terceiro conjunto
+     * i: índice do primeiro elemento do primeiro conjunto
+     * j: índice do segundo elemento do terceiro conjunto
      * n1: tamanho do primeiro elemento
      * n2: tamanho do segundo elemento
-     * i + n1 - 1: indice do ultimo elemento do primeiro conjunto
+     * i + n1 - 1: índice do ultimo elemento do primeiro conjunto
      * i + n1: elemento logo após o primeiro conjunto
-     * j + n2 - 1: indice do ultimo elemento do segundo conjunto
+     * j + n2 - 1: índice do ultimo elemento do segundo conjunto
      * j + n2: elemento logo após o segundo conjunto
      *
-     * a rota comeca com o elemento 0 e termina tambem com o elemento 0, que
-     * representam a saida e a chegada ao deposito, por isso o primeiro e ultimo
+     * a rota começa com o elemento 0 e termina também com o elemento 0, que
+     * representam a saída e a chegada ao deposito, por isso o primeiro e ultimo
      * elemento da rota não pode ser trocado, e portanto:
-     * 1: indice do primeiro cliente visitado na rota
-     * route.size() - 2: indice do ultimo cliente visitado na rota
+     * 1: índice do primeiro cliente visitado na rota
+     * route.size() - 2: índice do ultimo cliente visitado na rota
      *
      */
     for (int i = F(route); (i + n1 - 1) <= L(route); i++) {
-        if (n1 != n2)  // so verifica os conjuntos entre os clientes anteriores se os conjuntos tiver tamanhos distindos
+        if (n1 != n2)  // so verifica os conjuntos entre os clientes anteriores se os conjuntos tiver tamanhos distintos
             // para evitar que o mesmo conjunto seja verificado duas vezes
             for (int j = 1; (j + n2 - 1) < i; j++) {
                 int gain = evaluateSwap(route, j, i, n2, n1);
@@ -98,7 +98,7 @@ int IntraSearch::swapSearch(std::vector<int>* route, int n1, int n2) {
         }
     }
 
-    if (bestO > 0) {  // se ha uma melhora possivel, realiza o swap
+    if (bestO > 0) {  // se ha uma melhora possível, realiza o swap
         if (bestI > bestJ) {
             std::swap(bestI, bestJ);
             std::swap(n1, n2);
@@ -143,8 +143,8 @@ int IntraSearch::swapSearch(std::vector<int>* route, int n1, int n2) {
  * i1 + n1 - 1: ultimo elemento do primeiro conjunto
  * i2 + n2 - 1: ultimo elemento do segundo conjunto
  *
- * um retorno positivo representa uma diminuicao (melhora) no tempo de realizar a rota
- * enquando um negativo representa um aumento (piora)
+ * um retorno positivo representa uma diminuição (melhora) no tempo de realizar a rota
+ * enquanto um negativo representa um aumento (piora)
  */
 int IntraSearch::evaluateSwap(std::vector<int>* route, int i1, int i2, int n1, int n2) {
     assert(i1 + n1 - 1 < i2);
@@ -174,13 +174,13 @@ int IntraSearch::evaluateSwap(std::vector<int>* route, int i1, int i2, int n1, i
 }
 
 /*
- * Tenta realizar a reinsercao de um conjunto de n clientes adjacentes em todas as outras posicoes possiveis
+ * Tenta realizar a reinserção de um conjunto de n clientes adjacentes em todas as outras posições possíveis
  *
- * i: indice do primeiro elemento do conjunto
- * i + n - 1: indice do ultimo elemento do conjunto
- * L: indice do ultimo cliente na rota
+ * i: índice do primeiro elemento do conjunto
+ * i + n - 1: índice do ultimo elemento do conjunto
+ * L: índice do ultimo cliente na rota
  *
- * j representa onde será feita a tentativa de reinsercao
+ * j representa onde será feita a tentativa de reinserção
  */
 int IntraSearch::reinsertionSearch(std::vector<int>* route, int n) {
     int bestI, bestJ;
@@ -220,7 +220,7 @@ int IntraSearch::reinsertionSearch(std::vector<int>* route, int n) {
 }
 
 /*
- * tenta inverter a ordem de uma subrota que comeca no i-esimo cliente e termina no j-esimo cliente
+ * tenta inverter a ordem de uma subrota que começa no i-ésimo cliente e termina no j-ésimo cliente
  */
 int IntraSearch::twoOptSearch(std::vector<int>* route) {
     int bestI, bestJ;
