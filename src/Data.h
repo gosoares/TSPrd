@@ -30,7 +30,7 @@ struct AlgParams {
     int itDiv;      // iterations without improvement to diversify
     int timeLimit;  // in seconds
 
-    long long seed;  // seed for RNG
+    unsigned int seed;  // seed for RNG
 };
 
 class Data {

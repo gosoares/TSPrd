@@ -22,8 +22,8 @@ std::tuple<std::string, std::string, AlgParams> Data::parseArgs(int argc, char**
 
     program.add_argument("-s", "--seed")
         .help("Numeric value for seeding the RNG")
-        .default_value(((int)std::random_device{}()))
-        .scan<'i', int>();
+        .default_value(std::random_device{}())
+        .scan<'u', unsigned int>();
 
     program.add_argument("--mu").help("Minimum size of the population").default_value(20).scan<'i', int>();
     program.add_argument("--lambda")
@@ -58,7 +58,7 @@ std::tuple<std::string, std::string, AlgParams> Data::parseArgs(int argc, char**
     std::string instanceFile = program.get<std::string>("instanceFile");
     std::string outputFile = program.get<std::string>("--outputFile");
     int timeLimit = program.get<int>("--timeLimit");
-    int seed = program.get<int>("--seed");
+    unsigned int seed = program.get<unsigned int>("--seed");
 
     int mu = program.get<int>("--mu");
     int lambda = program.get<int>("--lambda");
