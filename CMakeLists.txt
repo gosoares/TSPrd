@@ -9,13 +9,23 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_definitions(-DLOG_VERBOSE=false)
 
-set(mainFiles
+set(mainFiles src/main.cpp
         src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
         src/Individual.h src/Instance.h src/Instance.cpp
         src/Population.h src/Population.cpp src/Split.h src/Split.cpp
         src/NeighborSearch.h src/NeighborSearch.cpp src/IntraSearch.h src/IntraSearch.cpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
 )
-add_executable(TSPrd src/main.cpp ${mainFiles})
+
+# fetch latest argparse
+include(FetchContent)
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
+add_executable(TSPrd ${mainFiles})
+target_link_libraries(TSPrd argparse)
 
 # set(CPLEX_DIR "/Applications/CPLEX_Studio201")
 # set(CPLEX_ARCH "x86-64_osx")

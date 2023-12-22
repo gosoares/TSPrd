@@ -2,6 +2,7 @@
 #define TSPRD_DATA_H
 
 #include <algorithm>
+#include <argparse/argparse.hpp>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -16,7 +17,6 @@
 #include <vector>
 
 #include "Instance.h"
-#include "argparse.hpp"
 
 const int INF = std::numeric_limits<int>::max() / 2;
 
