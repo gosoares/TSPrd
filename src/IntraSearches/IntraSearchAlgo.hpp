@@ -46,9 +46,6 @@ class IntraSearchAlgo {
     }
 
    public:
-    explicit IntraSearchAlgo(std::vector<IntraSearch*> searches, std::mt19937& generator)
-        : searches(searches), generator(generator) {}
-
     explicit IntraSearchAlgo(const Data& data)
         : searches(parseNames(data.params.intraMoves, data.timesMatrix)), generator(data.generator) {}
 

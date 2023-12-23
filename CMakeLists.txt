@@ -9,15 +9,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_definitions(-DLOG_VERBOSE=false)
 
-set(mainFiles src/main.cpp
-        src/Data.hpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
-        src/Individual.h src/Instance.h src/Instance.cpp
-        src/Population.h src/Population.cpp src/Split.h src/Split.cpp
-        src/NeighborSearch.hpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
-        src/IntraSearches/IntraSearch.hpp src/IntraSearches/IntraSearchAlgo.hpp
-        src/IntraSearches/IntraSwap.hpp src/IntraSearches/IntraReinsertion.hpp src/IntraSearches/IntraTwoOpt.hpp
-)
-
 # fetch latest argparse
 include(FetchContent)
 FetchContent_Declare(
@@ -26,7 +17,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-add_executable(TSPrd ${mainFiles})
+add_executable(TSPrd src/main.cpp
+        src/Data.hpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
+        src/Individual.h src/Instance.h src/Instance.cpp
+        src/Population.h src/Population.cpp src/Split.h src/Split.cpp
+        src/NeighborSearch.hpp src/Solution.h src/Solution.cpp
+        src/IntraSearches/IntraSearch.hpp src/IntraSearches/IntraSearchAlgo.hpp
+        src/IntraSearches/IntraSwap.hpp src/IntraSearches/IntraReinsertion.hpp src/IntraSearches/IntraTwoOpt.hpp
+        src/InterSearches/InterSearch.hpp src/InterSearches/InterSearchAlgo.hpp
+        src/InterSearches/InterSwap.hpp src/InterSearches/InterRelocation.hpp src/InterSearches/DivideAndSwap.hpp
+)
 target_link_libraries(TSPrd argparse)
 
 # set(CPLEX_DIR "/Applications/CPLEX_Studio201")

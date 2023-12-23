@@ -84,7 +84,10 @@ class Data {
             .nargs(argparse::nargs_pattern::any)
             .default_value(
                 std::vector<std::string>{"swap11", "swap12", "swap22", "reinsertion1", "reinsertion2", "2opt"});
-        program.add_argument("--interMoves").help("List of inter moves to be used").nargs(argparse::nargs_pattern::any);
+        program.add_argument("--interMoves")
+            .help("List of inter moves to be used")
+            .nargs(argparse::nargs_pattern::any)
+            .default_value(std::vector<std::string>{"relocation", "swap", "divideAndSwap"});
 
         program.add_argument("--mu").help("Minimum size of the population").default_value(20).scan<'i', int>();
         program.add_argument("--lambda")

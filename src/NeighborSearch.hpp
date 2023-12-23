@@ -1,11 +1,8 @@
 #ifndef TSPRD_NEIGHBORSEARCH_H
 #define TSPRD_NEIGHBORSEARCH_H
 
-#include "InterSearch.h"
-#include "IntraSearches/IntraReinsertion.hpp"
+#include "InterSearches/InterSearchAlgo.hpp"
 #include "IntraSearches/IntraSearchAlgo.hpp"
-#include "IntraSearches/IntraSwap.hpp"
-#include "IntraSearches/IntraTwoOpt.hpp"
 #include "Population.h"
 
 class NeighborSearch {
@@ -13,7 +10,7 @@ class NeighborSearch {
     Data& data;
 
     IntraSearchAlgo intraSearch;
-    InterSearch interSearch;
+    InterSearchAlgo interSearch;
 
     int splitNs(Solution* solution) {
         Sequence* sequence = solution->toSequence();
