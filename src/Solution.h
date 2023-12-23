@@ -1,7 +1,7 @@
 #ifndef TSPRD_SOLUTION_H
 #define TSPRD_SOLUTION_H
 
-#include "Data.h"
+#include "Data.hpp"
 
 using Sequence = std::vector<int>;
 

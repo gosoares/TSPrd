@@ -1,7 +1,7 @@
 #ifndef TSPRD_INTERSEARCH_H
 #define TSPRD_INTERSEARCH_H
 
-#include "Data.h"
+#include "Data.hpp"
 #include "Solution.h"
 
 class InterSearch {

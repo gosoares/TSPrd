@@ -10,10 +10,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 add_definitions(-DLOG_VERBOSE=false)
 
 set(mainFiles src/main.cpp
-        src/Data.h src/Data.cpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
+        src/Data.hpp src/GeneticAlgorithm.h src/GeneticAlgorithm.cpp
         src/Individual.h src/Instance.h src/Instance.cpp
         src/Population.h src/Population.cpp src/Split.h src/Split.cpp
-        src/NeighborSearch.h src/NeighborSearch.cpp src/IntraSearch.h src/IntraSearch.cpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
+        src/NeighborSearch.hpp src/InterSearch.h src/InterSearch.cpp src/Solution.h src/Solution.cpp
+        src/IntraSearches/IntraSearch.hpp src/IntraSearches/IntraSearchAlgo.hpp
+        src/IntraSearches/IntraSwap.hpp src/IntraSearches/IntraReinsertion.hpp src/IntraSearches/IntraTwoOpt.hpp
 )
 
 # fetch latest argparse

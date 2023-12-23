@@ -1,7 +1,7 @@
 #ifndef TSPRD_SPLIT_H
 #define TSPRD_SPLIT_H
 
-#include "Data.h"
+#include "Data.hpp"
 #include "Individual.h"
 
 class Split {

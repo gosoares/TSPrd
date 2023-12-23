@@ -1,7 +1,7 @@
 #ifndef TSPRD_INDIVIDUAL_H
 #define TSPRD_INDIVIDUAL_H
 
-#include "Data.h"
+#include "Data.hpp"
 
 class Individual {
    public:

@@ -1,7 +1,7 @@
 #ifndef TSPRD_POPULATION_H
 #define TSPRD_POPULATION_H
 
-#include "Data.h"
+#include "Data.hpp"
 #include "Individual.h"
 #include "Split.h"
 

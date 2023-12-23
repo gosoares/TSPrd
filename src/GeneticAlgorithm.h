@@ -1,8 +1,8 @@
 #ifndef TSPRD_GENETICALGORITHM_H
 #define TSPRD_GENETICALGORITHM_H
 
-#include "Data.h"
-#include "NeighborSearch.h"
+#include "Data.hpp"
+#include "NeighborSearch.hpp"
 #include "Population.h"
 #include "Split.h"
 
