@@ -1,5 +1,6 @@
 import math
 import re
+from dataclasses import dataclass
 from itertools import chain
 from os.path import exists
 
@@ -64,25 +65,39 @@ def get_instances_names():
     return chain(solomon_instances, atsplib_instances, tsplib_instances)
 
 
-def get_instances_execs():
+@dataclass
+class Instance:
+    instance_set: str
+    n_clients: int
+    name: str
+    beta: str
+    exec_id: int
+
+    def __post_init__(self):
+        self.full_name = "{}/{}_{}".format(self.instance_set, self.name, self.beta)
+
+
+def get_instances_execs() -> list[Instance]:
     # return an iterable of tuples (instance_set, n, instance_name, beta, exec_id)
     instances = get_instances_names()
     betas = ["0.5", "1", "1.5", "2", "2.5", "3"]
     exec_ids = range(1, 11)
 
     r = re.compile(r"\d+")
-    instances = [
-        (iset, int(r.search(name).group()), name, beta, exec_id)
+    return [
+        Instance(iset, int(r.search(name).group()), name, beta, exec_id)
         for iset, name in instances
         for beta in betas
         for exec_id in exec_ids
     ]
-    return instances
 
 
 def gen_instances_df():
     # (instance_set, n, instance_name, beta, exec_id)
-    instances = get_instances_execs()
+    instances = [
+        (i.instance_set, i.n_clients, i.name, i.beta, i.exec_id)
+        for i in get_instances_execs()
+    ]
     return pd.DataFrame(instances, columns=["set", "n", "name", "beta", "exec_id"])
 
 

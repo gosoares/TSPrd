@@ -58,7 +58,8 @@ Solution::Solution(Data* data) : data(data) {  // TODO check this constructor us
     time = 0;
 }
 
-Solution::Solution(Data& data, std::vector<std::vector<int>*> routes) : data(&data), routes(move(routes)), N(data.N) {
+Solution::Solution(Data& data, std::vector<std::vector<int>*> routes)
+    : data(&data), routes(std::move(routes)), N(data.N) {
     time = update();
 }
 
