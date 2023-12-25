@@ -15,8 +15,8 @@ TIME_LIMIT = int(10 * 60 * (2021.0 / 1618.0) + 0.5)
 @dataclass
 class ExecutionOptions:
     output_folder: str
-    intraSearches: list[str] | None = None
-    interSearches: list[str] | None = None
+    intra_moves: list[str] | None = None
+    inter_moves: list[str] | None = None
 
 
 @dataclass
@@ -34,14 +34,21 @@ class ExecutionItem:
         run_command = "./build/TSPrd {} -o {} -t {}".format(
             self.instance_file, self.output_file, TIME_LIMIT
         )
-        if self.options.intraSearches:
-            run_command += " --intraMoves {}".format(
-                " ".join(self.options.intraSearches)
-            )
-        if self.options.interSearches:
-            run_command += " --interMoves {}".format(
-                " ".join(self.options.interSearches)
-            )
+        if self.options.intra_moves is not None:
+            if self.options.intra_moves:
+                run_command += " --intraMoves {}".format(
+                    " ".join(self.options.intra_moves)
+                )
+            else:  # if empty
+                run_command += " --intraMoves none"
+
+        if self.options.inter_moves is not None:
+            if self.options.inter_moves:
+                run_command += " --interMoves {}".format(
+                    " ".join(self.options.inter_moves)
+                )
+            else:  # if empty
+                run_command += " --interMoves none"
         self.run_command = run_command
 
     @classmethod
@@ -80,12 +87,7 @@ def setup_execution(
     with open("{}/options.txt".format(options.output_folder), "w") as f:
         print(options.__dict__, file=f)
 
-    return [
-        ExecutionItem.from_instance(
-            i, ExecutionOptions(output_folder=options.output_folder)
-        )
-        for i in get_instances_execs()
-    ]
+    return [ExecutionItem.from_instance(i, options) for i in get_instances_execs()]
 
 
 def execute_all(execs: list[ExecutionItem], n_threads: int):

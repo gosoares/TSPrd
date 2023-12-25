@@ -127,6 +127,13 @@ class Data {
         auto intraMoves = program.get<std::vector<std::string>>("--intraMoves");
         auto interMoves = program.get<std::vector<std::string>>("--interMoves");
 
+        if (intraMoves.size() == 1 && intraMoves[0] == "none") {
+            intraMoves.clear();
+        }
+        if (interMoves.size() == 1 && interMoves[0] == "none") {
+            interMoves.clear();
+        }
+
         int mu = program.get<int>("--mu");
         int lambda = program.get<int>("--lambda");
         int nbElite = program.get<int>("--nbElite");
