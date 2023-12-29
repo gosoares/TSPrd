@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import concurrent.futures
 import subprocess
@@ -5,7 +7,6 @@ import time
 from dataclasses import dataclass
 from os import cpu_count, getloadavg, makedirs
 from os.path import exists
-from typing import Self
 
 from tsprd_data import Instance, get_instances_execs
 
@@ -56,7 +57,7 @@ class ExecutionItem:
         cls,
         instance: Instance,
         options: ExecutionOptions,
-    ) -> Self:
+    ) -> ExecutionItem:
         return cls(
             instance_name=instance.full_name,
             instance_file="../instances/{}.dat".format(instance.full_name),

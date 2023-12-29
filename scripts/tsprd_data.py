@@ -2,7 +2,7 @@ import math
 import re
 from dataclasses import dataclass
 from itertools import chain
-from os.path import exists
+from pathlib import Path
 
 import pandas as pd
 
@@ -101,7 +101,10 @@ def gen_instances_df():
     return pd.DataFrame(instances, columns=["set", "n", "name", "beta", "exec_id"])
 
 
-def read_execution_data(results_folder: str, remove_solomon_n: bool = True):
+def read_execution_data(results_folder: Path, remove_solomon_n: bool = True):
+    if not results_folder.exists():
+        raise FileNotFoundError(results_folder.absolute())
+
     df = (
         gen_instances_df()
     )  # each row of this dataframe represents one of ten execution of each instance n_instance_beta
@@ -121,7 +124,7 @@ def read_execution_data(results_folder: str, remove_solomon_n: bool = True):
     if missing > 0:
         print(
             'There were {} missing results in the "{}" folder.'.format(
-                missing, results_folder
+                missing, results_folder.absolute()
             )
         )
         df.dropna(subset="obj", inplace=True)
@@ -238,12 +241,10 @@ def split_instance_sets(df_agg: pd.DataFrame):
 
 
 def read_instance_result(
-    output_path: str, instance_set: str, instance: str, beta: str, exec_id: int
+    output_path: Path, instance_set: str, instance: str, beta: str, exec_id: int
 ):
-    file = "{}/{}/{}_{}_{}.txt".format(
-        output_path, instance_set, instance, beta, exec_id
-    )
-    if not exists(file):
+    file = output_path / instance_set / f"{instance}_{beta}_{exec_id}.txt"
+    if not file.exists():
         return None, None, None
 
     with open(file, "r") as f:

@@ -1,5 +1,6 @@
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 
@@ -34,10 +35,23 @@ c_transl = {  # for each column put the name and the alignment
 }
 
 
-def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\tiny"):
-    df = with_blank_columns(df)
+@dataclass
+class Table:
+    name: str
+    caption: str
+    df: pd.DataFrame
+    add_options: str = "\\tiny"
 
-    tex = get_table_tex(df, name, caption)
+
+def save_table_csv(table: Table, output_folder: Path):
+    output_folder.mkdir(parents=True, exist_ok=True)
+    table.df.to_csv(output_folder / f"{table.name}.csv")
+
+
+def save_table_tex(table: Table, output_folder: Path):
+    df = with_blank_columns(table.df)
+
+    tex = get_table_tex(df, table.name, table.caption)
     reg = re.compile(r"(\\toprule)((?:.|\n)*)(\\bottomrule)")
     body_tex = reg.search(tex).groups()[
         1
@@ -50,17 +64,18 @@ def save_table(name: str, caption: str, df: pd.DataFrame, add_options: str = "\\
     footer_tex = gen_table_footer(df)
     body_tex = header_tex + body_tex + footer_tex
     tex = tex.replace("__BODY__", body_tex)
-    tex = tex.replace("\\begin{tabular}", f"{add_options}\n\\begin{{tabular}}", 1)
+    tex = tex.replace("\\begin{tabular}", f"{table.add_options}\n\\begin{{tabular}}", 1)
 
-    if name.startswith("tsplib"):
+    if table.name.startswith("tsplib"):
         tex = re.sub(
             r"(\\begin{tabular}(?:.|\n)*\\end{tabular})",
             r"\\resizebox{\\textwidth}{!}{\n\1\n}",
             tex,
         )
 
-    Path("output").mkdir(parents=True, exist_ok=True)
-    print(tex, file=open(f"output/{name}.tex", "w"))
+    output_folder.mkdir(parents=True, exist_ok=True)
+    with open(output_folder / f"{table.name}.tex", "w") as f:
+        print(tex, file=f)
 
 
 def with_blank_columns(df: pd.DataFrame):
@@ -143,7 +158,7 @@ def gen_table_footer(df: pd.DataFrame):
         .mean(numeric_only=True)
         .rename(index)
     )
-    df_footer = footer.to_frame().reindex(df.columns, fill_value="").transpose()
+    df_footer = footer.to_frame().reindex(df.columns).transpose()
     if "ref_time" in df_footer:
         df_footer["ref_time"] = (
             df_footer["ref_time"].astype(int)
